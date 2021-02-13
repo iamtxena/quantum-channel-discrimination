@@ -1,10 +1,9 @@
 from itertools import product, combinations
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, Aer, execute
-
+from qiskit.quantum_info import state_fidelity
 from numpy import pi
 from math import e
-from matplotlib import colors, cm
-from matplotlib.ticker import PercentFormatter
+from matplotlib import cm
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -22,8 +21,6 @@ def prepareInitialStates(inAnglesTheta, inAnglesPhase):
         for phase in inAnglesPhase:
             initialStatesZeroAmplitude.append(math.cos(theta / 2) * (1 + 0j))
             initialStatesOneAmplitude.append((math.sin(theta / 2) * e**(1j * phase) + 0 + 0j))
-    # List of Initial States
-            # print("State ", indexTheta*P+indexPhase," =", initialStatesZeroAmplitude[indexTheta*P+indexPhase],"*|0> + ", initialStatesOneAmplitude     [indexTheta*P   +indexPhase], "*|1>")
     return {
         "zeroAmplitude": initialStatesZeroAmplitude,
         "oneAmplitude": initialStatesOneAmplitude,
@@ -102,7 +99,8 @@ def draw_cube(axes):
             axes.plot3D(*zip(s, l), color="w")
 
 
-def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations, backend, out_rz_angle=0, out_ry_angle=0):
+def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase,
+                                iterations, backend, state_backend_sim, out_rz_angle=0, out_ry_angle=0):
     # Create 2 qbits circuit and 1 output classical bit
     qreg_q = QuantumRegister(2, 'q')
     creg_c = ClassicalRegister(1, 'c')
@@ -114,6 +112,7 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations,
     totalCounts = []
     totalCircuits = []
     totalFinalStates = []
+    total_state_vectors = []
 
     Z_Output0 = []
     Z_Output1 = []
@@ -122,12 +121,10 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations,
     Y_Eta = []
 
     initialStates = prepareInitialStates(anglesTheta, anglesPhase)
-    index = -1
+
     # Initialize circuit with desired initial_state
     for eta in anglesEta:
-        index += 1
-        if index % 10 == 0:
-            print("Simulating channel with " + u"\u03B7" + " = " + str(int(math.degrees(eta))) + u"\u00B0")
+        print("Simulating channel with " + u"\u03B7" + " = " + str(int(math.degrees(eta))) + u"\u00B0")
         circuitResultsSpecificChannel = []
         countsSpecificChannel = []
         circuitSpecificChannel = []
@@ -147,6 +144,7 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations,
         X_Input1.append(nested_X_Input1)
         Y_Eta.append(nested_Y_Eta)
         loop_counter = 0
+        channel_state_vectors = []
 
         for indexInitialState in range(len(initialStates["zeroAmplitude"])):
             phase_cycle = indexInitialState // (len(anglesPhase) * len(anglesTheta))
@@ -162,6 +160,8 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations,
             circuit.initialize([initialStates["zeroAmplitude"][indexInitialState],
                                 initialStates["oneAmplitude"][indexInitialState]], qreg_q[0])
             circuit.reset(qreg_q[1])
+            # measuring the Initial StateVector
+            input_state_vector = execute(circuit, state_backend_sim).result().get_statevector(circuit)
             circuit.cry(eta, qreg_q[0], qreg_q[1])
             circuit.cx(qreg_q[1], qreg_q[0])
             circuit.rz(out_rz_angle, qreg_q[0])
@@ -170,6 +170,8 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations,
             circuitSpecificChannel.append(circuit)
             # execute circuit on backends
             job_sim = execute(circuit, backend, shots=iterations)
+            output_state_vector = execute(circuit, state_backend_sim,
+                                          shots=iterations).result().get_statevector(circuit)
             # get results
             results_sim = job_sim.result()
             circuitResultsSpecificChannel.append(results_sim)
@@ -187,12 +189,17 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations,
             nested_X_Input0.append(Prob_0.real)
             nested_X_Input1.append(Prob_1.real)
             nested_Y_Eta.append(eta)
+            channel_state_vectors.append({
+                "input_state_vector": input_state_vector,
+                "output_state_vector": output_state_vector
+            })
 
             # append the results for a specific channel
         totalCircuits.append(circuitSpecificChannel)
         totalFinalStates.append(finalStates)
         totalCounts.append(countsSpecificChannel)
         totalResults.append(circuitResultsSpecificChannel)
+        total_state_vectors.append(channel_state_vectors)
 
     return {
         "initialStates": initialStates,
@@ -205,7 +212,8 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations,
         "Z_Output1": np.array(Z_Output1),
         "X_Input0": np.array(X_Input0),
         "X_Input1": np.array(X_Input1),
-        "Y_Eta": np.array(Y_Eta)
+        "Y_Eta": np.array(Y_Eta),
+        "total_state_vectors": total_state_vectors
     }
 
 
@@ -367,7 +375,8 @@ def plot_wireframe_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped,
 
     # draw initial states
     ax.plot_wireframe(initialStatesReshaped['reshapedCoordsX'],
-                      initialStatesReshaped['reshapedCoordsY'], initialStatesReshaped['reshapedCoordsZ'], color="c")
+                      initialStatesReshaped['reshapedCoordsY'],
+                      initialStatesReshaped['reshapedCoordsZ'], color="c")
     ax.set_title("Input States")
     # draw center
     ax.scatter([0], [0], [0], color="g", s=50)
@@ -380,13 +389,16 @@ def plot_wireframe_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped,
     modulus_number = np.round(len(allChannelsFinalStatesReshaped) / (rows * cols - 1))
     index_to_print = 0
     for finalStatesReshaped in allChannelsFinalStatesReshaped:
-        if (indexFinalStateReshaped % modulus_number == 0 and index_to_print < (rows * cols - 1)):
+        if ((index_to_print == 0 or len(allChannelsFinalStatesReshaped) < modulus_number) or
+                (index_to_print != 0 and indexFinalStateReshaped % modulus_number == 0 and
+                 index_to_print < (rows * cols - 1))):
             # set up the axes for the second plot
             ax = fig.add_subplot(rows, cols, 2 + index_to_print, projection='3d')
             draw_cube(ax)
             # draw final states
             ax.plot_wireframe(finalStatesReshaped['reshapedCoordsX'],
-                              finalStatesReshaped['reshapedCoordsY'], finalStatesReshaped['reshapedCoordsZ'], color="r")
+                              finalStatesReshaped['reshapedCoordsY'],
+                              finalStatesReshaped['reshapedCoordsZ'], color="r")
             title = "Output States\n Channel " + "$\eta=" + \
                 str(int(math.degrees(anglesEta[indexFinalStateReshaped]))) + "\degree$"
             ax.set_title(title)
@@ -409,7 +421,8 @@ def plot_surface_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped, a
 
     # draw initial states
     surf = ax.plot_surface(initialStatesReshaped['reshapedCoordsX'],
-                           initialStatesReshaped['reshapedCoordsY'], initialStatesReshaped['reshapedCoordsZ'], linewidth=0, antialiased=True)
+                           initialStatesReshaped['reshapedCoordsY'],
+                           initialStatesReshaped['reshapedCoordsZ'], linewidth=0, antialiased=True)
     ax.set_title("Input States")
     fig.colorbar(surf, shrink=0.5, aspect=5)
 
@@ -421,13 +434,16 @@ def plot_surface_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped, a
     modulus_number = np.round(len(allChannelsFinalStatesReshaped) / (rows * cols - 1))
     index_to_print = 0
     for finalStatesReshaped in allChannelsFinalStatesReshaped:
-        if (indexFinalStateReshaped % modulus_number == 0 and index_to_print < (rows * cols - 1)):
+        if ((index_to_print == 0 or len(allChannelsFinalStatesReshaped) < modulus_number) or
+                (index_to_print != 0 and indexFinalStateReshaped % modulus_number == 0 and
+                 index_to_print < (rows * cols - 1))):
             # set up the axes for the second plot
             ax = fig.add_subplot(rows, cols, 2 + index_to_print, projection='3d')
             draw_cube(ax)
             # draw final states
             surf = ax.plot_surface(finalStatesReshaped['reshapedCoordsX'],
-                                   finalStatesReshaped['reshapedCoordsY'], finalStatesReshaped['reshapedCoordsZ'], linewidth=0, antialiased=True)
+                                   finalStatesReshaped['reshapedCoordsY'],
+                                   finalStatesReshaped['reshapedCoordsZ'], linewidth=0, antialiased=True)
             title = "Output States\n Channel " + "$\eta=" + \
                 str(int(math.degrees(anglesEta[indexFinalStateReshaped]))) + "\degree$"
             ax.set_title(title)
@@ -438,12 +454,14 @@ def plot_surface_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped, a
     plt.show()
 
 
-def run_base_circuit(angles_eta, points_theta, points_phase, iterations=1024):
+def run_base_circuit(angles_eta, points_theta, points_phase, iterations=1024, out_rz_angle=0, out_ry_angle=0):
     # Use Aer's qasm_simulator
     backend_sim = Aer.get_backend('qasm_simulator')
+    state_backend_sim = Aer.get_backend('statevector_simulator')
     simulatedResult = runDampingChannelSimulation(
         anglesEta=angles_eta, pointsTheta=points_theta, pointsPhase=points_phase,
-        iterations=iterations, backend=backend_sim)
+        iterations=iterations, backend=backend_sim, state_backend_sim=state_backend_sim,
+        out_rz_angle=out_rz_angle, out_ry_angle=out_ry_angle)
     initialStates = simulatedResult["initialStates"]
     totalResults = simulatedResult["totalResults"]
     totalCounts = simulatedResult["totalCounts"]
@@ -455,6 +473,7 @@ def run_base_circuit(angles_eta, points_theta, points_phase, iterations=1024):
     X_Input0 = simulatedResult["X_Input0"]
     X_Input1 = simulatedResult["X_Input1"]
     Y_Eta = simulatedResult["Y_Eta"]
+    total_state_vectors = simulatedResult["total_state_vectors"]
 
     # Set the Initial States
     initialStatesReshaped = computeStateVectorCoordsReshaped(
@@ -472,4 +491,38 @@ def run_base_circuit(angles_eta, points_theta, points_phase, iterations=1024):
             Y_Eta)
     )
 
-    return initialStates, totalResults, totalCounts, totalCircuits, totalFinalStates, anglesPhase, Z_Output0, Z_Output1, X_Input0, X_Input1, Y_Eta, initialStatesReshaped, allChannelsFinalStatesReshaped, eta_degrees
+    return (initialStates, totalResults, totalCounts, totalCircuits, totalFinalStates,
+            anglesPhase, Z_Output0, Z_Output1, X_Input0, X_Input1, Y_Eta, initialStatesReshaped,
+            allChannelsFinalStatesReshaped, eta_degrees, total_state_vectors)
+
+
+def compute_fidelity(total_state_vectors):
+    return list(map(lambda state_vectors_one_channel:
+                    list(map(lambda state_vector_execution:
+                             state_fidelity(state_vector_execution['input_state_vector'],
+                                            state_vector_execution['output_state_vector']),
+                             state_vectors_one_channel)), total_state_vectors)
+                )
+
+
+def plot_fidelity(input_1_probability, total_state_vectors, angles_eta, rows=3, cols=3, row_size=3 * 5, col_size=3 * 10):
+    fidelity_all_channels = compute_fidelity(total_state_vectors)
+    fig = plt.figure(figsize=(row_size, col_size))
+    index_channel = 0
+    modulus_number = np.round(len(fidelity_all_channels) / (rows * cols))
+    index_to_print = 0
+    for fidelity_one_channel in fidelity_all_channels:
+        if ((index_to_print == 0 or len(fidelity_all_channels) < modulus_number) or
+                (index_to_print != 0 and index_channel % modulus_number == 0 and
+                 index_to_print < (rows * cols))):
+            # set up the axes for the second plot
+            ax = fig.add_subplot(rows, cols, 1 + index_to_print)
+            # draw final states
+            ax.plot(input_1_probability[index_channel], fidelity_one_channel, 'o',
+                    label="$\eta=" + str(int(math.degrees(angles_eta[index_channel]))) + "\degree$")
+            ax.set_title(f"Fidelity Channel $\eta={str(int(math.degrees(angles_eta[index_channel])))} \degree$")
+            ax.set_xlabel("Input State " + "$\\vert\\vert\\beta\\vert\\vert ^2  \\vert1\\rangle$")
+            ax.set_ylabel('% Fidelity')
+            index_to_print += 1
+        index_channel += 1
+    plt.show()
