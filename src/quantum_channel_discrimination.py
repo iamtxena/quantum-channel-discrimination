@@ -1,16 +1,10 @@
 from itertools import product, combinations
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, Aer, execute
-from qiskit.visualization import plot_histogram, plot_state_qsphere, plot_bloch_multivector, plot_bloch_vector
-from qiskit.providers.aer import noise
-from qiskit.quantum_info import Operator, average_gate_fidelity, state_fidelity
 
 from numpy import pi
 from math import e
 from matplotlib import colors, cm
 from matplotlib.ticker import PercentFormatter
-from qiskit.ignis.mitigation.measurement import (
-    complete_meas_cal, tensored_meas_cal, CompleteMeasFitter, TensoredMeasFitter)
-from qiskit.extensions import Initialize
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -108,7 +102,7 @@ def draw_cube(axes):
             axes.plot3D(*zip(s, l), color="w")
 
 
-def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations, backend):
+def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations, backend, out_rz_angle=0, out_ry_angle=0):
     # Create 2 qbits circuit and 1 output classical bit
     qreg_q = QuantumRegister(2, 'q')
     creg_c = ClassicalRegister(1, 'c')
@@ -128,10 +122,12 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations,
     Y_Eta = []
 
     initialStates = prepareInitialStates(anglesTheta, anglesPhase)
-
+    index = -1
     # Initialize circuit with desired initial_state
     for eta in anglesEta:
-        print("Simulating channel with " + u"\u03B7" + " = " + str(int(math.degrees(eta))) + u"\u00B0")
+        index += 1
+        if index % 10 == 0:
+            print("Simulating channel with " + u"\u03B7" + " = " + str(int(math.degrees(eta))) + u"\u00B0")
         circuitResultsSpecificChannel = []
         countsSpecificChannel = []
         circuitSpecificChannel = []
@@ -168,6 +164,8 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase, iterations,
             circuit.reset(qreg_q[1])
             circuit.cry(eta, qreg_q[0], qreg_q[1])
             circuit.cx(qreg_q[1], qreg_q[0])
+            circuit.rz(out_rz_angle, qreg_q[0])
+            circuit.ry(out_ry_angle, qreg_q[0])
             circuit.measure(qreg_q[0], creg_c[0])
             circuitSpecificChannel.append(circuit)
             # execute circuit on backends
@@ -394,6 +392,46 @@ def plot_wireframe_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped,
             ax.set_title(title)
             # draw center
             ax.scatter([0], [0], finalStatesReshaped["center"], color="g", s=50)
+            index_to_print += 1
+        indexFinalStateReshaped += 1
+
+    plt.show()
+
+
+def plot_surface_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped, anglesEta, rows=3, cols=3):
+    fig = plt.figure(figsize=(20, 25))
+    # ===============
+    #  First subplot
+    # ===============
+    # set up the axes for the first plot
+    ax = fig.add_subplot(rows, cols, 1, projection='3d')
+    draw_cube(ax)
+
+    # draw initial states
+    surf = ax.plot_surface(initialStatesReshaped['reshapedCoordsX'],
+                           initialStatesReshaped['reshapedCoordsY'], initialStatesReshaped['reshapedCoordsZ'], linewidth=0, antialiased=True)
+    ax.set_title("Input States")
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+
+    # ===============
+    # Next subplots
+    # ===============
+
+    indexFinalStateReshaped = 0
+    modulus_number = np.round(len(allChannelsFinalStatesReshaped) / (rows * cols - 1))
+    index_to_print = 0
+    for finalStatesReshaped in allChannelsFinalStatesReshaped:
+        if (indexFinalStateReshaped % modulus_number == 0 and index_to_print < (rows * cols - 1)):
+            # set up the axes for the second plot
+            ax = fig.add_subplot(rows, cols, 2 + index_to_print, projection='3d')
+            draw_cube(ax)
+            # draw final states
+            surf = ax.plot_surface(finalStatesReshaped['reshapedCoordsX'],
+                                   finalStatesReshaped['reshapedCoordsY'], finalStatesReshaped['reshapedCoordsZ'], linewidth=0, antialiased=True)
+            title = "Output States\n Channel " + "$\eta=" + \
+                str(int(math.degrees(anglesEta[indexFinalStateReshaped]))) + "\degree$"
+            ax.set_title(title)
+            fig.colorbar(surf, shrink=0.5, aspect=5)
             index_to_print += 1
         indexFinalStateReshaped += 1
 
