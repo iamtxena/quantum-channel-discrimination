@@ -319,26 +319,20 @@ def prepare_and_plot_probabilities(anglesEta, initialStates, totalFinalStates):
 
 def plot_surface_probabilities(X_Input0, X_Input1, Z_Output0, Z_Output1, eta_degrees):
     # Representation of output probabilities for all circuit in a 3d plot
-    fig = plt.figure(figsize=(100, 125))
+    fig = plt.figure(figsize=(25, 35))
+
     ax = fig.add_subplot(1, 2, 1, projection='3d')
-
-    # ax.plot_wireframe(X_Input0, Y_Eta, Z_Output0, rstride=10, cstride=10)
-    ax.plot_wireframe(X_Input1, eta_degrees, Z_Output1, rstride=1, cstride=1)
-    ax.plot_surface(X_Input1, eta_degrees, Z_Output1, cmap=cm.coolwarm, linewidth=1, antialiased=True)
-    ax.set_title("Output Probabilities for $\\vert1\\rangle$", fontsize=50)
-    plt.ylabel("$\eta$ (degrees)")
-    plt.xlabel("Input State ||" + "$\\beta||^2 |1\\rangle$")
-
-    plt.show()
-
-    fig = plt.figure(figsize=(100, 125))
-    ax = fig.add_subplot(5, 4, 1, projection='3d')
-    ax.plot_wireframe(X_Input0, eta_degrees, Z_Output0, rstride=2, cstride=2)
     ax.plot_surface(X_Input0, eta_degrees, Z_Output0, cmap=cm.coolwarm, linewidth=1, antialiased=True)
-    ax.set_title("Output Probabilities for $\\vert0\\rangle$", fontsize=50)
-
+    ax.set_title("Output Probabilities for $\\vert0\\rangle$", fontsize=30)
     plt.ylabel("$\eta$ (degrees)")
     plt.xlabel("Input State ||" + "$\\alpha||^2 |0\\rangle$")
+
+    ax = fig.add_subplot(1, 2, 2, projection='3d')
+
+    ax.plot_surface(X_Input1, eta_degrees, Z_Output1, cmap=cm.coolwarm, linewidth=1, antialiased=True)
+    ax.set_title("Output Probabilities for $\\vert1\\rangle$", fontsize=30)
+    plt.ylabel("$\eta$ (degrees)")
+    plt.xlabel("Input State ||" + "$\\beta||^2 |1\\rangle$")
 
     plt.show()
 
@@ -364,19 +358,19 @@ def plot_probabilities2(data_0, data_1, color, angle):
     plt.show()
 
 
-def plotChannelsBlochs(initialStatesReshaped, allChannelsFinalStatesReshaped, anglesEta):
-    fig = plt.figure(figsize=(200, 500))
+def plot_wireframe_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped, anglesEta, rows=3, cols=3):
+    fig = plt.figure(figsize=(20, 25))
     # ===============
     #  First subplot
     # ===============
     # set up the axes for the first plot
-    ax = fig.add_subplot(26, 4, 1, projection='3d')
+    ax = fig.add_subplot(rows, cols, 1, projection='3d')
     draw_cube(ax)
 
     # draw initial states
     ax.plot_wireframe(initialStatesReshaped['reshapedCoordsX'],
                       initialStatesReshaped['reshapedCoordsY'], initialStatesReshaped['reshapedCoordsZ'], color="c")
-    ax.set_title("Initial States")
+    ax.set_title("Input States")
     # draw center
     ax.scatter([0], [0], [0], color="g", s=50)
 
@@ -385,18 +379,22 @@ def plotChannelsBlochs(initialStatesReshaped, allChannelsFinalStatesReshaped, an
     # ===============
 
     indexFinalStateReshaped = 0
+    modulus_number = np.round(len(allChannelsFinalStatesReshaped) / (rows * cols - 1))
+    index_to_print = 0
     for finalStatesReshaped in allChannelsFinalStatesReshaped:
-        # set up the axes for the second plot
-        ax = fig.add_subplot(26, 4, 2 + indexFinalStateReshaped, projection='3d')
-        draw_cube(ax)
-        # draw final states
-        ax.plot_wireframe(finalStatesReshaped['reshapedCoordsX'],
-                          finalStatesReshaped['reshapedCoordsY'], finalStatesReshaped['reshapedCoordsZ'], color="r")
-        title = "Final States\n Channel " + "$\eta=" + \
-            str(int(math.degrees(anglesEta[indexFinalStateReshaped]))) + "\degree$"
-        ax.set_title(title)
-        # draw center
-        ax.scatter([0], [0], finalStatesReshaped["center"], color="g", s=50)
+        if (indexFinalStateReshaped % modulus_number == 0 and index_to_print < (rows * cols - 1)):
+            # set up the axes for the second plot
+            ax = fig.add_subplot(rows, cols, 2 + index_to_print, projection='3d')
+            draw_cube(ax)
+            # draw final states
+            ax.plot_wireframe(finalStatesReshaped['reshapedCoordsX'],
+                              finalStatesReshaped['reshapedCoordsY'], finalStatesReshaped['reshapedCoordsZ'], color="r")
+            title = "Output States\n Channel " + "$\eta=" + \
+                str(int(math.degrees(anglesEta[indexFinalStateReshaped]))) + "\degree$"
+            ax.set_title(title)
+            # draw center
+            ax.scatter([0], [0], finalStatesReshaped["center"], color="g", s=50)
+            index_to_print += 1
         indexFinalStateReshaped += 1
 
     plt.show()
