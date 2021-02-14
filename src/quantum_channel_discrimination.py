@@ -506,51 +506,56 @@ def prepareInitialStatesFixedPhase(pointsTheta, Phase=0):
     return np.array(initialStates)
 
 
-def calculate_fidelity(initialStates, eta):
-    state_backend_sim = Aer.get_backend('statevector_simulator')
+def calculate_fidelity(initialStates, eta, rz_angle=0, ry_angle=0):
     qreg_q = QuantumRegister(2, 'q')
     creg_c = ClassicalRegister(1, 'c')
     circ = QuantumCircuit(qreg_q, creg_c)
+    backend_sim = Aer.get_backend('statevector_simulator')
 
+    stavec = []
     fidelity = []
     for i in range(len(initialStates)):
         circ.initialize([initialStates[i][0], initialStates[i][1]], qreg_q[0])
         circ.reset(qreg_q[1])
         circ.cry(eta, qreg_q[0], qreg_q[1])
         circ.cx(qreg_q[1], qreg_q[0])
-        res = execute(circ, state_backend_sim).result()
+        circ.rz(rz_angle, qreg_q[0])
+        circ.ry(ry_angle, qreg_q[0])
+        res = execute(circ, backend_sim).result()
         sv = res.get_statevector(circ)
-        fidelity.append([
-            state_fidelity([initialStates[i][0], initialStates[i][1]], [sv[0], sv[1]], validate=False),
-            state_fidelity([1, 0], [sv[0], sv[1]], validate=False)])
+        stavec.append([sv[0], sv[1]])
+        fidelity.append([state_fidelity([initialStates[i][0], initialStates[i][1]], [sv[0], sv[1]],
+                                        validate=False), state_fidelity([1, 0], [sv[0], sv[1]], validate=False)])
     return np.array(fidelity)
 
 
-def plot_fidelity(anglesEta, pointsTheta):
+def plot_fidelity(anglesEta, pointsTheta, rz_angle=0, ry_angle=0):
     # Representation of fidelity
     initialStates = prepareInitialStatesFixedPhase(pointsTheta, 0)
 
     fig = plt.figure(figsize=(25, 10))
     fig.suptitle('Fidelity Analysis', fontsize=20)
     ax1 = fig.add_subplot(1, 2, 1)
-    ax1.set_title('Output vs. Input', fontsize=14)
+    ax1.set_title('Output vs. Input. ' + '$Rz = ' + str(int(math.degrees(rz_angle))) + '\degree$' +
+                  '$Ry = ' + str(int(math.degrees(ry_angle))) + '\degree$', fontsize=14)
     ax1.set_xlabel('Input State ||' + '$\\alpha||^2 \\vert0\\rangle$', fontsize=14)
     ax2 = fig.add_subplot(1, 2, 2)
-    ax2.set_title('Output versus $\\vert0\\rangle$ state', fontsize=14)
+    ax2.set_title('Output versus $\\vert0\\rangle$ state' + '$Rz = ' + str(int(math.degrees(rz_angle))) +
+                  '\degree$' + '$Ry = ' + str(int(math.degrees(ry_angle))) + '\degree$', fontsize=14)
     ax2.set_xlabel('Input State ||' + '$\\alpha||^2 \\vert0\\rangle$', fontsize=14)
 
     index_channel = 0
-    modulus_number = 10
+    modulus_number = np.round(len(anglesEta) / 10)
     index_to_print = 0
 
     for eta in anglesEta:
-        if ((index_to_print == 0 or len(anglesEta) < modulus_number) or
+        if ((index_to_print == 0 or len(anglesEta) <= modulus_number) or
                 (index_to_print != 0 and index_channel % modulus_number == 0 and index_to_print < 10)):
             X = []
             Y = []
             Z = []
 
-            fidelity = calculate_fidelity(initialStates, eta)
+            fidelity = calculate_fidelity(initialStates, eta, rz_angle, ry_angle)
             for i in range(len(initialStates)):
                 X.append((initialStates[i][0] * np.conj(initialStates[i][0])).real)
                 Y.append(fidelity[i][0])
