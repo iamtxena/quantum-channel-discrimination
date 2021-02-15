@@ -444,13 +444,12 @@ def plot_surface_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped, a
     plt.show()
 
 
-def run_base_circuit(angles_eta, points_theta, points_phase, iterations=1024, out_rz_angle=0, out_ry_angle=0):
-    # Use Aer's qasm_simulator
-    backend_sim = Aer.get_backend('qasm_simulator')
+def run_base_circuit(angles_eta, points_theta, points_phase, iterations=1024,
+                     out_rz_angle=0, out_ry_angle=0, backend=Aer.get_backend('qasm_simulator')):
 
     simulatedResult = runDampingChannelSimulation(
         anglesEta=angles_eta, pointsTheta=points_theta, pointsPhase=points_phase,
-        iterations=iterations, backend=backend_sim,
+        iterations=iterations, backend=backend,
         out_rz_angle=out_rz_angle, out_ry_angle=out_ry_angle)
     initialStates = simulatedResult["initialStates"]
     totalResults = simulatedResult["totalResults"]
@@ -506,7 +505,7 @@ def prepareInitialStatesFixedPhase(pointsTheta, Phase=0):
     return np.array(initialStates)
 
 
-def calculate_fidelity(initialStates, eta, rz_angle=0, ry_angle=0):
+def calculate_fidelity(initialStates, eta, rz_angle=0, ry_angle=0, backend=Aer.get_backend('qasm_simulator')):
     qreg_q = QuantumRegister(2, 'q')
     creg_c = ClassicalRegister(1, 'c')
     circ = QuantumCircuit(qreg_q, creg_c)

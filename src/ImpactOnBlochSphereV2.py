@@ -15,8 +15,12 @@ creg_c = ClassicalRegister(2, 'c')
 creg_c = ClassicalRegister(1, 'c')
 T = 10  # Points of Theta angle (pi) in Bloch sphere - min 2
 P = 20  # Points of Phase angle (2*pi) in Bloch sphere - min 2
-angle = pi/1.5  # Angle used for CY gate
+angle = pi/1.9  # Angle used for CY gate
 cycles = 5000  # Number of iterations in execution
+
+# angles shift from first parameter, to the second one, with jumps using the third parameter
+# angles = np.arange(0, 2*pi, 2*pi/10)
+
 
 # Quantum states to pass through the circuit
 # We want to pass the Bloch sphere through it to see visually the transformation
@@ -30,7 +34,6 @@ Zero_Amplitude = [0]*T*P
 One_Amplitude = [0]*T*P
 Zero_AmplitudeF = [0]*T*P
 One_AmplitudeF = [0]*T*P
-
 print('Preparing states to pass through the circuit')
 for a in range(len(Theta)):
     for b in range(len(Phase)):
@@ -110,16 +113,33 @@ z_i = [0]*P*T
 for i in range(len(Zero_Amplitude)):
     Theta_i = 2*np.arccos(Zero_AmplitudeF[i])
     Phase_i = Phase[i % P]
-    x_i[i] = np.sin(Theta_i)*np.cos(Phase_i)
-    y_i[i] = np.sin(Theta_i)*np.sin(Phase_i)
+#    x_i[i] = np.sin(Theta_i)*np.cos(Phase_i)
+#    y_i[i] = np.sin(Theta_i)*np.sin(Phase_i)
     z_i[i] = np.cos(Theta_i)
-# Reshaping matrices X, Y and Z in right dimensions to be represented
+
+    # Reshaping matrices X, Y and Z in right dimensions to be represented
+top_z = max(z_i)
+min_z = min(z_i)
+radius = (top_z-min_z)/2
+center_z = 1-radius
+# print(z_i,top_z,min_z,center_z)
+for i in range(len(Zero_Amplitude)):
+    Theta_i = np.arccos((z_i[i]-center_z)/radius)
+    Phase_i = Phase[i % P]
+    x_i[i] = radius*np.sin(Theta_i)*np.cos(Phase_i)
+    y_i[i] = radius*np.sin(Theta_i)*np.sin(Phase_i)
+#    z_i[i] = np.cos(Theta_i)
+
 x_i = np.reshape(x_i, (T, P))
 y_i = np.reshape(y_i, (T, P))
 z_i = np.reshape(z_i, (T, P))
 ax.plot_wireframe(x_i, y_i, z_i, color="r")
 
 # draw center
-ax.scatter([0], [0], [0], color="g", s=100)
+ax.scatter([0], [0], [0], color="g", s=50)
+
+# draw final center
+ax.scatter([0], [0], center_z, color="b", s=50)
+
 
 plt.show()
