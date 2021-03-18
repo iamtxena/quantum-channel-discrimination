@@ -1,6 +1,7 @@
 from itertools import product, combinations
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, Aer, execute
 from qiskit.quantum_info import state_fidelity
+from qiskit.quantum_info.states.utils import partial_trace
 from numpy import pi
 from math import e
 from matplotlib import cm
@@ -534,8 +535,8 @@ def calculate_fidelity(initialStates, eta, rx_angle=0, ry_angle=0, backend=Aer.g
         res = execute(circ, backend_sim).result()
         sv = res.get_statevector(circ)
         stavec.append([sv[0], sv[1]])
-        fidelity.append([state_fidelity([initialStates[i][0], initialStates[i][1]], [sv[0], sv[1]],
-                                        validate=False), state_fidelity([1, 0], [sv[0], sv[1]], validate=False)])
+        fidelity.append([state_fidelity([initialStates[i][0], initialStates[i][1]], partial_trace(np.outer(sv,sv), [1]),
+                                        validate=True), state_fidelity([1, 0], partial_trace(np.outer(sv,sv), [1]), validate=True)])
     return np.array(fidelity)
 
 
