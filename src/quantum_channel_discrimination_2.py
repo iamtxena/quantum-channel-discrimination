@@ -54,9 +54,9 @@ def computeStateVectorCoordsReshaped(amplitudesVector, inputAnglesPhase, nPoints
     for indexAmplitudes in range(len(amplitudesVector)):
         Theta_i = np.arccos(amplitudesVector[indexAmplitudes])
         Phase_i = inputAnglesPhase[indexAmplitudes % nPointsPhase]
-        Theta_Bloch = 2*Theta_i
-        initialStateVectorCoordsX.append(np.sin(Theta_Bloch)*np.cos(Phase_i))
-        initialStateVectorCoordsY.append(np.sin(Theta_Bloch)*np.sin(Phase_i))
+        Theta_Bloch = 2 * Theta_i
+        initialStateVectorCoordsX.append(np.sin(Theta_Bloch) * np.cos(Phase_i))
+        initialStateVectorCoordsY.append(np.sin(Theta_Bloch) * np.sin(Phase_i))
         initialStateVectorCoordsZ.append(np.cos(Theta_Bloch))
     # Reshaping matrices X, Y and Z in right dimensions to be represented
     return {
@@ -73,7 +73,7 @@ def computeFinaleStateVectorCoordsReshaped(amplitudesVector, inputAnglesPhase, n
     finalStateVectorCoordsZ = []
     for indexAmplitudes in range(len(amplitudesVector)):
         Theta_i = np.arccos(amplitudesVector[indexAmplitudes])
-        Theta_Bloch = 2*Theta_i
+        Theta_Bloch = 2 * Theta_i
         finalStateVectorCoordsZ.append(np.cos(Theta_Bloch))
 #        finalStateVectorCoordsZ.append(np.cos(Theta_i))
     # Reshaping matrices X, Y and Z in right dimensions to be represented
@@ -83,10 +83,10 @@ def computeFinaleStateVectorCoordsReshaped(amplitudesVector, inputAnglesPhase, n
     center_z = 1 - radius
 
     for newIndexAmplitudes in range(len(amplitudesVector)):
-        newTheta_i = np.arccos((finalStateVectorCoordsZ[newIndexAmplitudes]-center_z)/radius)
+        newTheta_i = np.arccos((finalStateVectorCoordsZ[newIndexAmplitudes] - center_z) / radius)
         newPhase_i = inputAnglesPhase[newIndexAmplitudes % nPointsPhase]
-        finalStateVectorCoordsX.append(np.sqrt(radius)*np.sin(newTheta_i)*np.cos(newPhase_i))
-        finalStateVectorCoordsY.append(np.sqrt(radius)*np.sin(newTheta_i)*np.sin(newPhase_i))
+        finalStateVectorCoordsX.append(np.sqrt(radius) * np.sin(newTheta_i) * np.cos(newPhase_i))
+        finalStateVectorCoordsY.append(np.sqrt(radius) * np.sin(newTheta_i) * np.sin(newPhase_i))
 
     return {
         'reshapedCoordsX': np.reshape(finalStateVectorCoordsX, (nPointsTheta, nPointsPhase)),
@@ -110,7 +110,7 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase,
     qreg_q = QuantumRegister(2, 'q')
     creg_c = ClassicalRegister(1, 'c')
     # First we generate the angles which will help the draw the sphere
-    anglesTheta = np.mgrid[0:pi/2:pointsTheta * 1j]
+    anglesTheta = np.mgrid[0:pi / 2:pointsTheta * 1j]
     anglesPhase = np.mgrid[0:2 * pi:pointsPhase * 1j]
 
     totalResults = []
@@ -130,7 +130,7 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase,
     for eta in anglesEta:
         index += 1
         if index % 10 == 0:
-            print("Simulating channel with " + u"\u03BB" + " = " + str(format(math.sin(eta)*math.sin(eta), '.2f')))
+            print("Simulating channel with " + u"\u03BB" + " = " + str(format(math.sin(eta) * math.sin(eta), '.2f')))
         circuitResultsSpecificChannel = []
         countsSpecificChannel = []
         circuitSpecificChannel = []
@@ -165,7 +165,7 @@ def runDampingChannelSimulation(anglesEta, pointsTheta, pointsPhase,
             circuit.initialize([initialStates["zeroAmplitude"][indexInitialState],
                                 initialStates["oneAmplitude"][indexInitialState]], qreg_q[0])
             circuit.reset(qreg_q[1])
-            circuit.cry(2*eta, qreg_q[0], qreg_q[1])
+            circuit.cry(2 * eta, qreg_q[0], qreg_q[1])
             circuit.cx(qreg_q[1], qreg_q[0])
             circuit.rx(out_rx_angle, qreg_q[0])
             circuit.ry(out_ry_angle, qreg_q[0])
@@ -420,11 +420,11 @@ def plot_surface_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped, a
                            initialStatesReshaped['reshapedCoordsZ'], linewidth=0, antialiased=True)
     ax.set_title("Input States")
     fig.colorbar(surf, shrink=0.5, aspect=5)
-        # draw center
+    # draw center
     ax.scatter([0], [0], [0], color="g", s=50)
-    ##Draw state
-    ax.scatter(initialStatesReshaped['reshapedCoordsX'][6][0], initialStatesReshaped['reshapedCoordsY'][6][6], initialStatesReshaped['reshapedCoordsZ'][6][9], color="b", s=150)
-
+    # Draw state
+    ax.scatter(initialStatesReshaped['reshapedCoordsX'][6][0], initialStatesReshaped['reshapedCoordsY']
+               [6][6], initialStatesReshaped['reshapedCoordsZ'][6][9], color="b", s=150)
 
     # ===============
     # Next subplots
@@ -444,12 +444,14 @@ def plot_surface_blochs(initialStatesReshaped, allChannelsFinalStatesReshaped, a
             surf = ax.plot_surface(finalStatesReshaped['reshapedCoordsX'],
                                    finalStatesReshaped['reshapedCoordsY'],
                                    finalStatesReshaped['reshapedCoordsZ'], linewidth=0, antialiased=True)
-            Lambda = format(math.sin((anglesEta[indexFinalStateReshaped]))*math.sin((anglesEta[indexFinalStateReshaped])), '.2f')
+            Lambda = format(math.sin((anglesEta[indexFinalStateReshaped])) *
+                            math.sin((anglesEta[indexFinalStateReshaped])), '.2f')
             title = "Final States\n Channel " + u"\u03BB" + "=" + str(Lambda)
             ax.set_title(title)
             fig.colorbar(surf, shrink=0.5, aspect=5)
             ax.scatter([0], [0], finalStatesReshaped["center"], color="g", s=50)
-            ax.scatter(finalStatesReshaped['reshapedCoordsX'][6][0], finalStatesReshaped['reshapedCoordsY'][6][6], finalStatesReshaped['reshapedCoordsZ'][6][9], color="b", s=(150-25*indexFinalStateReshaped))
+            ax.scatter(finalStatesReshaped['reshapedCoordsX'][6][0], finalStatesReshaped['reshapedCoordsY'][6][6],
+                       finalStatesReshaped['reshapedCoordsZ'][6][9], color="b", s=(150 - 25 * indexFinalStateReshaped))
             index_to_print += 1
         indexFinalStateReshaped += 1
 
@@ -490,10 +492,11 @@ def run_base_circuit(angles_eta, points_theta, points_phase, iterations=1024,
             list(map(lambda radian: int(math.degrees(radian)), etaArray)),
             Y_Eta)
     )
+    lambdas = list(map(lambda eta: np.round(math.sin(eta)**2, 3), angles_eta))
 
     return (initialStates, totalResults, totalCounts, totalCircuits, totalFinalStates,
             anglesPhase, Z_Output0, Z_Output1, X_Input0, X_Input1, Y_Eta, initialStatesReshaped,
-            allChannelsFinalStatesReshaped, eta_degrees)
+            allChannelsFinalStatesReshaped, eta_degrees, lambdas)
 
 
 def prepareInitialStatesFixedPhase(pointsTheta, Phase=0):
@@ -528,15 +531,16 @@ def calculate_fidelity(initialStates, eta, rx_angle=0, ry_angle=0, backend=Aer.g
     for i in range(len(initialStates)):
         circ.initialize([initialStates[i][0], initialStates[i][1]], qreg_q[0])
         circ.reset(qreg_q[1])
-        circ.cry(2*eta, qreg_q[0], qreg_q[1])
+        circ.cry(2 * eta, qreg_q[0], qreg_q[1])
         circ.cx(qreg_q[1], qreg_q[0])
         circ.rx(rx_angle, qreg_q[0])
         circ.ry(ry_angle, qreg_q[0])
         res = execute(circ, backend_sim).result()
         sv = res.get_statevector(circ)
         stavec.append([sv[0], sv[1]])
-        fidelity.append([state_fidelity([initialStates[i][0], initialStates[i][1]], partial_trace(np.outer(sv,sv), [1]),
-                                        validate=True), state_fidelity([1, 0], partial_trace(np.outer(sv,sv), [1]), validate=True)])
+        fidelity.append([state_fidelity([initialStates[i][0], initialStates[i][1]],
+                                        partial_trace(np.outer(sv, sv), [1]), validate=True),
+                         state_fidelity([1, 0], partial_trace(np.outer(sv, sv), [1]), validate=True)])
     return np.array(fidelity)
 
 
