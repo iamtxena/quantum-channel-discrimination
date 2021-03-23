@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 from ..backends import DeviceBackend
+from ..configurations import SetupConfiguration
+from ..results import ExecutionResults
+from ..optimizations import OptimizationSetup, OptimalConfigurations
 
 
 class DampingChannel(ABC):
@@ -13,12 +16,12 @@ class DampingChannel(ABC):
         pass
 
     @abstractmethod
-    def set_channel_configuration(self, configuration: ChannelConfiguration) -> None:
+    def setup_channel(self, setup: SetupConfiguration) -> None:
         """ Defines the parameters to be used to setup the channel as a base configuration """
         pass
 
     @abstractmethod
-    def set_optimization_configuration(self, configuration: OptimizationConfiguration) -> None:
+    def setup_optimization(self, setup: OptimizationSetup) -> None:
         """ Defines the optimization parameters to be used to find the optimal configuration values """
         pass
 
@@ -34,7 +37,8 @@ class DampingChannel(ABC):
 
     @abstractmethod
     def find_optimal_configurations(self) -> OptimalConfigurations:
-        """ Finds out the optimal configuration for each pair of attenuation levels using the configured optimization algorithm """
+        """ Finds out the optimal configuration for each pair of attenuation levels
+            using the configured optimization algorithm """
         pass
 
     @abstractmethod
