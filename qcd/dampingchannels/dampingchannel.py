@@ -55,3 +55,8 @@ class DampingChannel(ABC):
         """ Displays the channel fidelity for 11 discrete attenuation levels ranging from
             0 (minimal attenuation) to 1 (maximal attenuation) """
         pass
+
+    @abstractmethod
+    def plot_first_channel(self):
+        """ Draws the first created channel """
+        pass
