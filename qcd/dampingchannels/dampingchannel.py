@@ -10,25 +10,18 @@ class DampingChannel(ABC):
     """ Generic class acting as an interface for any damping channel
         using a provided discrimantion strategy """
 
-    @abstractmethod
-    def set_backend(self, backend: DeviceBackend) -> None:
-        """ Defines a provider backend to execute the experiments """
-        pass
+    def __init__(self, backend: DeviceBackend,
+                 channel_setup_configuration: SetupConfiguration,
+                 optimization_setup: Optional[OptimizationSetup] = None) -> None:
+        self._backend = backend
+        self._channel_setup_configuration = channel_setup_configuration
+        self._optimization_setup = optimization_setup
 
-    @abstractmethod
-    def setup_channel(self, setup: SetupConfiguration) -> None:
-        """ Defines the parameters to be used to setup the channel as a base configuration """
-        pass
-
-    @abstractmethod
-    def setup_optimization(self, setup: OptimizationSetup) -> None:
+    def setup_optimization(self, optimization_setup: OptimizationSetup) -> None:
         """ Defines the optimization parameters to be used to find the optimal configuration values """
-        pass
-
-    @abstractmethod
-    def create(self) -> None:
-        """ Builder function to create all circuits parametrizing a quantum channel with the given configuration """
-        pass
+        if self._optimization_setup is not None:
+            raise AttributeError("Optimization setup already defined")
+        self._optimization_setup = optimization_setup
 
     @abstractmethod
     def run(self) -> ExecutionResults:

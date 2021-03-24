@@ -9,20 +9,10 @@ from ..optimizations import OptimizationSetup, OptimalConfigurations
 class OneShotDampingChannel(DampingChannel):
     """ Representation of the One Shot Quantum Damping Channel """
 
-    def set_backend(self, backend: DeviceBackend) -> None:
-        """ Defines a provider backend to execute the experiments """
-        self._backend = backend
-
-    def setup_channel(self, channel_setup_configuration: SetupConfiguration) -> None:
-        """ Defines the parameters to be used to setup the channel as a base configuration """
-        self._channel_setup_configuration = channel_setup_configuration
-
-    def setup_optimization(self, optimization_setup: OptimizationSetup) -> None:
-        """ Defines the optimization parameters to be used to find the optimal configuration values """
-        self._optimization_setup = optimization_setup
-
-    def create(self) -> None:
-        """ Builder function to create all circuits parametrizing a quantum channel with the given configuration """
+    def __init__(self, backend: DeviceBackend,
+                 channel_setup_configuration: SetupConfiguration,
+                 optimization_setup: Optional[OptimizationSetup] = None) -> None:
+        super().__init__(backend, channel_setup_configuration, optimization_setup)
 
     def run(self) -> ExecutionResults:
         """ Runs all the experiments using the configured circuits launched to the provided backend """
