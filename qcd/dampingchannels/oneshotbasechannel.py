@@ -1,8 +1,8 @@
 from . import DampingChannel
-from typing import Optional
+from typing import Optional, List
 from ..backends import DeviceBackend
 from ..configurations import OneShotSetupConfiguration
-from ..results import ExecutionResults
+from ..executions import Execution
 from ..optimizations import OptimizationSetup, OptimalConfigurations
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 import numpy as np
@@ -12,38 +12,20 @@ import math
 class OneShotDampingChannel(DampingChannel):
     """ Representation of the One Shot Quantum Damping Channel """
 
-    def __init__(self, backend: DeviceBackend,
+    def __init__(self,
                  channel_setup_configuration: OneShotSetupConfiguration,
                  optimization_setup: Optional[OptimizationSetup] = None) -> None:
-        super().__init__(backend, channel_setup_configuration, optimization_setup)
+        super().__init__(channel_setup_configuration, optimization_setup)
 
         self._circuits = self._create_all_circuits(channel_setup_configuration)
 
-    def run(self) -> ExecutionResults:
+    def run(self, backend: List[DeviceBackend]) -> Execution:
         """ Runs all the experiments using the configured circuits launched to the provided backend """
         raise NotImplementedError('Method not implemented')
 
     def find_optimal_configurations(self) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
-        raise NotImplementedError('Method not implemented')
-
-    def plot_surface_probabilities(self):
-        """ Displays the output probabilities for all circuits in a 3D plot """
-        raise NotImplementedError('Method not implemented')
-
-    def plot_wireframe_blochs(self, rows: Optional[int] = 3, cols: Optional[int] = 3):
-        """ Displays the resulting Bloch Spheres after the input states travels through the channel  """
-        raise NotImplementedError('Method not implemented')
-
-    def plot_wireframe_blochs_one_lambda(self, one_lambda: int, rows: Optional[int] = 3, cols: Optional[int] = 3):
-        """ Displays the resulting Bloch Spheres after the input states travels through the channel
-            using only the provided attenuation level (lambda) """
-        raise NotImplementedError('Method not implemented')
-
-    def plot_fidelity(self):
-        """ Displays the channel fidelity for 11 discrete attenuation levels ranging from
-            0 (minimal attenuation) to 1 (maximal attenuation) """
         raise NotImplementedError('Method not implemented')
 
     def plot_first_channel(self):
