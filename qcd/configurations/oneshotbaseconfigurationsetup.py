@@ -7,11 +7,11 @@ class OneShotSetupConfiguration(SetupConfiguration):
     """ Representation of the One Shot Setup configuration """
 
     def __init__(self, setup: Dict) -> None:
-        points_theta = setup['points_theta']
-        if points_theta is None:
+        self._points_theta = setup['points_theta']
+        if self._points_theta is None:
             raise ValueError('points_theta is required')
-        points_phase = setup['points_phase']
-        if points_phase is None:
+        self._points_phase = setup['points_phase']
+        if self._points_phase is None:
             raise ValueError('points_phase is required')
         self._attenuation_factors = setup['attenuation_factors']
         if self._attenuation_factors is None:
@@ -27,10 +27,18 @@ class OneShotSetupConfiguration(SetupConfiguration):
         self._angles_phase_interval = (0, 2 * np.pi)
         self._angles_rx_interval = (0, 2 * np.pi)
         self._angles_ry_interval = (0, 2 * np.pi)
-        self._angles_theta = np.mgrid[0:np.pi / 2:points_theta * 1j]
-        self._angles_phase = np.mgrid[0:2 * np.pi:points_phase * 1j]
+        self._angles_theta = np.mgrid[0:np.pi / 2:self._points_theta * 1j]
+        self._angles_phase = np.mgrid[0:2 * np.pi:self._points_phase * 1j]
         self._attenuation_angles = list(map(lambda attenuation_factor: np.arcsin(
             np.sqrt(attenuation_factor)), self._attenuation_factors))
+
+    @property
+    def points_theta(self) -> List[int]:
+        return self._points_theta
+
+    @property
+    def points_phase(self) -> List[float]:
+        return self._points_phase
 
     @property
     def angles_theta(self) -> List[float]:
