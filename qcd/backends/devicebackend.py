@@ -1,5 +1,5 @@
 from abc import ABC
-from qiskit.providers import Backend
+from qiskit.providers import BackendV1 as Backend
 
 
 class DeviceBackend(ABC):

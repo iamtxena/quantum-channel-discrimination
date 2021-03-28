@@ -16,12 +16,14 @@ class OneShotSetupConfiguration(SetupConfiguration):
         self._attenuation_factors = setup['attenuation_factors']
         if self._attenuation_factors is None:
             raise ValueError('attenuation_factors is required')
-        self._angles_rx = setup['angles_rx']
-        if self._angles_rx is None:
-            raise ValueError('angles_rx is required')
-        self._angles_ry = setup['angles_ry']
-        if self._angles_ry is None:
-            raise ValueError('angles_ry is required')
+        try:
+            self._angles_rx = setup['angles_rx']
+        except KeyError:
+            self._angles_rx = [0]
+        try:
+            self._angles_ry = setup['angles_ry']
+        except KeyError:
+            self._angles_ry = [0]
 
         self._angles_theta_interval = (0, np.pi / 2)
         self._angles_phase_interval = (0, 2 * np.pi)
@@ -33,11 +35,11 @@ class OneShotSetupConfiguration(SetupConfiguration):
             np.sqrt(attenuation_factor)), self._attenuation_factors))
 
     @property
-    def points_theta(self) -> List[int]:
+    def points_theta(self) -> int:
         return self._points_theta
 
     @property
-    def points_phase(self) -> List[float]:
+    def points_phase(self) -> int:
         return self._points_phase
 
     @property
