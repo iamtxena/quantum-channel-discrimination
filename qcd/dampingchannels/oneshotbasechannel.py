@@ -91,9 +91,12 @@ class OneShotDampingChannel(DampingChannel):
     def _execute_all_circuits_one_backend(self, backend: DeviceBackend, iterations: Optional[int] = 1024,
                                           timeout: Optional[float] = None) -> OneShotResults:
         results = []
-        for circuits_one_lambda in self._circuits:
+        for idx, circuits_one_lambda in enumerate(self._circuits):
             job = cast(Job, execute(circuits_one_lambda, backend=backend.backend, shots=iterations))
-            print(f'Job launched to {job.backend()} with id = {job.job_id()}')
+            print(
+                'Execution using channel with ' + u"\u03BB" '=' +
+                f'{np.round(self.__channel_setup_configuration.attenuation_factors[idx], 1)} ' +
+                f'launched to {job.backend()} with id={job.job_id()}')
             job.wait_for_final_state(timeout=timeout)
             final_state = self._process_information_from_job_one_lambda(job, self._initial_states)
             final_state_reshaped = self._compute_finale_state_vector_coords_reshaped(
