@@ -1,13 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from ..results import ExecutionResults
 
 
 class Execution(ABC):
     """ Generic class acting as an interface for any Execution Output """
-
-    def __init__(self, results: ExecutionResults):
-        self.results = results
 
     @abstractmethod
     def plot_surface_probabilities(self):

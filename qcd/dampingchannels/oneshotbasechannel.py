@@ -3,9 +3,13 @@ from typing import Optional, List, Union, cast, Tuple
 from ..backends import DeviceBackend
 from ..configurations import OneShotSetupConfiguration
 from ..executions import Execution, OneShotExecution
-from ..results import OneShotResults
+from ..typings import OneShotResults
 from ..optimizations import OptimizationSetup, OptimalConfigurations
-from ..typings import ResultStates, ResultState, ResultStatesReshaped
+from ..typings import (ResultStates,
+                       ResultState,
+                       ResultStatesReshaped,
+                       ResultProbabilities,
+                       ResultProbabilitiesOneChannel)
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute
 from qiskit.providers.job import JobV1 as Job
 from qiskit.result import Result
@@ -90,7 +94,11 @@ class OneShotDampingChannel(DampingChannel):
 
     def _execute_all_circuits_one_backend(self, backend: DeviceBackend, iterations: Optional[int] = 1024,
                                           timeout: Optional[float] = None) -> OneShotResults:
-        results = []
+        final_states_list = []
+        final_states_reshaped_list = []
+        total_lambdas_per_state = []
+        probabilities = ResultProbabilities(x_input_0=[], x_input_1=[], z_output_0=[], z_output_1=[])
+
         for idx, circuits_one_lambda in enumerate(self._circuits):
             job = cast(Job, execute(circuits_one_lambda, backend=backend.backend, shots=iterations))
             print(
@@ -98,26 +106,57 @@ class OneShotDampingChannel(DampingChannel):
                 f'{np.round(self.__channel_setup_configuration.attenuation_factors[idx], 1)} ' +
                 f'launched to {job.backend()} with id={job.job_id()}')
             job.wait_for_final_state(timeout=timeout)
-            final_state = self._process_information_from_job_one_lambda(job, self._initial_states)
-            final_state_reshaped = self._compute_finale_state_vector_coords_reshaped(
-                final_state['zero_amplitude'],
+            final_states, probabilities_one_channel = self._process_job_one_lambda(job, self._initial_states)
+            final_states_reshaped = self._compute_finale_state_vector_coords_reshaped(
+                final_states['zero_amplitude'],
                 self.__channel_setup_configuration.angles_phase,
                 self.__channel_setup_configuration.points_theta,
                 self.__channel_setup_configuration.points_phase)
-            results.append(final_state_reshaped)
-        return OneShotResults(results, backend.backend.name())
+            final_states_list.append(final_states)
+            probabilities['x_input_0'].append(probabilities_one_channel['x_input_0'])
+            probabilities['x_input_1'].append(probabilities_one_channel['x_input_1'])
+            probabilities['z_output_0'].append(probabilities_one_channel['z_output_0'])
+            probabilities['z_output_1'].append(probabilities_one_channel['z_output_1'])
+            final_states_reshaped_list.append(final_states_reshaped)
+            total_lambdas_per_state.append(
+                [self.__channel_setup_configuration.attenuation_factors[idx]] * len(final_states['zero_amplitude']))
 
-    def _process_information_from_job_one_lambda(self, job: Job, initial_states: ResultStates) -> ResultStates:
+        return OneShotResults(final_states=final_states_list,
+                              final_states_reshaped=final_states_reshaped_list,
+                              probabilities=probabilities,
+                              attenuation_factor_per_state=total_lambdas_per_state,
+                              backend_name=backend.backend.name())
+
+    def _process_job_one_lambda(self,
+                                job: Job,
+                                initial_states: ResultStates) -> Tuple[ResultStates,
+                                                                       ResultProbabilitiesOneChannel]:
         results = cast(Result, job.result())
         final_states = ResultStates(zero_amplitude=[], one_amplitude=[])
+        x_input_0 = []
+        x_input_1 = []
+        z_output_0 = []
+        z_output_1 = []
 
         for initial_states_idx, _ in enumerate(initial_states["zero_amplitude"]):
             counts = results.get_counts(initial_states_idx)
             final_state = self._convert_counts_to_final_state(counts)
             final_states["zero_amplitude"].append(final_state["zero_amplitude"])
             final_states["one_amplitude"].append(final_state["one_amplitude"])
+            z_output_0.append(final_state["zero_amplitude"]**2)
+            z_output_1.append(final_state["one_amplitude"]**2)
+            Prob_0 = initial_states["zero_amplitude"][initial_states_idx] * \
+                np.conj(initial_states["zero_amplitude"][initial_states_idx])
+            Prob_1 = initial_states["one_amplitude"][initial_states_idx] * \
+                np.conj(initial_states["one_amplitude"][initial_states_idx])
+            x_input_0.append(Prob_0.real)
+            x_input_1.append(Prob_1.real)
 
-        return final_states
+        return (final_states,
+                ResultProbabilitiesOneChannel(x_input_0=x_input_0,
+                                              x_input_1=x_input_1,
+                                              z_output_0=z_output_0,
+                                              z_output_1=z_output_1))
 
     def _compute_finale_state_vector_coords_reshaped(self,
                                                      amplitudes_vector: List[float],
