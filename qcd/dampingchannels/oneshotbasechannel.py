@@ -4,12 +4,13 @@ from ..backends import DeviceBackend
 from ..configurations import OneShotSetupConfiguration
 from ..executions import Execution, OneShotExecution
 from ..typings import OneShotResults
-from ..optimizations import OptimizationSetup, OptimalConfigurations
+from ..optimizations import OptimalConfigurations, OneShotOptimalConfigurations
 from ..typings import (ResultStates,
                        ResultState,
                        ResultStatesReshaped,
                        ResultProbabilities,
-                       ResultProbabilitiesOneChannel)
+                       ResultProbabilitiesOneChannel,
+                       OptimizationSetup)
 from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
 from qiskit.providers.job import JobV1 as Job
 from qiskit.result import Result
@@ -24,12 +25,9 @@ class OneShotDampingChannel(DampingChannel):
     """ Representation of the One Shot Quantum Damping Channel """
 
     def __init__(self,
-                 channel_setup_configuration: OneShotSetupConfiguration,
-                 optimization_setup: Optional[OptimizationSetup] = None) -> None:
-        super().__init__(channel_setup_configuration, optimization_setup)
+                 channel_setup_configuration: OneShotSetupConfiguration) -> None:
+        super().__init__(channel_setup_configuration)
         self.__channel_setup_configuration = channel_setup_configuration
-        self.__optimization_setup = optimization_setup
-
         self._circuits, self._initial_states = self._create_all_circuits(channel_setup_configuration)
 
     def run(self, backend: Union[DeviceBackend, List[DeviceBackend]],
@@ -44,10 +42,12 @@ class OneShotDampingChannel(DampingChannel):
 
         return OneShotExecution(self._execute_all_circuits_one_backend(backend, iterations, timeout))
 
-    def find_optimal_configurations(self) -> OptimalConfigurations:
+    def find_optimal_configurations(self,
+                                    optimization_setup: OptimizationSetup) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
-        raise NotImplementedError('Method not implemented')
+
+        return OneShotOptimalConfigurations()
 
     def plot_first_channel(self):
         return self._circuits[0][0].draw('mpl')

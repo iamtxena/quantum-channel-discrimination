@@ -3,7 +3,8 @@ from typing import Optional, List, Union
 from ..backends import DeviceBackend
 from ..configurations import SetupConfiguration
 from ..executions import Execution
-from ..optimizations import OptimizationSetup, OptimalConfigurations
+from ..optimizations import OptimalConfigurations
+from ..typings import OptimizationSetup
 
 
 class DampingChannel(ABC):
@@ -11,16 +12,8 @@ class DampingChannel(ABC):
         using a provided discrimantion strategy """
 
     def __init__(self,
-                 channel_setup_configuration: SetupConfiguration,
-                 optimization_setup: Optional[OptimizationSetup] = None) -> None:
+                 channel_setup_configuration: SetupConfiguration) -> None:
         self._channel_setup_configuration = channel_setup_configuration
-        self._optimization_setup = optimization_setup
-
-    def setup_optimization(self, optimization_setup: OptimizationSetup) -> None:
-        """ Defines the optimization parameters to be used to find the optimal configuration values """
-        if self._optimization_setup is not None:
-            raise AttributeError("Optimization setup already defined")
-        self._optimization_setup = optimization_setup
 
     @abstractmethod
     def run(self, backend: Union[DeviceBackend, List[DeviceBackend]],
@@ -29,7 +22,8 @@ class DampingChannel(ABC):
         pass
 
     @abstractmethod
-    def find_optimal_configurations(self) -> OptimalConfigurations:
+    def find_optimal_configurations(self,
+                                    optimization_setup: OptimizationSetup) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
         pass

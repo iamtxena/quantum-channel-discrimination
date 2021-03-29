@@ -40,3 +40,9 @@ class OneShotResults(TypedDict):
     attenuation_factors: List[float]
     attenuation_factor_per_state: List[List[float]]
     backend_name: str
+
+
+class OptimizationSetup(TypedDict):
+    optimizer_algorithms: List[str]
+    optimizer_iterations: List[str]
+    attenuation_factors: List[float]
