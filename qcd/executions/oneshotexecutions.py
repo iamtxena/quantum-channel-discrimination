@@ -1,25 +1,27 @@
 from . import Execution
-from typing import Optional
+from typing import Optional, Union, List, cast
 from ..typings import OneShotResults
 from matplotlib import cm
 import matplotlib.pyplot as plt
+import numpy as np
+from itertools import product, combinations
 
 
 class OneShotExecution(Execution):
     """ Representation of the One Shot Execution """
 
-    def __init__(self, results: OneShotResults):
+    def __init__(self, results: Union[OneShotResults, List[OneShotResults]]):
         self._results = results
 
-    def plot_surface_probabilities(self) -> None:
+    def plot_surface_probabilities(self, results_index: Optional[int] = 0) -> None:
         """ Displays the output probabilities for all circuits in a 3D plot """
-        # Representation of output probabilities for all circuit in a 3d plot
+        results = self._get_one_result(results_index)
         fig = plt.figure(figsize=(25, 35))
 
         ax = fig.add_subplot(1, 2, 1, projection='3d')
-        ax.plot_surface(self._results['probabilities']['x_input_0'],
-                        self._results['attenuation_factor_per_state'],
-                        self._results['probabilities']['z_output_0'],
+        ax.plot_surface(results['probabilities']['x_input_0'],
+                        results['attenuation_factor_per_state'],
+                        results['probabilities']['z_output_0'],
                         cmap=cm.coolwarm,
                         linewidth=1,
                         antialiased=True)
@@ -29,9 +31,9 @@ class OneShotExecution(Execution):
 
         ax = fig.add_subplot(1, 2, 2, projection='3d')
 
-        ax.plot_surface(self._results['probabilities']['x_input_1'],
-                        self._results['attenuation_factor_per_state'],
-                        self._results['probabilities']['z_output_1'],
+        ax.plot_surface(results['probabilities']['x_input_1'],
+                        results['attenuation_factor_per_state'],
+                        results['probabilities']['z_output_1'],
                         cmap=cm.coolwarm,
                         linewidth=1,
                         antialiased=True)
@@ -41,16 +43,97 @@ class OneShotExecution(Execution):
 
         plt.show()
 
-    def plot_wireframe_blochs(self, rows: Optional[int] = 3, cols: Optional[int] = 3):
+    def plot_wireframe_blochs(self,
+                              results_index: Optional[int] = 0,
+                              in_rows: Optional[int] = 3,
+                              in_cols: Optional[int] = 3) -> None:
         """ Displays the resulting Bloch Spheres after the input states travels through the channel  """
-        raise NotImplementedError('Method not implemented')
+        results = self._get_one_result(results_index)
+        rows = in_rows
+        cols = in_cols
+        if rows is None:
+            rows = 3
+        if cols is None:
+            cols = 3
 
-    def plot_wireframe_blochs_one_lambda(self, one_lambda: int, rows: Optional[int] = 3, cols: Optional[int] = 3):
+        fig = plt.figure(figsize=(20, 25))
+        # ===============
+        #  First subplot
+        # ===============
+        # set up the axes for the first plot
+        ax = fig.add_subplot(rows, cols, 1, projection='3d')
+        self._draw_cube(ax)
+
+        # ===============
+        # Next subplots
+        # ===============
+        attenuation_factors = results['attenuation_factors']
+        modulus_number = np.round(len(results['final_states_reshaped']) / (rows * cols - 1))
+        index_to_print = 0
+        for idx, final_state_reshaped in enumerate(results['final_states_reshaped']):
+            if ((index_to_print == 0 or len(results['final_states_reshaped']) < modulus_number) or
+                    (index_to_print != 0 and idx % modulus_number == 0 and
+                     index_to_print < (rows * cols - 1)) or
+                    (idx == len(results['final_states_reshaped']) - 1)):
+                # set up the axes for the second plot
+                ax = fig.add_subplot(rows, cols, 1 + index_to_print, projection='3d')
+                self._draw_cube(ax)
+                # draw final states
+                ax.plot_wireframe(final_state_reshaped['reshaped_coords_x'],
+                                  final_state_reshaped['reshaped_coords_y'],
+                                  final_state_reshaped['reshaped_coords_z'],
+                                  color="r")
+                title = f'Output States\n Channel $\lambda= {np.round(attenuation_factors[idx], 2)}$'
+                ax.set_title(title)
+                # draw center
+                ax.scatter([0], [0], final_state_reshaped["center"], color="g", s=50)
+                index_to_print += 1
+
+        plt.show()
+
+    def plot_wireframe_blochs_one_lambda(self,
+                                         rows: Optional[int] = 3,
+                                         cols: Optional[int] = 3) -> None:
         """ Displays the resulting Bloch Spheres after the input states travels through the channel
             using only the provided attenuation level (lambda) """
-        raise NotImplementedError('Method not implemented')
+        results = self._get_results()
+        fig = plt.figure(figsize=(20, 25))
+        for idx, result in enumerate(results):
+            # set up the axes for the second plot
+            ax = fig.add_subplot(rows, cols, 1 + idx, projection='3d')
+            self._draw_cube(ax)
 
-    def plot_fidelity(self):
-        """ Displays the channel fidelity for 11 discrete attenuation levels ranging from
-            0 (minimal attenuation) to 1 (maximal attenuation) """
-        raise NotImplementedError('Method not implemented')
+            final_state_reshaped = result['final_states_reshaped'][0]
+            # draw final states
+            ax.plot_wireframe(final_state_reshaped['reshaped_coords_x'],
+                              final_state_reshaped['reshaped_coords_y'],
+                              final_state_reshaped['reshaped_coords_z'],
+                              color="r")
+
+            attenuation_factor = np.round(result['attenuation_factors'][0], 1)
+            title = f"Output States executed on {result['backend_name']}\n Channel $\lambda= {attenuation_factor}$"
+            ax.set_title(title)
+            # draw center
+            ax.scatter([0], [0], result['final_states_reshaped'][0]["center"], color="g", s=50)
+
+        plt.show()
+
+    def _draw_cube(self, axes):
+        """ Draw a cube passing axes as a parameter """
+        r = [-1, 1]
+        for s, l in combinations(np.array(list(product(r, r, r))), 2):
+            if np.sum(np.abs(s - l)) == r[1] - r[0]:
+                axes.plot3D(*zip(s, l), color="w")
+
+    def _get_one_result(self, results_index: Optional[int] = 0) -> OneShotResults:
+        idx = results_index
+        if idx is None:
+            idx = 0
+        if isinstance(self._results, list):
+            return cast(List[OneShotResults], self._results)[idx]
+        return cast(OneShotResults, self._results)
+
+    def _get_results(self) -> List[OneShotResults]:
+        if isinstance(self._results, list):
+            return cast(List[OneShotResults], self._results)
+        return [cast(OneShotResults, self._results)]

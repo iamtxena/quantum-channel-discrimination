@@ -1,6 +1,6 @@
 """ Optimization classes """
 
-from .optimizationsetup import OptimizationSetup
-from .oneshotbaseoptimizationsetup import OneShotOptimizationSetup
+from .optimization import Optimization
+from .oneshotoptimization import OneShotOptimization
 from .optimalconfigurations import OptimalConfigurations
 from .oneshotoptimalconfigurations import OneShotOptimalConfigurations

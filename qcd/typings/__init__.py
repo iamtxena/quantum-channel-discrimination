@@ -37,5 +37,6 @@ class OneShotResults(TypedDict):
     final_states: List[ResultStates]
     final_states_reshaped: List[ResultStatesReshaped]
     probabilities: ResultProbabilities
+    attenuation_factors: List[float]
     attenuation_factor_per_state: List[List[float]]
     backend_name: str
