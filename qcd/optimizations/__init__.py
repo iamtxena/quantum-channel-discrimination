@@ -2,5 +2,5 @@
 
 from .optimization import Optimization
 from .oneshotoptimization import OneShotOptimization
-from .optimalconfigurations import OptimalConfigurations
-from .oneshotoptimalconfigurations import OneShotOptimalConfigurations
+from .optimizationresults import OptimizationResults
+from .oneshotoptimizationresults import OneShotOptimizationResults

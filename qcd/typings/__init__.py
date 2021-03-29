@@ -1,5 +1,6 @@
 """ Typings from all qcd module """
-from typing import List, TypedDict
+from typing import List, TypedDict, Tuple
+from .configurations import OneShotConfigurationDict, OptimalConfiguration, OptimalConfigurations
 
 
 class ResultStates(TypedDict):
@@ -44,5 +45,8 @@ class OneShotResults(TypedDict):
 
 class OptimizationSetup(TypedDict):
     optimizer_algorithms: List[str]
-    optimizer_iterations: List[str]
+    optimizer_iterations: List[int]
     attenuation_factors: List[float]
+    initial_parameters: List[float]
+    variable_bounds: List[Tuple[float, float]]
+    plays: int

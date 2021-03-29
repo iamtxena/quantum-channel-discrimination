@@ -1,16 +1,17 @@
 from . import ChannelConfiguration
-from typing import Dict
+from ..typings import OneShotConfigurationDict
+from typing import cast
 
 
 class OneShotConfiguration(ChannelConfiguration):
     """ Definition for One Shot channel configuration """
 
-    def __init__(self, configuration: Dict) -> None:
+    def __init__(self, configuration: OneShotConfigurationDict) -> None:
         self._theta = configuration['theta']
         self._phase = configuration['phase']
         self._angle_rx = configuration['angle_rx']
         self._angle_ry = configuration['angle_ry']
-        self._attenuation_factor_pair = configuration['attenuation_factor_pair']
+        super().__init__(cast(dict, configuration))
 
     @property
     def theta(self) -> float:
@@ -27,7 +28,3 @@ class OneShotConfiguration(ChannelConfiguration):
     @property
     def angle_ry(self) -> float:
         return self._angle_ry
-
-    @property
-    def attenuation_factor_pair(self) -> float:
-        return self._attenuation_factor_pair
