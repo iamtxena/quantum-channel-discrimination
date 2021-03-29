@@ -4,7 +4,7 @@ from ..backends import DeviceBackend
 from ..configurations import OneShotSetupConfiguration
 from ..executions import Execution, OneShotExecution
 from ..typings import OneShotResults
-from ..optimizations import OptimalConfigurations, OneShotOptimalConfigurations
+from ..optimizations import OptimizationResults, OneShotOptimization
 from ..typings import (ResultStates,
                        ResultState,
                        ResultStatesReshaped,
@@ -25,10 +25,11 @@ class OneShotDampingChannel(DampingChannel):
     """ Representation of the One Shot Quantum Damping Channel """
 
     def __init__(self,
-                 channel_setup_configuration: OneShotSetupConfiguration) -> None:
+                 channel_setup_configuration: Optional[OneShotSetupConfiguration] = None) -> None:
         super().__init__(channel_setup_configuration)
         self.__channel_setup_configuration = channel_setup_configuration
-        self._circuits, self._initial_states = self._create_all_circuits(channel_setup_configuration)
+        if channel_setup_configuration is not None:
+            self._circuits, self._initial_states = self._create_all_circuits(channel_setup_configuration)
 
     def run(self, backend: Union[DeviceBackend, List[DeviceBackend]],
             iterations: Optional[int] = 1024, timeout: Optional[float] = None) -> Execution:
@@ -43,11 +44,11 @@ class OneShotDampingChannel(DampingChannel):
         return OneShotExecution(self._execute_all_circuits_one_backend(backend, iterations, timeout))
 
     def find_optimal_configurations(self,
-                                    optimization_setup: OptimizationSetup) -> OptimalConfigurations:
+                                    optimization_setup: OptimizationSetup) -> OptimizationResults:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
 
-        return OneShotOptimalConfigurations()
+        return OneShotOptimization(optimization_setup).find_optimal_configurations()
 
     def plot_first_channel(self):
         return self._circuits[0][0].draw('mpl')
@@ -55,6 +56,8 @@ class OneShotDampingChannel(DampingChannel):
     def plot_fidelity(self) -> None:
         """ Displays the channel fidelity for 11 discrete attenuation levels ranging from
             0 (minimal attenuation) to 1 (maximal attenuation) """
+        if self.__channel_setup_configuration is None:
+            raise ValueError('SetupConfiguration must be specified')
         # Representation of fidelity
         initial_states = self._prepare_initial_states_fixed_phase(self.__channel_setup_configuration.angles_theta)
 
@@ -176,6 +179,9 @@ class OneShotDampingChannel(DampingChannel):
 
     def _execute_all_circuits_one_backend(self, backend: DeviceBackend, iterations: Optional[int] = 1024,
                                           timeout: Optional[float] = None) -> OneShotResults:
+        if self.__channel_setup_configuration is None:
+            raise ValueError('SetupConfiguration must be specified')
+
         final_states_list = []
         final_states_reshaped_list = []
         total_lambdas_per_state = []
