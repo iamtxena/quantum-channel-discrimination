@@ -1,6 +1,6 @@
 from abc import ABC
 from typing import Optional
-from ..typings import OptimalConfigurations
+from ..typings.configurations import OptimalConfigurations
 import pickle
 
 

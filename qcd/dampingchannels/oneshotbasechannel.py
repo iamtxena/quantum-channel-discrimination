@@ -4,7 +4,8 @@ from ..backends import DeviceBackend
 from ..configurations import OneShotSetupConfiguration
 from ..executions import Execution, OneShotExecution
 from ..typings import OneShotResults
-from ..optimizations import OptimizationResults, OneShotOptimization
+from ..optimizations import OneShotOptimization
+from ..optimizationresults import OptimizationResults
 from ..typings import (ResultStates,
                        ResultState,
                        ResultStatesReshaped,

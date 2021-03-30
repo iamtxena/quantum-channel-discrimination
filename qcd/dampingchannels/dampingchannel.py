@@ -3,7 +3,7 @@ from typing import Optional, List, Union
 from ..backends import DeviceBackend
 from ..configurations import SetupConfiguration
 from ..executions import Execution
-from ..optimizations import OptimizationResults
+from ..optimizationresults import OptimizationResults
 from ..typings import OptimizationSetup
 
 

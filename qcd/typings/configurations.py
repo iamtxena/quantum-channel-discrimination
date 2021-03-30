@@ -1,24 +1,19 @@
 """ Typings from all qcd module """
 from typing import List, TypedDict, Tuple
-from ..configurations import ChannelConfiguration
-
-
-class OneShotConfigurationDict(TypedDict):
-    theta: float
-    phase: float
-    angle_rx: float
-    angle_ry: float
-    attenuation_pair: Tuple[float, float]
+from ..configurations.configuration import ChannelConfiguration
 
 
 class OptimalConfiguration(TypedDict):
     best_algorithm: str
     best_probability: float
     best_configuration: ChannelConfiguration
+    number_calls_made: int
 
 
 class OptimalConfigurations(TypedDict):
-    attenuation_pairs: List[Tuple[float, float]]
+    eta_pairs: List[Tuple[float, float]]
     best_algorithm: List[str]
     probabilities: List[float]
     configurations: List[ChannelConfiguration]
+    attenuation_pairs: List[Tuple[float, float]]
+    number_calls_made: List[int]

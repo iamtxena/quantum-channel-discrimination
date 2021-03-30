@@ -1,6 +1,6 @@
 from . import OptimizationResults
 from typing import Optional
-from ..typings import OptimalConfigurations
+from ..typings.configurations import OptimalConfigurations
 
 
 class OneShotOptimizationResults(OptimizationResults):

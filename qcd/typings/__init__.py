@@ -1,6 +1,5 @@
 """ Typings from all qcd module """
 from typing import List, TypedDict, Tuple
-from .configurations import OneShotConfigurationDict, OptimalConfiguration, OptimalConfigurations
 
 
 class ResultStates(TypedDict):

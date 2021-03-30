@@ -1,5 +1,5 @@
 from . import ChannelConfiguration
-from ..typings import OneShotConfigurationDict
+from ..typings.dicts import OneShotConfigurationDict
 from typing import cast
 
 

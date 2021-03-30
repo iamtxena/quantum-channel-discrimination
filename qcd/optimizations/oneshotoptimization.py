@@ -1,8 +1,9 @@
 
 from . import Optimization
-from ..typings import OptimizationSetup, OneShotConfigurationDict
+from ..typings import OptimizationSetup
 import numpy as np
-from typing import Tuple, cast
+from typing import Tuple, cast, List
+from ..typings.dicts import OneShotConfigurationDict
 from ..configurations import ChannelConfiguration, OneShotConfiguration
 import math
 from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
@@ -15,7 +16,7 @@ class OneShotOptimization(Optimization):
         super().__init__(optimization_setup)
 
     def _convert_optimizer_results_to_channel_configuration(self,
-                                                            configuration: np.ndarray[float],
+                                                            configuration: List[float],
                                                             attenuation_pair: Tuple[float, float]
                                                             ) -> ChannelConfiguration:
         """ Convert the results of an optimization to a One Shot channel configuration """
@@ -72,7 +73,7 @@ class OneShotOptimization(Optimization):
         """
         return real_measured_result
 
-    def _cost_function(self, params: np.ndarray[float]) -> float:
+    def _cost_function(self, params: List[float]) -> float:
         """ Computes the cost of running a specific configuration for the number of plays
             defined in the optimization setup.
             Cost is computed as 1 (perfect probability) - average success probability for

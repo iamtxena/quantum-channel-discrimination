@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple
-from ..optimizations import OptimizationResults
-from ..typings import OptimizationSetup, OptimalConfiguration, OptimalConfigurations
+from ..optimizationresults import OptimizationResults
+from ..typings import OptimizationSetup
+from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
 from ..configurations import ChannelConfiguration
 import itertools
 import time
@@ -17,6 +18,7 @@ class Optimization(ABC):
     def __init__(self, optimization_setup: OptimizationSetup):
         self._setup = optimization_setup
         self._attenuation_pairs = self._get_combinations_two_lambdas_without_repeats()
+        self._eta_pairs = self._get_combinations_two_etas_without_repeats()
         self._global_attenuation_pair = (0.0, 0.0)
 
     def find_optimal_configurations(self) -> OptimizationResults:
@@ -25,6 +27,7 @@ class Optimization(ABC):
         probabilities = []
         configurations = []
         best_algorithm = []
+        number_calls_made = []
 
         program_start_time = time.time()
         print("Starting the execution")
@@ -36,6 +39,7 @@ class Optimization(ABC):
             probabilities.append(result['best_probability'])
             configurations.append(result['best_configuration'])
             best_algorithm.append(result['best_algorithm'])
+            number_calls_made.append(result['number_calls_made'])
             end_time = time.time()
             print("total minutes taken this pair of lambdas: ", int(np.round((end_time - start_time) / 60)))
             print("total minutes taken so far: ", int(np.round((end_time - program_start_time) / 60)))
@@ -46,14 +50,16 @@ class Optimization(ABC):
         print(f'Total pair of lambdas tested: {len(self._attenuation_pairs)}')
 
         return OptimizationResults(OptimalConfigurations(
+            eta_pairs=self._eta_pairs,
             attenuation_pairs=self._attenuation_pairs,
             best_algorithm=best_algorithm,
             probabilities=probabilities,
-            configurations=configurations))
+            configurations=configurations,
+            number_calls_made=number_calls_made))
 
     @abstractmethod
     def _convert_optimizer_results_to_channel_configuration(self,
-                                                            configuration: np.ndarray[float],
+                                                            configuration: List[float],
                                                             attenuation_pair: Tuple[float, float]
                                                             ) -> ChannelConfiguration:
         """ Convert the results of an optimization to a channel configuration """
@@ -89,7 +95,7 @@ class Optimization(ABC):
         pass
 
     @abstractmethod
-    def _cost_function(self, params: np.ndarray[float]) -> float:
+    def _cost_function(self, params: List[float]) -> float:
         """ Computes the cost of running a specific configuration for the number of plays
               defined in the optimization setup.
               Cost is computed as 1 (perfect probability) - average success probability for
@@ -116,6 +122,13 @@ class Optimization(ABC):
             return 1
         return 0
 
+    def _get_combinations_without_repeats(self, elements: List[float]) -> List[Tuple[float, float]]:
+        # when there is only one element, we add the same element
+        if len(elements) == 1:
+            elements.append(elements[0])
+        # get combinations of two lambdas without repeats
+        return list(itertools.combinations(elements, 2))
+
     def _get_combinations_two_lambdas_without_repeats(self) -> List[Tuple[float, float]]:
         """ from a given list of attenuations (lambdas) create a
             list of all combinatorial pairs of possible lambdas
@@ -124,11 +137,13 @@ class Optimization(ABC):
             than first lambda 0.2 and second lambda 0.1
         """
         list_lambda = self._setup['attenuation_factors']
-        # when there is only one element, we add the same element
-        if len(list_lambda) == 1:
-            list_lambda.append(list_lambda[0])
-        # get combinations of two lambdas without repeats
-        return list(itertools.combinations(list_lambda, 2))
+        return self._get_combinations_without_repeats(list_lambda)
+
+    def _get_combinations_two_etas_without_repeats(self) -> List[Tuple[float, float]]:
+        lambdas = self._setup['attenuation_factors']
+        angles_eta = list(map(lambda one_lambda: np.arcsin(np.sqrt(one_lambda)), lambdas))
+
+        return self._get_combinations_without_repeats(angles_eta)
 
     def _compute_best_configuration(self) -> OptimalConfiguration:
         """ Find out the best configuration with a global pair of lambdas (channels) trying out
@@ -138,6 +153,7 @@ class Optimization(ABC):
         best_probability = 0
         best_configuration = []
         best_optimizer_algorithm = ""
+        number_calls_made = 0
 
         for optimizer_algorithm, max_evals in zip(optimizer_algorithms, optimizer_iterations):
             print("Analyzing Optimizer Algorithm: ", optimizer_algorithm)
@@ -161,10 +177,12 @@ class Optimization(ABC):
                 best_probability = 1 - ret[1]
                 best_configuration = ret[0]
                 best_optimizer_algorithm = optimizer_algorithm
+                number_calls_made = ret[2]
 
         # Print results
         print("Final Best Optimizer Algorithm: ", best_optimizer_algorithm)
         print("Final Best Average Probability:", best_probability)
+        print("Number of cost function calls made:", number_calls_made)
         print("Parameters Found: " + u"\u03B8" + " = " + str(int(math.degrees(best_configuration[0]))) + u"\u00B0" +
               ", Phase = " + str(int(math.degrees(best_configuration[1]))) + u"\u00B0" +
               ", " + u"\u03D5" + "rx = " + str(int(math.degrees(best_configuration[2]))) + u"\u00B0" +
@@ -175,5 +193,6 @@ class Optimization(ABC):
             best_algorithm=best_optimizer_algorithm,
             best_probability=best_probability,
             best_configuration=self._convert_optimizer_results_to_channel_configuration(best_configuration,
-                                                                                        self._global_attenuation_pair)
+                                                                                        self._global_attenuation_pair),
+            number_calls_made=number_calls_made
         )
