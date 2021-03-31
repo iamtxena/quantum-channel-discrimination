@@ -1,5 +1,6 @@
 """ Typings from all qcd module """
 from typing import List, TypedDict, Tuple
+import enum
 
 
 class ResultStates(TypedDict):
@@ -49,3 +50,9 @@ class OptimizationSetup(TypedDict):
     initial_parameters: List[float]
     variable_bounds: List[Tuple[float, float]]
     plays: int
+
+
+class GuessStrategy(enum.Enum):
+    one_bit_same_as_measured = 1
+    two_bit_base = 2
+    two_bit_neural_network = 3

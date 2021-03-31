@@ -31,7 +31,7 @@ class OneShotSetupConfiguration(SetupConfiguration):
         self._angles_ry_interval = (0, 2 * np.pi)
         self._angles_theta = np.mgrid[0:np.pi / 2:self._points_theta * 1j]
         self._angles_phase = np.mgrid[0:2 * np.pi:self._points_phase * 1j]
-        self._attenuation_angles = list(map(lambda attenuation_factor: np.arcsin(
+        self._angles_eta = list(map(lambda attenuation_factor: np.arcsin(
             np.sqrt(attenuation_factor)), self._attenuation_factors))
 
     @property
@@ -63,8 +63,8 @@ class OneShotSetupConfiguration(SetupConfiguration):
         return self._attenuation_factors
 
     @property
-    def attenuation_angles(self) -> List[float]:
-        return self._attenuation_angles
+    def angles_eta(self) -> List[float]:
+        return self._angles_eta
 
     @property
     def angles_theta_interval(self) -> Tuple[float, float]:
