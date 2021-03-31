@@ -18,7 +18,6 @@ class Optimization(ABC):
     def __init__(self, optimization_setup: OptimizationSetup):
         self._setup = optimization_setup
         self._eta_pairs = self._get_combinations_two_etas_without_repeats()
-        print(f'eta_pairs: {self._eta_pairs}')
         self._global_eta_pair = (0.0, 0.0)
 
     @abstractmethod
@@ -149,7 +148,6 @@ class Optimization(ABC):
                                      objective_function=self._cost_function,
                                      variable_bounds=self._setup['variable_bounds'],
                                      initial_point=self._setup['initial_parameters'])
-            print(f'optimizer result: {ret}')
             print("Best Average Probability:", 1 - ret[1])
             if (1 - ret[1]) > best_probability:
                 best_configuration = ret[0]
@@ -164,8 +162,8 @@ class Optimization(ABC):
         print("Parameters Found: " + u"\u03B8" + " = " + str(int(math.degrees(best_configuration[0]))) + u"\u00B0" +
               ", " + u"\u03D5" + "rx = " + str(int(math.degrees(best_configuration[1]))) + u"\u00B0" +
               ", " + u"\u03D5" + "ry = " + str(int(math.degrees(best_configuration[2]))) + u"\u00B0" +
-              ", " + u"\u03B7" + u"\u2080" + " = " + str(self._global_eta_pair[0]) +
-              ", " + u"\u03B7" + u"\u2081" + " = " + str(self._global_eta_pair[1]))
+              ", " + u"\u03B7" + u"\u2080" + " = " + str(int(math.degrees(self._global_eta_pair[0]))) + u"\u00B0" +
+              ", " + u"\u03B7" + u"\u2081" + " = " + str(int(math.degrees(self._global_eta_pair[1]))) + u"\u00B0")
         return OptimalConfiguration(
             best_algorithm=best_optimizer_algorithm,
             best_probability=best_probability,

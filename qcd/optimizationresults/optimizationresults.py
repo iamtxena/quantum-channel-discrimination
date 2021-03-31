@@ -2,10 +2,9 @@ from abc import ABC
 from typing import Optional, List, Union, cast
 from ..typings.configurations import OptimalConfigurations
 from .aux import (build_probabilities_matrix, build_amplitudes_matrix,
-                  plot_comparison_between_two_results, compute_percentage_delta_values)
+                  plot_comparison_between_two_results, compute_percentage_delta_values, plot_one_result)
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 class OptimizationResults(ABC):
@@ -31,14 +30,14 @@ class OptimizationResults(ABC):
         with open(f'./{path}{name}.pkl', 'rb') as file:
             self._results.append(pickle.load(file))
 
-    def load_theoretical_results_from_file(self, name: str) -> None:
+    def load_theoretical_results_from_file(self, name: str, path: Optional[str] = "") -> None:
         theoretical_results = []
-        with open('results/' + name + '.pkl', 'rb') as file:
+        with open(f'./{path}{name}.pkl', 'rb') as file:
             theoretical_results.append(pickle.load(file))
         self._theoretical_probabilities_matrix = build_probabilities_matrix(theoretical_results)
         self._theoretical_amplitudes_matrix = build_amplitudes_matrix(theoretical_results)
 
-    def load_results(self, file_names: Union[str, List[str]]) -> None:
+    def load_results(self, file_names: Union[str, List[str]], path: Optional[str] = "") -> None:
         """
           1. Load results from file for all file names
           2. build probability matrices for each loaded result
@@ -49,19 +48,21 @@ class OptimizationResults(ABC):
             names = [cast(str, file_names)]
 
         for file_name in names:
-            self.load_results_from_file(file_name)
+            self.load_results_from_file(file_name, path)
 
         self.build_probabilities_matrix()
         self.build_amplitudes_matrix()
 
     def build_probabilities_matrix(self) -> None:
         """ Build probabilities matrix for all loaded results """
+        self._probabilities_matrices = []
         for result in self._results:
             probs1 = build_probabilities_matrix(result)
             self._probabilities_matrices.append(probs1)
 
     def build_amplitudes_matrix(self) -> None:
         """ Build amplitudes matrix for all loaded results """
+        self._amplitudes_matrices = []
         for result in self._results:
             amp1 = build_amplitudes_matrix(result)
             self._amplitudes_matrices.append(amp1)
@@ -73,18 +74,7 @@ class OptimizationResults(ABC):
                            vmin: float = 0.0,
                            vmax: float = 1.0) -> None:
         """ Plot probabilities analysis """
-        self._plot_one_result(results_index, title, bar_label, vmin, vmax)
-
-    def _plot_one_result(self, results_index, title, bar_label, vmin, vmax):
-        fig = plt.figure(title)
-        ax1 = fig.add_subplot(111)
-        im = ax1.imshow(self._probabilities_matrices[results_index],
-                        cmap='viridis', extent=(0, 90, 90, 0), vmin=vmin, vmax=vmax)
-        plt.colorbar(im, label=bar_label)
-        ax1.set_xlabel('Channel 0 (angle $\eta$)')
-        ax1.set_ylabel('Channel 1 (angle $\eta$)')
-        ax1.set_title(title)
-        plt.show()
+        plot_one_result(self._probabilities_matrices[results_index], title, bar_label, vmin, vmax)
 
     def plot_probabilities_comparison(self,
                                       results_index1: int,
@@ -117,7 +107,7 @@ class OptimizationResults(ABC):
                         vmin: float = 0.0,
                         vmax: float = 1.0) -> None:
         """ Plot amplitudes analysis """
-        self._plot_one_result(results_index, title, bar_label, vmin, vmax)
+        plot_one_result(self._amplitudes_matrices[results_index], title, bar_label, vmin, vmax)
 
     def plot_amplitudes_comparison(self,
                                    results_index1: int,

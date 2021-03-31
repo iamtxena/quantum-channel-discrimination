@@ -1,43 +1,126 @@
 """ Auxiliary static methods """
+import math
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import List, cast
+from typing import List, cast, Tuple
+from ..configurations import OneShotConfiguration
 
 
 def build_probabilities_matrix(result):
-    X1 = []
-    for eta_pair in result['eta_pairs']:
-        X1.append(int(eta_pair[1]))
-        X1.append(int(eta_pair[0]))
-    X1 = sorted(list(dict.fromkeys(X1)))
-    lenx1 = len(X1)
-    probs1 = np.zeros((lenx1, lenx1))
-    values1 = list(result.values())
-    for ind_prob in range(len(values1[2])):
-        ind_0 = X1.index(int(result['eta_pairs'][ind_prob][0]))
-        ind_1 = X1.index(int(result['eta_pairs'][ind_prob][1]))
-        probs1[ind_1, ind_0] = values1[2][ind_prob]
-    for i in range(len(X1)):
-        probs1[i, i] = 0.5
-    return probs1
+    try:
+        return _build_probabilities_matrix(result)
+    except TypeError:
+        return _build_probabilities_matrix_legacy(result)
 
 
 def build_amplitudes_matrix(result):
+    try:
+        return _build_amplitudes_matrix(result)
+    except TypeError:
+        return _build_amplitudes_matrix_legacy(result)
+
+
+def _build_probabilities_matrix(result):
+    sorted_etas, matrix = _init_matrix(result)
+    _assign_probabilities(result, sorted_etas, matrix)
+    _reset_diagonal_matrix(sorted_etas, matrix, value=0.5)
+    return matrix
+
+
+def _build_probabilities_matrix_legacy(result):
+    sorted_etas, matrix = _init_matrix_legacy(result)
+    _assign_probabilities_legacy(result, sorted_etas, matrix)
+    _reset_diagonal_matrix(sorted_etas, matrix, value=0.5)
+    return matrix
+
+
+def _build_amplitudes_matrix(result):
+    sorted_etas, matrix = _init_matrix(result)
+    _assign_amplitudes(result, sorted_etas, matrix)
+    _reset_diagonal_matrix(sorted_etas, matrix, value=0)
+    return matrix
+
+
+def _build_amplitudes_matrix_legacy(result):
+    sorted_etas, matrix = _init_matrix_legacy(result)
+    _assign_amplitudes_legacy(result, sorted_etas, matrix)
+    _reset_diagonal_matrix(sorted_etas, matrix, value=0)
+    return matrix
+
+
+def _assign_probabilities(result, sorted_etas, matrix):
+    for idx, probability in enumerate(result['probabilities']):
+        ind_0 = sorted_etas.index(math.degrees(result['eta_pairs'][idx][0]))
+        ind_1 = sorted_etas.index(math.degrees(result['eta_pairs'][idx][1]))
+        matrix[ind_1, ind_0] = probability
+
+
+def _assign_probabilities_legacy(result, sorted_etas, matrix):
+    for idx, probability in enumerate(result['probabilities']):
+        ind_0 = sorted_etas.index(int(result['eta_pairs'][idx][0]))
+        ind_1 = sorted_etas.index(int(result['eta_pairs'][idx][1]))
+        matrix[ind_1, ind_0] = probability
+
+
+def _assign_amplitudes(result, sorted_etas, matrix):
+    for idx, configuration in enumerate(result['configurations']):
+        ind_0 = sorted_etas.index(math.degrees(result['eta_pairs'][idx][0]))
+        ind_1 = sorted_etas.index(math.degrees(result['eta_pairs'][idx][1]))
+        matrix[ind_1, ind_0] = np.sin(cast(OneShotConfiguration, configuration).theta)
+
+
+def _assign_amplitudes_legacy(result, sorted_etas, matrix):
+    for idx, configuration in enumerate(result['configurations']):
+        ind_0 = sorted_etas.index(int(result['eta_pairs'][idx][0]))
+        ind_1 = sorted_etas.index(int(result['eta_pairs'][idx][1]))
+        matrix[ind_1, ind_0] = np.sin(configuration[0])
+
+
+def _reset_diagonal_matrix(values: List[float], matrix: np.array, value: float = 0) -> None:
+    for idx, _ in enumerate(values):
+        matrix[idx, idx] = value
+
+
+def _get_sorted_etas_in_degrees(eta_pairs: List[Tuple[float, float]]) -> List[float]:
     X1 = []
-    for eta_pair in result['eta_pairs']:
+    for eta_pair in eta_pairs:
+        X1.append(math.degrees(eta_pair[1]))
+        X1.append(math.degrees(eta_pair[0]))
+    return sorted(list(set(X1)))
+
+
+def _get_sorted_etas_in_degrees_legacy(eta_pairs: List[Tuple[float, float]]) -> List[int]:
+    X1 = []
+    for eta_pair in eta_pairs:
         X1.append(int(eta_pair[1]))
         X1.append(int(eta_pair[0]))
-    X1 = sorted(list(set(X1)))
-    lenx1 = len(X1)
+    return sorted(list(set(X1)))
+
+
+def _init_matrix(result) -> Tuple[List[float], np.array]:
+    sorted_etas = _get_sorted_etas_in_degrees(result['eta_pairs'])
+    lenx1 = len(sorted_etas)
     amp1 = np.zeros((lenx1, lenx1))
-    values1 = list(result.values())
-    for ind_prob in range(len(values1[3])):
-        ind_0 = X1.index(int(result['eta_pairs'][ind_prob][0]))
-        ind_1 = X1.index(int(result['eta_pairs'][ind_prob][1]))
-        amp1[ind_1, ind_0] = np.sin(values1[3][ind_prob][0])
-    for i in range(len(X1)):
-        amp1[i, i] = 0
-    return amp1
+    return sorted_etas, amp1
+
+
+def _init_matrix_legacy(result) -> Tuple[List[int], np.array]:
+    sorted_etas = _get_sorted_etas_in_degrees_legacy(result['eta_pairs'])
+    lenx1 = len(sorted_etas)
+    amp1 = np.zeros((lenx1, lenx1))
+    return sorted_etas, amp1
+
+
+def plot_one_result(result, title, bar_label, vmin, vmax, cmap='viridis'):
+    fig = plt.figure(title)
+    ax1 = fig.add_subplot(111)
+    im = ax1.imshow(result,
+                    cmap, extent=(0, 90, 90, 0), vmin=vmin, vmax=vmax)
+    plt.colorbar(im, label=bar_label)
+    ax1.set_xlabel('Channel 0 (angle $\eta$)')
+    ax1.set_ylabel('Channel 1 (angle $\eta$)')
+    ax1.set_title(title, fontsize=14)
+    plt.show()
 
 
 def plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax):
@@ -47,7 +130,7 @@ def plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vma
     plt.colorbar(im, label=bar_label)
     ax1.set_xlabel('Channel 0 (angle $\eta$)')
     ax1.set_ylabel('Channel 1 (angle $\eta$)')
-    ax1.set_title(title)
+    ax1.set_title(title, fontsize=14)
     plt.show()
 
 
