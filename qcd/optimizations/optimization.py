@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 from ..optimizationresults import OptimizationResults
-from ..typings import OptimizationSetup
+from ..typings import OptimizationSetup, GuessStrategy
 from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
 from ..configurations import ChannelConfiguration
+from .aux import set_random_eta, check_value, reorder_pairs
 import itertools
 import time
 import numpy as np
 import math
-import random
 from qiskit.aqua.components.optimizers import CRS, DIRECT_L, DIRECT_L_RAND, ESCH, ISRES
 
 
@@ -17,81 +17,24 @@ class Optimization(ABC):
 
     def __init__(self, optimization_setup: OptimizationSetup):
         self._setup = optimization_setup
-        self._attenuation_pairs = self._get_combinations_two_lambdas_without_repeats()
         self._eta_pairs = self._get_combinations_two_etas_without_repeats()
-        self._global_attenuation_pair = (0.0, 0.0)
-
-    def find_optimal_configurations(self) -> OptimizationResults:
-        """ Finds out the optimal configuration for each pair of attenuation levels
-            using the configured optimization algorithm """
-        probabilities = []
-        configurations = []
-        best_algorithm = []
-        number_calls_made = []
-
-        program_start_time = time.time()
-        print("Starting the execution")
-
-        for lambda_pair in self._attenuation_pairs:
-            start_time = time.time()
-            self._global_attenuation_pair = lambda_pair
-            result = self._compute_best_configuration()
-            probabilities.append(result['best_probability'])
-            configurations.append(result['best_configuration'])
-            best_algorithm.append(result['best_algorithm'])
-            number_calls_made.append(result['number_calls_made'])
-            end_time = time.time()
-            print("total minutes taken this pair of lambdas: ", int(np.round((end_time - start_time) / 60)))
-            print("total minutes taken so far: ", int(np.round((end_time - program_start_time) / 60)))
-
-        end_time = time.time()
-        print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))
-        print("All guesses have been calculated")
-        print(f'Total pair of lambdas tested: {len(self._attenuation_pairs)}')
-
-        return OptimizationResults(OptimalConfigurations(
-            eta_pairs=self._eta_pairs,
-            attenuation_pairs=self._attenuation_pairs,
-            best_algorithm=best_algorithm,
-            probabilities=probabilities,
-            configurations=configurations,
-            number_calls_made=number_calls_made))
+        self._global_eta_pair = (0.0, 0.0)
 
     @abstractmethod
     def _convert_optimizer_results_to_channel_configuration(self,
                                                             configuration: List[float],
-                                                            attenuation_pair: Tuple[float, float]
+                                                            eta_pair: Tuple[float, float]
                                                             ) -> ChannelConfiguration:
         """ Convert the results of an optimization to a channel configuration """
         pass
 
     @abstractmethod
-    def _prepare_initial_state(self, theta: float, phase: float) -> Tuple[complex, complex]:
+    def _prepare_initial_state(self, theta: float) -> Tuple[complex, complex]:
         """ Prepare initial state """
         pass
 
     @abstractmethod
-    def _convert_counts_to_final_result(self, counts: str) -> int:
-        """ Convert the execution result to the final measured value: 0 or 1 """
-        pass
-
-    def _set_random_lambda(self, attenuation_pair: Tuple[float, float]) -> int:
-        """ return a random choice from attenuation pair with the correspondent index value """
-        lambda_value = random.choice(attenuation_pair)
-        if lambda_value == attenuation_pair[0]:
-            return 0
-        return 1
-
-    @abstractmethod
     def _compute_damping_channel(self, channel_configuration: ChannelConfiguration, attenuation_index: int) -> int:
-        pass
-
-    @abstractmethod
-    def _guess_lambda_used(self, real_measured_result: int) -> int:
-        """ Decides which lambda was used on the real execution.
-            It is a silly guess.
-            It returns the same lambda used as the measured result
-        """
         pass
 
     @abstractmethod
@@ -104,49 +47,82 @@ class Optimization(ABC):
           """
         pass
 
+    @abstractmethod
+    def _convert_counts_to_eta_used(self,
+                                    counts_dict: dict,
+                                    guess_strategy: GuessStrategy) -> int:
+        """ Decides which eta was used on the real execution from the 'counts' measured
+            based on the guess strategy that is required to use
+        """
+        pass
+
+    def find_optimal_configurations(self) -> OptimizationResults:
+        """ Finds out the optimal configuration for each pair of attenuation levels
+            using the configured optimization algorithm """
+        probabilities = []
+        configurations = []
+        best_algorithm = []
+        number_calls_made = []
+
+        program_start_time = time.time()
+        print("Starting the execution")
+
+        for eta_pair in self._eta_pairs:
+            start_time = time.time()
+            self._global_eta_pair = eta_pair
+            result = self._compute_best_configuration()
+            probabilities.append(result['best_probability'])
+            configurations.append(result['best_configuration'])
+            best_algorithm.append(result['best_algorithm'])
+            number_calls_made.append(result['number_calls_made'])
+            end_time = time.time()
+            print("total minutes taken this pair of etas: ", int(np.round((end_time - start_time) / 60)))
+            print("total minutes taken so far: ", int(np.round((end_time - program_start_time) / 60)))
+
+        end_time = time.time()
+        print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))
+        print("All guesses have been calculated")
+        print(f'Total pair of etas tested: {len(self._eta_pairs)}')
+
+        return OptimizationResults(OptimalConfigurations(
+            eta_pairs=self._eta_pairs,
+            best_algorithm=best_algorithm,
+            probabilities=probabilities,
+            configurations=configurations,
+            number_calls_made=number_calls_made))
+
     def _play_and_guess_one_case(self, channel_configuration: ChannelConfiguration) -> int:
-        """ Execute a real execution with a random lambda from the two passed,
-            guess which one was used on the exection and
+        """ Execute a real execution with a random eta from the two passed,
+            guess which one was used on the execution and
             check the result.
             Returns 1 on success (it was a correct guess) or 0 on fail (it was an incorrect guess)
         """
-        attenuation_index = self._set_random_lambda(channel_configuration.attenuation_pair)
-        result = self._compute_damping_channel(channel_configuration, attenuation_index)
-        guess_index_attenuation_factor = self._guess_lambda_used(result)
+        eta_index = set_random_eta(channel_configuration.eta_pair)
+        guess_index_eta = self._compute_damping_channel(channel_configuration, eta_index)
 
-        return self._check_value(attenuation_index, guess_index_attenuation_factor)
-
-    def _check_value(self, real_index_attenuation_factor: int,
-                     guess_index_attenuation_factor: int):
-        if real_index_attenuation_factor == guess_index_attenuation_factor:
-            return 1
-        return 0
-
-    def _get_combinations_without_repeats(self, elements: List[float]) -> List[Tuple[float, float]]:
-        # when there is only one element, we add the same element
-        if len(elements) == 1:
-            elements.append(elements[0])
-        # get combinations of two lambdas without repeats
-        return list(itertools.combinations(elements, 2))
-
-    def _get_combinations_two_lambdas_without_repeats(self) -> List[Tuple[float, float]]:
-        """ from a given list of attenuations (lambdas) create a
-            list of all combinatorial pairs of possible lambdas
-            without repeats (order does not matter).
-            For us it is the same testing first lambda 0.1 and second lambda 0.2
-            than first lambda 0.2 and second lambda 0.1
-        """
-        list_lambda = self._setup['attenuation_factors']
-        return self._get_combinations_without_repeats(list_lambda)
+        return check_value(eta_index, guess_index_eta)
 
     def _get_combinations_two_etas_without_repeats(self) -> List[Tuple[float, float]]:
-        lambdas = self._setup['attenuation_factors']
-        angles_eta = list(map(lambda one_lambda: np.arcsin(np.sqrt(one_lambda)), lambdas))
+        """ from a given list of attenuations (etas) create a
+            list of all combinatorial pairs of possible etas
+            without repeats
+            For us it is the same testing first eta 0.1 and second eta 0.2
+            than first eta 0.2 and second eta 0.1
+            Though, we will always put the greater value as the first pair element
+        """
+        attenuation_factors = self._setup['attenuation_factors']
+        angles_etas = list(map(lambda attenuation_factor: np.arcsin(np.sqrt(attenuation_factor)), attenuation_factors))
 
-        return self._get_combinations_without_repeats(angles_eta)
+        # when there is only one element, we add the same element
+        if len(angles_etas) == 1:
+            angles_etas.append(angles_etas[0])
+        # get combinations of two etas without repeats
+        eta_pairs = list(itertools.combinations(angles_etas, 2))
+
+        return reorder_pairs(eta_pairs)
 
     def _compute_best_configuration(self) -> OptimalConfiguration:
-        """ Find out the best configuration with a global pair of lambdas (channels) trying out
+        """ Find out the best configuration with a global pair of etas (channels) trying out
             a list of specified optimization algorithm """
         optimizer_algorithms = self._setup['optimizer_algorithms']
         optimizer_iterations = self._setup['optimizer_iterations']
@@ -174,25 +150,24 @@ class Optimization(ABC):
                                      initial_point=self._setup['initial_parameters'])
             print("Best Average Probability:", 1 - ret[1])
             if (1 - ret[1]) > best_probability:
-                best_probability = 1 - ret[1]
                 best_configuration = ret[0]
-                best_optimizer_algorithm = optimizer_algorithm
+                best_probability = 1 - ret[1]
                 number_calls_made = ret[2]
+                best_optimizer_algorithm = optimizer_algorithm
 
         # Print results
         print("Final Best Optimizer Algorithm: ", best_optimizer_algorithm)
         print("Final Best Average Probability:", best_probability)
         print("Number of cost function calls made:", number_calls_made)
         print("Parameters Found: " + u"\u03B8" + " = " + str(int(math.degrees(best_configuration[0]))) + u"\u00B0" +
-              ", Phase = " + str(int(math.degrees(best_configuration[1]))) + u"\u00B0" +
-              ", " + u"\u03D5" + "rx = " + str(int(math.degrees(best_configuration[2]))) + u"\u00B0" +
-              ", " + u"\u03D5" + "ry = " + str(int(math.degrees(best_configuration[3]))) + u"\u00B0" +
-              ", " + u"\u03BB" + u"\u2080" + " = " + str(self._global_attenuation_pair[0]) +
-              ", " + u"\u03BB" + u"\u2081" + " = " + str(self._global_attenuation_pair[1]))
+              ", " + u"\u03D5" + "rx = " + str(int(math.degrees(best_configuration[1]))) + u"\u00B0" +
+              ", " + u"\u03D5" + "ry = " + str(int(math.degrees(best_configuration[2]))) + u"\u00B0" +
+              ", " + u"\u03B7" + u"\u2080" + " = " + str(int(math.degrees(self._global_eta_pair[0]))) + u"\u00B0" +
+              ", " + u"\u03B7" + u"\u2081" + " = " + str(int(math.degrees(self._global_eta_pair[1]))) + u"\u00B0")
         return OptimalConfiguration(
             best_algorithm=best_optimizer_algorithm,
             best_probability=best_probability,
             best_configuration=self._convert_optimizer_results_to_channel_configuration(best_configuration,
-                                                                                        self._global_attenuation_pair),
+                                                                                        self._global_eta_pair),
             number_calls_made=number_calls_made
         )

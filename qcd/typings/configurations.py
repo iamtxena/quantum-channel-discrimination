@@ -15,5 +15,4 @@ class OptimalConfigurations(TypedDict):
     best_algorithm: List[str]
     probabilities: List[float]
     configurations: List[ChannelConfiguration]
-    attenuation_pairs: List[Tuple[float, float]]
     number_calls_made: List[int]

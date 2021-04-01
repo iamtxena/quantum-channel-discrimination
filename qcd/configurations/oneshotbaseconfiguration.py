@@ -8,7 +8,6 @@ class OneShotConfiguration(ChannelConfiguration):
 
     def __init__(self, configuration: OneShotConfigurationDict) -> None:
         self._theta = configuration['theta']
-        self._phase = configuration['phase']
         self._angle_rx = configuration['angle_rx']
         self._angle_ry = configuration['angle_ry']
         super().__init__(cast(dict, configuration))
@@ -16,10 +15,6 @@ class OneShotConfiguration(ChannelConfiguration):
     @property
     def theta(self) -> float:
         return self._theta
-
-    @property
-    def phase(self) -> float:
-        return self._phase
 
     @property
     def angle_rx(self) -> float:

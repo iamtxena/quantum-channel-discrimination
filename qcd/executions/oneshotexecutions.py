@@ -1,10 +1,10 @@
 from . import Execution
 from typing import Optional, Union, List, cast
 from ..typings import OneShotResults
+from .aux import draw_cube
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import numpy as np
-from itertools import product, combinations
 
 
 class OneShotExecution(Execution):
@@ -62,7 +62,7 @@ class OneShotExecution(Execution):
         # ===============
         # set up the axes for the first plot
         ax = fig.add_subplot(rows, cols, 1, projection='3d')
-        self._draw_cube(ax)
+        draw_cube(ax)
 
         # ===============
         # Next subplots
@@ -77,7 +77,7 @@ class OneShotExecution(Execution):
                     (idx == len(results['final_states_reshaped']) - 1)):
                 # set up the axes for the second plot
                 ax = fig.add_subplot(rows, cols, 1 + index_to_print, projection='3d')
-                self._draw_cube(ax)
+                draw_cube(ax)
                 # draw final states
                 ax.plot_wireframe(final_state_reshaped['reshaped_coords_x'],
                                   final_state_reshaped['reshaped_coords_y'],
@@ -101,7 +101,7 @@ class OneShotExecution(Execution):
         for idx, result in enumerate(results):
             # set up the axes for the second plot
             ax = fig.add_subplot(rows, cols, 1 + idx, projection='3d')
-            self._draw_cube(ax)
+            draw_cube(ax)
 
             final_state_reshaped = result['final_states_reshaped'][0]
             # draw final states
@@ -117,13 +117,6 @@ class OneShotExecution(Execution):
             ax.scatter([0], [0], result['final_states_reshaped'][0]["center"], color="g", s=50)
 
         plt.show()
-
-    def _draw_cube(self, axes):
-        """ Draw a cube passing axes as a parameter """
-        r = [-1, 1]
-        for s, l in combinations(np.array(list(product(r, r, r))), 2):
-            if np.sum(np.abs(s - l)) == r[1] - r[0]:
-                axes.plot3D(*zip(s, l), color="w")
 
     def _get_one_result(self, results_index: Optional[int] = 0) -> OneShotResults:
         idx = results_index
