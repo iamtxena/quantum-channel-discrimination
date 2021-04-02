@@ -52,6 +52,10 @@ class OptimizationSetup(TypedDict):
     plays: int
 
 
+class TheoreticalOptimizationSetup(TypedDict):
+    eta_pairs: List[Tuple[float, float]]
+
+
 class GuessStrategy(enum.Enum):
     one_bit_same_as_measured = 1
     two_bit_base = 2

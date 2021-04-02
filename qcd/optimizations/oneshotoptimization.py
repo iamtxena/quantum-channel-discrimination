@@ -1,8 +1,6 @@
-
 from . import Optimization
 from ..typings import OptimizationSetup, GuessStrategy
 from typing import Tuple, cast, List
-from ..typings.dicts import OneShotConfigurationDict
 from ..configurations import ChannelConfiguration, OneShotConfiguration
 from .aux import get_measured_value_from_counts
 import math
@@ -20,12 +18,11 @@ class OneShotOptimization(Optimization):
                                                             eta_pair: Tuple[float, float]
                                                             ) -> ChannelConfiguration:
         """ Convert the results of an optimization to a One Shot channel configuration """
-        config_dict = OneShotConfigurationDict(
-            theta=configuration[0],
-            angle_rx=configuration[1],
-            angle_ry=configuration[2],
-            eta_pair=eta_pair)
-        return OneShotConfiguration(config_dict)
+        return OneShotConfiguration({
+            'theta': configuration[0],
+            'angle_rx': configuration[1],
+            'angle_ry': configuration[2],
+            'eta_pair': eta_pair})
 
     def _prepare_initial_state(self, theta: float) -> Tuple[complex, complex]:
         """ Prepare initial state """
@@ -86,14 +83,11 @@ class OneShotOptimization(Optimization):
             all the plays with the given configuration
             Returns the Cost (error probability).
         """
-        configuration = OneShotConfiguration(
-            OneShotConfigurationDict(
-                theta=params[0],
-                angle_rx=params[1],
-                angle_ry=params[2],
-                eta_pair=self._global_eta_pair
-            )
-        )
+        configuration = OneShotConfiguration({
+            'theta': params[0],
+            'angle_rx': params[1],
+            'angle_ry': params[2],
+            'eta_pair': self._global_eta_pair})
 
         success_counts = 0
         for play in range(self._setup['plays']):

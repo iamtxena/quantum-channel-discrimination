@@ -16,3 +16,14 @@ class OptimalConfigurations(TypedDict):
     probabilities: List[float]
     configurations: List[ChannelConfiguration]
     number_calls_made: List[int]
+
+
+class TheoreticalOptimalConfiguration(TypedDict):
+    best_probability: float
+    best_theoric_x: float
+
+
+class TheoreticalOptimalConfigurations(TypedDict):
+    eta_pairs: List[Tuple[float, float]]
+    probabilities: List[float]
+    list_theoric_x: List[float]
