@@ -2,10 +2,9 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple
 from ..optimizationresults import OptimizationResults
 from ..typings import OptimizationSetup, GuessStrategy
-from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
+from ..typings.configurations import OptimalConfiguration
 from ..configurations import ChannelConfiguration
-from .aux import set_random_eta, check_value, reorder_pairs
-import itertools
+from .aux import set_random_eta, check_value, get_combinations_two_etas_without_repeats
 import time
 import numpy as np
 import math
@@ -17,7 +16,7 @@ class Optimization(ABC):
 
     def __init__(self, optimization_setup: OptimizationSetup):
         self._setup = optimization_setup
-        self._eta_pairs = self._get_combinations_two_etas_without_repeats()
+        self._eta_pairs = get_combinations_two_etas_without_repeats(self._setup['attenuation_factors'])
         self._global_eta_pair = (0.0, 0.0)
 
     @abstractmethod
@@ -84,12 +83,12 @@ class Optimization(ABC):
         print("All guesses have been calculated")
         print(f'Total pair of etas tested: {len(self._eta_pairs)}')
 
-        return OptimizationResults(OptimalConfigurations(
-            eta_pairs=self._eta_pairs,
-            best_algorithm=best_algorithm,
-            probabilities=probabilities,
-            configurations=configurations,
-            number_calls_made=number_calls_made))
+        return OptimizationResults({
+            'eta_pairs': self._eta_pairs,
+            'best_algorithm': best_algorithm,
+            'probabilities': probabilities,
+            'configurations': configurations,
+            'number_calls_made': number_calls_made})
 
     def _play_and_guess_one_case(self, channel_configuration: ChannelConfiguration) -> int:
         """ Execute a real execution with a random eta from the two passed,
@@ -101,25 +100,6 @@ class Optimization(ABC):
         guess_index_eta = self._compute_damping_channel(channel_configuration, eta_index)
 
         return check_value(eta_index, guess_index_eta)
-
-    def _get_combinations_two_etas_without_repeats(self) -> List[Tuple[float, float]]:
-        """ from a given list of attenuations (etas) create a
-            list of all combinatorial pairs of possible etas
-            without repeats
-            For us it is the same testing first eta 0.1 and second eta 0.2
-            than first eta 0.2 and second eta 0.1
-            Though, we will always put the greater value as the first pair element
-        """
-        attenuation_factors = self._setup['attenuation_factors']
-        angles_etas = list(map(lambda attenuation_factor: np.arcsin(np.sqrt(attenuation_factor)), attenuation_factors))
-
-        # when there is only one element, we add the same element
-        if len(angles_etas) == 1:
-            angles_etas.append(angles_etas[0])
-        # get combinations of two etas without repeats
-        eta_pairs = list(itertools.combinations(angles_etas, 2))
-
-        return reorder_pairs(eta_pairs)
 
     def _compute_best_configuration(self) -> OptimalConfiguration:
         """ Find out the best configuration with a global pair of etas (channels) trying out
@@ -164,10 +144,9 @@ class Optimization(ABC):
               ", " + u"\u03D5" + "ry = " + str(int(math.degrees(best_configuration[2]))) + u"\u00B0" +
               ", " + u"\u03B7" + u"\u2080" + " = " + str(int(math.degrees(self._global_eta_pair[0]))) + u"\u00B0" +
               ", " + u"\u03B7" + u"\u2081" + " = " + str(int(math.degrees(self._global_eta_pair[1]))) + u"\u00B0")
-        return OptimalConfiguration(
-            best_algorithm=best_optimizer_algorithm,
-            best_probability=best_probability,
-            best_configuration=self._convert_optimizer_results_to_channel_configuration(best_configuration,
-                                                                                        self._global_eta_pair),
-            number_calls_made=number_calls_made
-        )
+
+        return {'best_algorithm': best_optimizer_algorithm,
+                'best_probability': best_probability,
+                'best_configuration': self._convert_optimizer_results_to_channel_configuration(best_configuration,
+                                                                                               self._global_eta_pair),
+                'number_calls_made': number_calls_made}
