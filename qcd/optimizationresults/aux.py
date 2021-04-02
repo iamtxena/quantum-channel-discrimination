@@ -3,20 +3,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, cast, Tuple, Union, Dict
 from ..configurations import OneShotConfiguration
-from ..typings.configurations import OptimalConfigurations
+from ..typings.configurations import OptimalConfigurations, TheoreticalOptimalConfigurations
 
 
-def build_probabilities_matrix(result: OptimalConfigurations) -> List[List[float]]:
+def build_probabilities_matrix(
+        result: Union[OptimalConfigurations, TheoreticalOptimalConfigurations]) -> List[List[float]]:
     if isinstance(result['eta_pairs'][0][0], float):
-        return _build_probabilities_matrix(result)
+        return _build_probabilities_matrix(cast(OptimalConfigurations, result))
     if isinstance(result['eta_pairs'][0][0], str):
         return cast(List[List[float]], _build_probabilities_matrix_legacy(cast(Dict, result)))
     raise ValueError('Bad input results')
 
 
-def build_amplitudes_matrix(result: OptimalConfigurations) -> List[List[float]]:
-    if isinstance(result['eta_pairs'][0][0], float):
-        return _build_amplitudes_matrix(result)
+def build_amplitudes_matrix(
+        result: Union[OptimalConfigurations, TheoreticalOptimalConfigurations]) -> List[List[float]]:
+    if isinstance(result['eta_pairs'][0][0], float) and _isOptimalConfigurations(result):
+        return _build_amplitudes_matrix(cast(OptimalConfigurations, result))
+    if isinstance(result['eta_pairs'][0][0], float) and _isTheoreticalOptimalConfigurations(result):
+        return _build_theoretical_amplitudes_matrix(cast(TheoreticalOptimalConfigurations, result))
     if isinstance(result['eta_pairs'][0][0], str):
         return cast(List[List[float]], _build_amplitudes_matrix_legacy(cast(Dict, result)))
     raise ValueError('Bad input results')
@@ -39,6 +43,13 @@ def _build_probabilities_matrix_legacy(result: Dict) -> List[List[int]]:
 def _build_amplitudes_matrix(result: OptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
     _assign_amplitudes(result, sorted_etas, matrix)
+    _reset_diagonal_matrix(sorted_etas, matrix, value=0)
+    return matrix
+
+
+def _build_theoretical_amplitudes_matrix(result: TheoreticalOptimalConfigurations) -> List[List[float]]:
+    sorted_etas, matrix = _init_matrix(result)
+    _assign_theoretical_amplitudes(result, sorted_etas, matrix)
     _reset_diagonal_matrix(sorted_etas, matrix, value=0)
     return matrix
 
@@ -69,6 +80,15 @@ def _assign_amplitudes(result: OptimalConfigurations, sorted_etas: List[float], 
         ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
         ind_1 = sorted_etas.index(result['eta_pairs'][idx][1])
         matrix[ind_0, ind_1] = np.sin(cast(OneShotConfiguration, configuration).theta)
+
+
+def _assign_theoretical_amplitudes(result: TheoreticalOptimalConfigurations,
+                                   sorted_etas: List[float],
+                                   matrix: np.array):
+    for idx, best_theoric_x in enumerate(result['list_theoric_x']):
+        ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
+        ind_1 = sorted_etas.index(result['eta_pairs'][idx][1])
+        matrix[ind_0, ind_1] = best_theoric_x
 
 
 def _assign_amplitudes_legacy(result: Dict, sorted_etas: List[int], matrix: np.array):
@@ -158,3 +178,27 @@ def compute_percentage_delta_values(delta_values: List[List[float]],
             row = row - 1
         col = col - 1
     return delta_pc_prob1
+
+
+def _isOptimalConfigurations(input_dict: Union[OptimalConfigurations,
+                                               TheoreticalOptimalConfigurations]) -> bool:
+    """ check if input dictionary is an OptimalConfigurations one """
+    tmp_dict = cast(OptimalConfigurations, input_dict)
+    if (tmp_dict.get('eta_pairs') and
+        tmp_dict.get('best_algorithm') and
+        tmp_dict.get('probabilities') and
+        tmp_dict.get('configurations') and
+            tmp_dict.get('number_calls_made')):
+        return True
+    return False
+
+
+def _isTheoreticalOptimalConfigurations(input_dict: Union[OptimalConfigurations,
+                                                          TheoreticalOptimalConfigurations]) -> bool:
+    """ check if input dictionary is an TheoreticalOptimalConfigurations one """
+    tmp_dict = cast(TheoreticalOptimalConfigurations, input_dict)
+    if (tmp_dict.get('eta_pairs') and
+        tmp_dict.get('probabilities') and
+            tmp_dict.get('list_theoric_x')):
+        return True
+    return False

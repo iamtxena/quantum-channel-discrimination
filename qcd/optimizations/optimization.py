@@ -4,7 +4,7 @@ from ..optimizationresults import OptimizationResults
 from ..typings import OptimizationSetup, GuessStrategy
 from ..typings.configurations import OptimalConfiguration
 from ..configurations import ChannelConfiguration
-from .aux import set_random_eta, check_value, get_combinations_two_etas_without_repeats
+from .aux import set_random_eta, check_value, get_combinations_two_etas_without_repeats_from_lambdas
 import time
 import numpy as np
 import math
@@ -16,7 +16,7 @@ class Optimization(ABC):
 
     def __init__(self, optimization_setup: OptimizationSetup):
         self._setup = optimization_setup
-        self._eta_pairs = get_combinations_two_etas_without_repeats(self._setup['attenuation_factors'])
+        self._eta_pairs = get_combinations_two_etas_without_repeats_from_lambdas(self._setup['attenuation_factors'])
         self._global_eta_pair = (0.0, 0.0)
 
     @abstractmethod

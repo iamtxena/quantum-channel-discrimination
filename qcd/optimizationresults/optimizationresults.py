@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List, Union, cast
 from ..typings import TheoreticalOptimizationSetup
-from ..typings.configurations import OptimalConfigurations
+from ..typings.configurations import OptimalConfigurations, TheoreticalOptimalConfigurations
 from .aux import (build_probabilities_matrix, build_amplitudes_matrix,
                   plot_comparison_between_two_results, compute_percentage_delta_values, plot_one_result)
 import pickle
@@ -13,11 +13,11 @@ class OptimizationResults(ABC):
 
     def __init__(self, optimal_configurations: Optional[OptimalConfigurations] = None) -> None:
         self._results: List[OptimalConfigurations] = []
-        if optimal_configurations is not None:
-            self._results = [optimal_configurations]
         self._probabilities_matrices: List[List[List[float]]] = []
         self._amplitudes_matrices: List[List[List[float]]] = []
-        self._build_theoretical_matrices_result()
+        if optimal_configurations is not None:
+            self._results = [optimal_configurations]
+            self._build_theoretical_matrices_result()
 
     """ save and load results to and from a file """
 
@@ -31,8 +31,9 @@ class OptimizationResults(ABC):
             self._results.append(pickle.load(file))
 
     @abstractmethod
-    def _compute_theoretical_optimal_results(self,
-                                             optimization_setup: TheoreticalOptimizationSetup) -> OptimalConfigurations:
+    def _compute_theoretical_optimal_results(
+            self,
+            optimization_setup: TheoreticalOptimizationSetup) -> TheoreticalOptimalConfigurations:
         pass
 
     def _build_theoretical_matrices_result(self) -> None:
@@ -55,17 +56,18 @@ class OptimizationResults(ABC):
         for file_name in names:
             self.load_results_from_file(file_name, path)
 
-        self.build_probabilities_matrix()
-        self.build_amplitudes_matrix()
+        self._build_probabilities_matrix()
+        self._build_amplitudes_matrix()
+        self._build_theoretical_matrices_result()
 
-    def build_probabilities_matrix(self) -> None:
+    def _build_probabilities_matrix(self) -> None:
         """ Build probabilities matrix for all loaded results """
         self._probabilities_matrices = []
         for result in self._results:
             probs1 = build_probabilities_matrix(result)
             self._probabilities_matrices.append(probs1)
 
-    def build_amplitudes_matrix(self) -> None:
+    def _build_amplitudes_matrix(self) -> None:
         """ Build amplitudes matrix for all loaded results """
         self._amplitudes_matrices = []
         for result in self._results:
@@ -80,6 +82,14 @@ class OptimizationResults(ABC):
                            vmax: float = 1.0) -> None:
         """ Plot probabilities analysis """
         plot_one_result(self._probabilities_matrices[results_index], title, bar_label, vmin, vmax)
+
+    def plot_theoretical_probabilities(self,
+                                       title: str = 'Probabilities from theory',
+                                       bar_label: str = 'Probabilities value',
+                                       vmin: float = 0.0,
+                                       vmax: float = 1.0) -> None:
+        """ Plot theoretical probabilities analysis """
+        plot_one_result(self._theoretical_probabilities_matrix, title, bar_label, vmin, vmax)
 
     def plot_probabilities_comparison(self,
                                       results_index1: int,
@@ -114,6 +124,14 @@ class OptimizationResults(ABC):
         """ Plot amplitudes analysis """
         plot_one_result(self._amplitudes_matrices[results_index], title, bar_label, vmin, vmax)
 
+    def plot_theoretical_amplitudes(self,
+                                    title: str = 'Input state amplitude |1> obtained from theory',
+                                    bar_label: str = 'Amplitude value',
+                                    vmin: float = 0.0,
+                                    vmax: float = 1.0) -> None:
+        """ Plot theoretical amplitudes analysis """
+        plot_one_result(self._theoretical_amplitudes_matrix, title, bar_label, vmin, vmax)
+
     def plot_amplitudes_comparison(self,
                                    results_index1: int,
                                    results_index2: int,
@@ -131,8 +149,8 @@ class OptimizationResults(ABC):
                                                           title: str = 'Difference in Amplitudes' +
                                                           '(theory vs. simulation)',
                                                           bar_label: str = 'Amplitude Delta value',
-                                                          vmin: float = -0.1,
-                                                          vmax: float = 0.1) -> None:
+                                                          vmin: float = -1,
+                                                          vmax: float = 1) -> None:
         """ Plot amplitudes comparing two results """
         delta_probs = cast(np.ndarray, self._theoretical_amplitudes_matrix) - \
             cast(np.ndarray, self._amplitudes_matrices[results_index])
@@ -141,7 +159,7 @@ class OptimizationResults(ABC):
     def plot_probabilities_comparison_percentage(self,
                                                  results_index: int,
                                                  title: str = 'Deviation in % from theoric ' +
-                                                 'probability (simulation vs. theory',
+                                                 'probability (thoery vs. simulation)',
                                                  bar_label: str = 'Probabilities Delta (%)',
                                                  vmin: float = -40.,
                                                  vmax: float = 0.0) -> None:
@@ -155,7 +173,7 @@ class OptimizationResults(ABC):
     def plot_amplitudes_comparison_percentage(self,
                                               results_index: int,
                                               title: str = 'Deviation in % from theoric ' +
-                                              'amplitude (simulation vs. theory',
+                                              'amplitude (theory vs. simulation)',
                                               bar_label: str = 'Amplitude Delta (%)',
                                               vmin: float = -40.,
                                               vmax: float = 0.0) -> None:
