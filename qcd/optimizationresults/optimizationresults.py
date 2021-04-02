@@ -103,14 +103,14 @@ class OptimizationResults(ABC):
             cast(np.ndarray, self._probabilities_matrices[results_index2])
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax)
 
-    def plot_probabilities_comparison_with_theorical_results(self,
-                                                             results_index: int,
-                                                             title: str = 'Difference in Probabilities' +
-                                                                          '(theory vs. simulation)',
-                                                             bar_label: str = 'Probabilities Delta value',
-                                                             vmin: float = -0.1,
-                                                             vmax: float = 0.1) -> None:
-        """ Plot probabilities comparing two results """
+    def plot_probabilities_comparison_with_theoretical_results(self,
+                                                               results_index: int,
+                                                               title: str = 'Difference in Probabilities' +
+                                                               '(theory vs. simulation)',
+                                                               bar_label: str = 'Probabilities Delta value',
+                                                               vmin: float = -0.1,
+                                                               vmax: float = 0.1) -> None:
+        """ Plot probabilities comparing theoretical results """
         delta_probs = cast(np.ndarray, self._theoretical_probabilities_matrix) - \
             cast(np.ndarray, self._probabilities_matrices[results_index])
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax)
@@ -144,14 +144,14 @@ class OptimizationResults(ABC):
             cast(np.ndarray, self._amplitudes_matrices[results_index2])
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax)
 
-    def plot_amplitudes_comparison_with_theorical_results(self,
-                                                          results_index: int,
-                                                          title: str = 'Difference in Amplitudes' +
-                                                          '(theory vs. simulation)',
-                                                          bar_label: str = 'Amplitude Delta value',
-                                                          vmin: float = -1,
-                                                          vmax: float = 1) -> None:
-        """ Plot amplitudes comparing two results """
+    def plot_amplitudes_comparison_with_theoretical_results(self,
+                                                            results_index: int,
+                                                            title: str = 'Difference in Amplitudes' +
+                                                            '(theory vs. simulation)',
+                                                            bar_label: str = 'Amplitude Delta value',
+                                                            vmin: float = -1,
+                                                            vmax: float = 1) -> None:
+        """ Plot amplitudes comparing theoretical results """
         delta_probs = cast(np.ndarray, self._theoretical_amplitudes_matrix) - \
             cast(np.ndarray, self._amplitudes_matrices[results_index])
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax)
