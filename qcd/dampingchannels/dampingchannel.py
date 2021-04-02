@@ -3,7 +3,7 @@ from typing import Optional, List, Union
 from ..backends import DeviceBackend
 from ..configurations import SetupConfiguration
 from ..executions import Execution
-from ..optimizationresults import OptimizationResults
+from ..typings.configurations import OptimalConfigurations
 from ..typings import OptimizationSetup
 
 
@@ -23,7 +23,7 @@ class DampingChannel(ABC):
 
     @abstractmethod
     def find_optimal_configurations(self,
-                                    optimization_setup: OptimizationSetup) -> OptimizationResults:
+                                    optimization_setup: OptimizationSetup) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
         pass

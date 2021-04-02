@@ -20,10 +20,24 @@ class OptimalConfigurations(TypedDict):
 
 class TheoreticalOptimalConfiguration(TypedDict):
     best_probability: float
-    best_theoric_x: float
+
+
+class TheoreticalOneShotOptimalConfiguration(TheoreticalOptimalConfiguration):
+    best_theoretical_amplitude: float
+
+
+class TheoreticalOneShotEntangledOptimalConfiguration(TheoreticalOneShotOptimalConfiguration):
+    improvement: float
 
 
 class TheoreticalOptimalConfigurations(TypedDict):
     eta_pairs: List[Tuple[float, float]]
     probabilities: List[float]
-    list_theoric_x: List[float]
+
+
+class TheoreticalOneShotOptimalConfigurations(TheoreticalOptimalConfigurations):
+    list_theoretical_amplitude: List[float]
+
+
+class TheoreticalOneShotEntangledOptimalConfigurations(TheoreticalOneShotOptimalConfigurations):
+    improvements: List[float]

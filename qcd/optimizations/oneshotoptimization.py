@@ -1,9 +1,12 @@
 from . import Optimization
 from ..typings import OptimizationSetup, GuessStrategy
+from ..typings.configurations import OptimalConfigurations
 from typing import Tuple, cast, List
 from ..configurations import ChannelConfiguration, OneShotConfiguration
 from .aux import get_measured_value_from_counts
 import math
+import time
+import numpy as np
 from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
 
 
@@ -94,3 +97,38 @@ class OneShotOptimization(Optimization):
             success_counts += self._play_and_guess_one_case(configuration)
 
         return 1 - (success_counts / self._setup['plays'])
+
+    def find_optimal_configurations(self) -> OptimalConfigurations:
+        """ Finds out the optimal configuration for each pair of attenuation levels
+            using the configured optimization algorithm """
+        probabilities = []
+        configurations = []
+        best_algorithm = []
+        number_calls_made = []
+
+        program_start_time = time.time()
+        print("Starting the execution")
+
+        for eta_pair in self._eta_pairs:
+            start_time = time.time()
+            self._global_eta_pair = eta_pair
+            result = self._compute_best_configuration()
+            probabilities.append(result['best_probability'])
+            configurations.append(result['best_configuration'])
+            best_algorithm.append(result['best_algorithm'])
+            number_calls_made.append(result['number_calls_made'])
+            end_time = time.time()
+            print("total minutes taken this pair of etas: ", int(np.round((end_time - start_time) / 60)))
+            print("total minutes taken so far: ", int(np.round((end_time - program_start_time) / 60)))
+
+        end_time = time.time()
+        print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))
+        print("All guesses have been calculated")
+        print(f'Total pair of etas tested: {len(self._eta_pairs)}')
+
+        return {
+            'eta_pairs': self._eta_pairs,
+            'best_algorithm': best_algorithm,
+            'probabilities': probabilities,
+            'configurations': configurations,
+            'number_calls_made': number_calls_made}

@@ -1,9 +1,11 @@
 """ Auxiliary static methods """
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import List, cast, Tuple, Union, Dict
+from typing import List, cast, Tuple, Union, Dict, Optional
 from ..configurations import OneShotConfiguration
-from ..typings.configurations import OptimalConfigurations, TheoreticalOptimalConfigurations
+from ..typings.configurations import (
+    OptimalConfigurations, TheoreticalOptimalConfigurations, TheoreticalOneShotOptimalConfigurations)
 
 
 def build_probabilities_matrix(
@@ -19,8 +21,8 @@ def build_amplitudes_matrix(
         result: Union[OptimalConfigurations, TheoreticalOptimalConfigurations]) -> List[List[float]]:
     if isinstance(result['eta_pairs'][0][0], float) and _isOptimalConfigurations(result):
         return _build_amplitudes_matrix(cast(OptimalConfigurations, result))
-    if isinstance(result['eta_pairs'][0][0], float) and _isTheoreticalOptimalConfigurations(result):
-        return _build_theoretical_amplitudes_matrix(cast(TheoreticalOptimalConfigurations, result))
+    if isinstance(result['eta_pairs'][0][0], float) and _isTheoreticalOneShotOptimalConfigurations(result):
+        return _build_theoretical_amplitudes_matrix(cast(TheoreticalOneShotOptimalConfigurations, result))
     if isinstance(result['eta_pairs'][0][0], str):
         return cast(List[List[float]], _build_amplitudes_matrix_legacy(cast(Dict, result)))
     raise ValueError('Bad input results')
@@ -47,7 +49,7 @@ def _build_amplitudes_matrix(result: OptimalConfigurations) -> List[List[float]]
     return matrix
 
 
-def _build_theoretical_amplitudes_matrix(result: TheoreticalOptimalConfigurations) -> List[List[float]]:
+def _build_theoretical_amplitudes_matrix(result: TheoreticalOneShotOptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
     _assign_theoretical_amplitudes(result, sorted_etas, matrix)
     _reset_diagonal_matrix(sorted_etas, matrix, value=0)
@@ -82,13 +84,13 @@ def _assign_amplitudes(result: OptimalConfigurations, sorted_etas: List[float], 
         matrix[ind_0, ind_1] = np.sin(cast(OneShotConfiguration, configuration).theta)
 
 
-def _assign_theoretical_amplitudes(result: TheoreticalOptimalConfigurations,
+def _assign_theoretical_amplitudes(result: TheoreticalOneShotOptimalConfigurations,
                                    sorted_etas: List[float],
                                    matrix: np.array):
-    for idx, best_theoric_x in enumerate(result['list_theoric_x']):
+    for idx, best_theoretical_amplitude in enumerate(result['list_theoretical_amplitude']):
         ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
         ind_1 = sorted_etas.index(result['eta_pairs'][idx][1])
-        matrix[ind_0, ind_1] = best_theoric_x
+        matrix[ind_0, ind_1] = best_theoretical_amplitude
 
 
 def _assign_amplitudes_legacy(result: Dict, sorted_etas: List[int], matrix: np.array):
@@ -193,12 +195,24 @@ def _isOptimalConfigurations(input_dict: Union[OptimalConfigurations,
     return False
 
 
-def _isTheoreticalOptimalConfigurations(input_dict: Union[OptimalConfigurations,
-                                                          TheoreticalOptimalConfigurations]) -> bool:
-    """ check if input dictionary is an TheoreticalOptimalConfigurations one """
-    tmp_dict = cast(TheoreticalOptimalConfigurations, input_dict)
+def _isTheoreticalOneShotOptimalConfigurations(input_dict: Union[OptimalConfigurations,
+                                                                 TheoreticalOptimalConfigurations]) -> bool:
+    """ check if input dictionary is an TheoreticalOneShotOptimalConfigurations one """
+    tmp_dict = cast(TheoreticalOneShotOptimalConfigurations, input_dict)
     if (tmp_dict.get('eta_pairs') and
         tmp_dict.get('probabilities') and
-            tmp_dict.get('list_theoric_x')):
+            tmp_dict.get('list_theoretical_amplitude')):
         return True
     return False
+
+
+def load_result_from_file(name: str, path: Optional[str] = "") -> OptimalConfigurations:
+    """ load result from a file """
+    with open(f'./{path}{name}.pkl', 'rb') as file:
+        return pickle.load(file)
+
+
+def save_result_to_disk(optimal_configurations: OptimalConfigurations, name: str, path: Optional[str] = "") -> None:
+    """ save result to a file """
+    with open(f'./{path}{name}.pkl', 'wb') as file:
+        pickle.dump(optimal_configurations, file, pickle.HIGHEST_PROTOCOL)

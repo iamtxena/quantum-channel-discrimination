@@ -5,13 +5,13 @@ from ..configurations import OneShotSetupConfiguration
 from ..executions import Execution, OneShotExecution
 from ..typings import OneShotResults
 from ..optimizations import OneShotOptimization
-from ..optimizationresults import OptimizationResults
 from ..typings import (ResultStates,
                        ResultState,
                        ResultStatesReshaped,
                        ResultProbabilities,
                        ResultProbabilitiesOneChannel,
                        OptimizationSetup)
+from ..typings.configurations import OptimalConfigurations
 from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
 from qiskit.providers.job import JobV1 as Job
 from qiskit.result import Result
@@ -45,7 +45,7 @@ class OneShotDampingChannel(DampingChannel):
         return OneShotExecution(self._execute_all_circuits_one_backend(backend, iterations, timeout))
 
     def find_optimal_configurations(self,
-                                    optimization_setup: OptimizationSetup) -> OptimizationResults:
+                                    optimization_setup: OptimizationSetup) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
 
@@ -71,7 +71,7 @@ class OneShotDampingChannel(DampingChannel):
         ax2.set_title('Output versus $\\vert0\\rangle$ state', fontsize=14)
         ax2.set_xlabel('Input State ||' + '$\\alpha||^2 \\vert0\\rangle$', fontsize=14)
 
-        angles_eta = self.__channel_setup_configuration.attenuation_angles
+        angles_eta = self.__channel_setup_configuration.angles_eta
         index_channel = 0
         modulus_number = np.round(len(angles_eta) / 10)
         index_to_print = 0

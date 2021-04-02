@@ -1,12 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple
-from ..optimizationresults import OptimizationResults
 from ..typings import OptimizationSetup, GuessStrategy
-from ..typings.configurations import OptimalConfiguration
+from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
 from ..configurations import ChannelConfiguration
 from .aux import set_random_eta, check_value, get_combinations_two_etas_without_repeats_from_lambdas
-import time
-import numpy as np
 import math
 from qiskit.aqua.components.optimizers import CRS, DIRECT_L, DIRECT_L_RAND, ESCH, ISRES
 
@@ -55,40 +52,10 @@ class Optimization(ABC):
         """
         pass
 
-    def find_optimal_configurations(self) -> OptimizationResults:
+    def find_optimal_configurations(self) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
-        probabilities = []
-        configurations = []
-        best_algorithm = []
-        number_calls_made = []
-
-        program_start_time = time.time()
-        print("Starting the execution")
-
-        for eta_pair in self._eta_pairs:
-            start_time = time.time()
-            self._global_eta_pair = eta_pair
-            result = self._compute_best_configuration()
-            probabilities.append(result['best_probability'])
-            configurations.append(result['best_configuration'])
-            best_algorithm.append(result['best_algorithm'])
-            number_calls_made.append(result['number_calls_made'])
-            end_time = time.time()
-            print("total minutes taken this pair of etas: ", int(np.round((end_time - start_time) / 60)))
-            print("total minutes taken so far: ", int(np.round((end_time - program_start_time) / 60)))
-
-        end_time = time.time()
-        print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))
-        print("All guesses have been calculated")
-        print(f'Total pair of etas tested: {len(self._eta_pairs)}')
-
-        return OptimizationResults({
-            'eta_pairs': self._eta_pairs,
-            'best_algorithm': best_algorithm,
-            'probabilities': probabilities,
-            'configurations': configurations,
-            'number_calls_made': number_calls_made})
+        pass
 
     def _play_and_guess_one_case(self, channel_configuration: ChannelConfiguration) -> int:
         """ Execute a real execution with a random eta from the two passed,

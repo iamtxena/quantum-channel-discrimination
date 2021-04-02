@@ -1,2 +1,4 @@
-from .optimizationresults import OptimizationResults
-from .oneshotoptimizationresults import OneShotOptimizationResults
+from .optimizationresult import OptimizationResult
+from .oneshotoptimizationresult import OneShotOptimizationResult
+from .oneshotentangledoptimizationresult import OneShotEntangledOptimizationResult
+from .globaloptimizationresults import GlobalOptimizationResults
