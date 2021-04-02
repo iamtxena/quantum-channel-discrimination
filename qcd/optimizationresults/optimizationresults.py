@@ -1,5 +1,6 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Optional, List, Union, cast
+from ..typings import TheoreticalOptimizationSetup
 from ..typings.configurations import OptimalConfigurations
 from .aux import (build_probabilities_matrix, build_amplitudes_matrix,
                   plot_comparison_between_two_results, compute_percentage_delta_values, plot_one_result)
@@ -16,8 +17,7 @@ class OptimizationResults(ABC):
             self._results = [optimal_configurations]
         self._probabilities_matrices: List[List[List[float]]] = []
         self._amplitudes_matrices: List[List[List[float]]] = []
-        self._theoretical_probabilities_matrix: List[List[float]] = []
-        self._theoretical_amplitudes_matrix: List[List[float]] = []
+        self._build_theoretical_matrices_result()
 
     """ save and load results to and from a file """
 
@@ -30,10 +30,15 @@ class OptimizationResults(ABC):
         with open(f'./{path}{name}.pkl', 'rb') as file:
             self._results.append(pickle.load(file))
 
-    def load_theoretical_results_from_file(self, name: str, path: Optional[str] = "") -> None:
-        theoretical_results = []
-        with open(f'./{path}{name}.pkl', 'rb') as file:
-            theoretical_results.append(pickle.load(file))
+    @abstractmethod
+    def _compute_theoretical_optimal_results(self,
+                                             optimization_setup: TheoreticalOptimizationSetup) -> OptimalConfigurations:
+        pass
+
+    def _build_theoretical_matrices_result(self) -> None:
+
+        theoretical_results = self._compute_theoretical_optimal_results(
+            {'eta_pairs': self._results[0]['eta_pairs']})
         self._theoretical_probabilities_matrix = build_probabilities_matrix(theoretical_results)
         self._theoretical_amplitudes_matrix = build_amplitudes_matrix(theoretical_results)
 

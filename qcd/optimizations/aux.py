@@ -1,6 +1,8 @@
 """ Auxiliary static methods """
 from typing import Tuple, List
 import random
+import itertools
+import numpy as np
 
 
 def get_measured_value_from_counts(counts_dict: dict) -> str:
@@ -35,3 +37,22 @@ def reorder_pairs(pairs: List[Tuple[float, float]]) -> List[Tuple[float, float]]
         if pair[0] < pair[1]:
             reordered_pairs[idx] = (pair[1], pair[0])
     return reordered_pairs
+
+
+def get_combinations_two_etas_without_repeats(attenuation_factors: List[float]) -> List[Tuple[float, float]]:
+    """ from a given list of attenuations factors create a
+        list of all combinatorial pairs of possible etas
+        without repeats
+        For us it is the same testing first eta 0.1 and second eta 0.2
+        than first eta 0.2 and second eta 0.1
+        Though, we will always put the greater value as the first pair element
+    """
+    angles_etas = list(map(lambda attenuation_factor: np.arcsin(np.sqrt(attenuation_factor)), attenuation_factors))
+
+    # when there is only one element, we add the same element
+    if len(angles_etas) == 1:
+        angles_etas.append(angles_etas[0])
+    # get combinations of two etas without repeats
+    eta_pairs = list(itertools.combinations(angles_etas, 2))
+
+    return reorder_pairs(eta_pairs)
