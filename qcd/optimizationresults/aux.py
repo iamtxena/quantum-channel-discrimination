@@ -4,12 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, cast, Tuple, Union, Dict, Optional
 from ..configurations import OneShotConfiguration
-from ..typings.configurations import (
-    OptimalConfigurations, TheoreticalOptimalConfigurations, TheoreticalOneShotOptimalConfigurations)
+from ..typings.configurations import (OptimalConfigurations,
+                                      TheoreticalOneShotOptimalConfigurations)
 
 
 def build_probabilities_matrix(
-        result: Union[OptimalConfigurations, TheoreticalOptimalConfigurations]) -> List[List[float]]:
+        result: Union[OptimalConfigurations, TheoreticalOneShotOptimalConfigurations]) -> List[List[float]]:
     if isinstance(result['eta_pairs'][0][0], float):
         return _build_probabilities_matrix(cast(OptimalConfigurations, result))
     if isinstance(result['eta_pairs'][0][0], str):
@@ -18,7 +18,7 @@ def build_probabilities_matrix(
 
 
 def build_amplitudes_matrix(
-        result: Union[OptimalConfigurations, TheoreticalOptimalConfigurations]) -> List[List[float]]:
+        result: Union[OptimalConfigurations, TheoreticalOneShotOptimalConfigurations]) -> List[List[float]]:
     if isinstance(result['eta_pairs'][0][0], float) and _isOptimalConfigurations(result):
         return _build_amplitudes_matrix(cast(OptimalConfigurations, result))
     if isinstance(result['eta_pairs'][0][0], float) and _isTheoreticalOneShotOptimalConfigurations(result):
@@ -183,7 +183,7 @@ def compute_percentage_delta_values(delta_values: List[List[float]],
 
 
 def _isOptimalConfigurations(input_dict: Union[OptimalConfigurations,
-                                               TheoreticalOptimalConfigurations]) -> bool:
+                                               TheoreticalOneShotOptimalConfigurations]) -> bool:
     """ check if input dictionary is an OptimalConfigurations one """
     tmp_dict = cast(OptimalConfigurations, input_dict)
     if (tmp_dict.get('eta_pairs') and
@@ -196,7 +196,7 @@ def _isOptimalConfigurations(input_dict: Union[OptimalConfigurations,
 
 
 def _isTheoreticalOneShotOptimalConfigurations(input_dict: Union[OptimalConfigurations,
-                                                                 TheoreticalOptimalConfigurations]) -> bool:
+                                                                 TheoreticalOneShotOptimalConfigurations]) -> bool:
     """ check if input dictionary is an TheoreticalOneShotOptimalConfigurations one """
     tmp_dict = cast(TheoreticalOneShotOptimalConfigurations, input_dict)
     if (tmp_dict.get('eta_pairs') and

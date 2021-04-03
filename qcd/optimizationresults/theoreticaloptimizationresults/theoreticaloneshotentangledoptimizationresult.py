@@ -1,7 +1,7 @@
 from . import TheoreticalOneShotOptimizationResult
-from ..typings.configurations import TheoreticalOneShotEntangledOptimalConfigurations
-from ..typings import TheoreticalOptimizationSetup
-from ..optimizations import TheoreticalOneShotEntangledOptimization
+from ...typings.configurations import TheoreticalOneShotEntangledOptimalConfigurations
+from ...typings import TheoreticalOptimizationSetup
+from ...optimizations import TheoreticalOneShotEntangledOptimization
 
 
 class TheoreticalOneShotEntangledOptimizationResult(TheoreticalOneShotOptimizationResult):

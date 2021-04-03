@@ -1,7 +1,7 @@
 from . import TheoreticalOptimizationResult
-from ..typings import TheoreticalOptimizationSetup
-from ..optimizations import TheoreticalOneShotOptimization
-from ..typings.configurations import TheoreticalOneShotOptimalConfigurations
+from ...typings import TheoreticalOptimizationSetup
+from ...optimizations import TheoreticalOneShotOptimization
+from ...typings.configurations import TheoreticalOneShotOptimalConfigurations
 
 
 class TheoreticalOneShotOptimizationResult(TheoreticalOptimizationResult):

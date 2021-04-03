@@ -4,8 +4,9 @@ from ..typings.configurations import OptimalConfigurations
 from .aux import (load_result_from_file, plot_one_result,
                   plot_comparison_between_two_results, compute_percentage_delta_values)
 from .global_aux import build_optimization_result
-from . import TheoreticalResult, TheoreticalOneShotOptimizationResult, TheoreticalOneShotEntangledOptimizationResult
-from ..typings import DampingChannelStrategy
+from .theoreticaloptimizationresults import (
+    TheoreticalOneShotOptimizationResult, TheoreticalOneShotEntangledOptimizationResult)
+from ..typings.theoreticalresult import DampingChannelStrategy, TheoreticalResult, STRATEGY
 import numpy as np
 
 
@@ -37,8 +38,8 @@ class GlobalOptimizationResults(ABC):
     def _build_all_theoretical_optimizations_results(self, optimal_configurations: OptimalConfigurations) -> None:
         """ Build the theoretical optimization result for each damping channel supported """
         self._theoretical_results: TheoreticalResult = {
-            DampingChannelStrategy.one_shot: TheoreticalOneShotOptimizationResult(optimal_configurations),
-            DampingChannelStrategy.one_shot_side_entanglement:
+            'one_shot': TheoreticalOneShotOptimizationResult(optimal_configurations),
+            'one_shot_side_entanglement':
             TheoreticalOneShotEntangledOptimizationResult(optimal_configurations),
         }
 
@@ -52,13 +53,14 @@ class GlobalOptimizationResults(ABC):
         plot_one_result(self._optimization_results[results_index].probabilities_matrix, title, bar_label, vmin, vmax)
 
     def plot_theoretical_probabilities(self,
-                                       strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot,
+                                       strategy: STRATEGY = DampingChannelStrategy.one_shot,
                                        title: str = 'Probabilities from theory',
                                        bar_label: str = 'Probabilities value',
                                        vmin: float = 0.0,
                                        vmax: float = 1.0) -> None:
         """ Plot theoretical probabilities analysis """
-        plot_one_result(self._theoretical_results[strategy].probabilities_matrix, title, bar_label, vmin, vmax)
+        plot_one_result(
+            self._theoretical_results[strategy].probabilities_matrix, title, bar_label, vmin, vmax)
 
     def plot_amplitudes(self,
                         results_index: int,
@@ -70,7 +72,7 @@ class GlobalOptimizationResults(ABC):
         plot_one_result(self._optimization_results[results_index].amplitudes_matrix, title, bar_label, vmin, vmax)
 
     def plot_theoretical_amplitudes(self,
-                                    strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot,
+                                    strategy: STRATEGY = DampingChannelStrategy.one_shot,
                                     title: str = 'Input state amplitude |1> obtained from theory',
                                     bar_label: str = 'Amplitude value',
                                     vmin: float = 0.0,
@@ -92,8 +94,8 @@ class GlobalOptimizationResults(ABC):
 
     def plot_theoretical_probabilities_comparison(
             self,
-            fisrt_strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot,
-            second_strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot_side_entanglement,
+            fisrt_strategy: STRATEGY = DampingChannelStrategy.one_shot,
+            second_strategy: STRATEGY = DampingChannelStrategy.one_shot_side_entanglement,
             title: str = 'Difference in Probabilities from theoretical strategies',
             bar_label: str = 'Probabilities value',
             vmin: float = -0.1,
@@ -106,7 +108,7 @@ class GlobalOptimizationResults(ABC):
     def plot_probabilities_comparison_with_theoretical_result(
             self,
             results_index: int,
-            strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot,
+            strategy: STRATEGY = DampingChannelStrategy.one_shot,
             title: str = 'Difference in Probabilities' +
             '(theory vs. simulation)',
             bar_label: str = 'Probabilities Delta value',
@@ -131,8 +133,8 @@ class GlobalOptimizationResults(ABC):
 
     def plot_theoretical_amplitudes_comparison(
             self,
-            fisrt_strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot,
-            second_strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot_side_entanglement,
+            fisrt_strategy: STRATEGY = DampingChannelStrategy.one_shot,
+            second_strategy: STRATEGY = DampingChannelStrategy.one_shot_side_entanglement,
             title: str = 'Difference in Amplitudes from theoretical strategies',
             bar_label: str = 'Amplitude value',
             vmin: float = -1.0,
@@ -145,7 +147,7 @@ class GlobalOptimizationResults(ABC):
     def plot_amplitudes_comparison_with_theoretical_result(
             self,
             results_index: int,
-            strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot,
+            strategy: STRATEGY = DampingChannelStrategy.one_shot,
             title: str = 'Difference in Amplitudes' +
             '(theory vs. simulation)',
             bar_label: str = 'Amplitude Delta value',
@@ -159,7 +161,7 @@ class GlobalOptimizationResults(ABC):
     def plot_probabilities_comparison_percentage(
             self,
             results_index: int,
-            strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot,
+            strategy: STRATEGY = DampingChannelStrategy.one_shot,
             title: str = 'Deviation in % from theoric ' +
             'probability (thoery vs. simulation)',
             bar_label: str = 'Probabilities Delta (%)',
@@ -175,7 +177,7 @@ class GlobalOptimizationResults(ABC):
     def plot_amplitudes_comparison_percentage(
             self,
             results_index: int,
-            strategy: DampingChannelStrategy = DampingChannelStrategy.one_shot,
+            strategy: STRATEGY = DampingChannelStrategy.one_shot,
             title: str = 'Deviation in % from theoric ' +
             'amplitude (theory vs. simulation)',
             bar_label: str = 'Amplitude Delta (%)',

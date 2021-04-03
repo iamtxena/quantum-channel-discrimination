@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from ..typings.configurations import OptimalConfigurations
-from ..typings import TheoreticalOptimizationSetup
-from . import OptimizationResult
+from .. import OptimizationResult
+from ...typings import TheoreticalOptimizationSetup
+from ...typings.configurations import OptimalConfigurations
 
 
 class TheoreticalOptimizationResult(OptimizationResult):

@@ -44,8 +44,8 @@ class OneShotDampingChannel(DampingChannel):
 
         return OneShotExecution(self._execute_all_circuits_one_backend(backend, iterations, timeout))
 
-    def find_optimal_configurations(self,
-                                    optimization_setup: OptimizationSetup) -> OptimalConfigurations:
+    @staticmethod
+    def find_optimal_configurations(optimization_setup: OptimizationSetup) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
 

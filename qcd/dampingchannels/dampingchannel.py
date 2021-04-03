@@ -21,9 +21,9 @@ class DampingChannel(ABC):
         """ Runs all the experiments using the configured circuits launched to the provided backend """
         pass
 
+    @staticmethod
     @abstractmethod
-    def find_optimal_configurations(self,
-                                    optimization_setup: OptimizationSetup) -> OptimalConfigurations:
+    def find_optimal_configurations(optimization_setup: OptimizationSetup) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
         pass
