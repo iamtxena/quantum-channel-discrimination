@@ -46,7 +46,7 @@ class OneShotResults(TypedDict):
 class OptimizationSetup(TypedDict):
     optimizer_algorithms: List[str]
     optimizer_iterations: List[int]
-    attenuation_factors: List[float]
+    attenuation_angles: List[float]
     initial_parameters: List[float]
     variable_bounds: List[Tuple[float, float]]
     plays: int

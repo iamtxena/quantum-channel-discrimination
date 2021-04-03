@@ -201,3 +201,13 @@ class GlobalOptimizationResults(ABC):
         percentage_delta_amplitudes = compute_percentage_delta_values(
             delta_amplitudes, self._theoretical_results[strategy].amplitudes_matrix)
         plot_comparison_between_two_results(percentage_delta_amplitudes, title, bar_label, vmin, vmax, cmap)
+
+    def plot_theoretical_improvement(self,
+                                     title: str = 'Improvement on Side Entanglement Theory',
+                                     bar_label: str = 'Improvement value',
+                                     vmin: float = 0.0,
+                                     vmax: float = 1.0) -> None:
+        """ Plot theoretical improvement analysis """
+        plot_one_result(cast(TheoreticalOneShotEntangledOptimizationResult,
+                             self._theoretical_results['one_shot_side_entanglement'])._improvement_matrix,
+                        title, bar_label, vmin, vmax)

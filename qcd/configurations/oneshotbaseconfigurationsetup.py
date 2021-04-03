@@ -13,9 +13,9 @@ class OneShotSetupConfiguration(SetupConfiguration):
         self._points_phase = setup['points_phase']
         if self._points_phase is None:
             raise ValueError('points_phase is required')
-        self._attenuation_factors = setup['attenuation_factors']
-        if self._attenuation_factors is None:
-            raise ValueError('attenuation_factors is required')
+        self._angles_eta = setup['attenuation_angles']
+        if self._angles_eta is None:
+            raise ValueError('attenuation_angles is required')
         try:
             self._angles_rx = setup['angles_rx']
         except KeyError:
@@ -31,8 +31,7 @@ class OneShotSetupConfiguration(SetupConfiguration):
         self._angles_ry_interval = (0, 2 * np.pi)
         self._angles_theta = np.mgrid[0:np.pi / 2:self._points_theta * 1j]
         self._angles_phase = np.mgrid[0:2 * np.pi:self._points_phase * 1j]
-        self._angles_eta = list(map(lambda attenuation_factor: np.arcsin(
-            np.sqrt(attenuation_factor)), self._attenuation_factors))
+        self._attenuation_factors = list(map(lambda angle_eta: (np.sin(angle_eta))**2, self._angles_eta))
 
     @property
     def points_theta(self) -> int:

@@ -8,8 +8,8 @@ class TheoreticalOptimizationResult(OptimizationResult):
     """ Generic class acting as an interface for the theoretical optimization result of any channel """
 
     def __init__(self, optimal_configurations: OptimalConfigurations) -> None:
-        theoretical_result = self._prepare_etas_and_compute_theoretical_result(optimal_configurations)
-        super().__init__(theoretical_result)
+        self._theoretical_result = self._prepare_etas_and_compute_theoretical_result(optimal_configurations)
+        super().__init__(self._theoretical_result)
 
     def _prepare_etas_and_compute_theoretical_result(
             self,
