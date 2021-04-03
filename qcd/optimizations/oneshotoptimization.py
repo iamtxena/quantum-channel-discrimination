@@ -122,8 +122,8 @@ class OneShotOptimization(Optimization):
 
         end_time = time.time()
         print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))
-        print("All guesses have been calculated")
-        print(f'Total pair of etas tested: {len(self._eta_pairs)}')
+        print(f'Number eta pairs optimized: {len(eta_pairs_idx_to_optimize)}' +
+              f'from the total eta pairs: {len(self._eta_pairs)} ')
         optimal_configurations['eta_pairs'] = self._eta_pairs
 
         return optimal_configurations
