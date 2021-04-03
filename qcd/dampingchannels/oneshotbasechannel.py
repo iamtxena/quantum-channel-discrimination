@@ -52,7 +52,7 @@ class OneShotDampingChannel(DampingChannel):
             using the configured optimization algorithm """
 
         optimal_configurations = OneShotOptimization(optimization_setup).find_optimal_configurations(clone_setup)
-        if clone_setup is not None and clone_setup['file_name'] is not None:
+        if clone_setup is not None and 'file_name' in clone_setup:
             save_object_to_disk(optimal_configurations,
                                 f"{clone_setup['file_name']}_{clone_setup['id_clone']}", clone_setup['path'])
         return optimal_configurations

@@ -5,7 +5,7 @@ from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
 from ..configurations import ChannelConfiguration
 from .aux import set_random_eta, check_value, get_combinations_two_etas_without_repeats_from_etas
 import math
-from qiskit.aqua.components.optimizers import ADAM, CRS, DIRECT_L, DIRECT_L_RAND, ESCH, ISRES
+from qiskit.aqua.components.optimizers import L_BFGS_B, ADAM, CRS, DIRECT_L, DIRECT_L_RAND, ESCH, ISRES
 
 
 class Optimization(ABC):
@@ -82,6 +82,8 @@ class Optimization(ABC):
             print("Analyzing Optimizer Algorithm: ", optimizer_algorithm)
             if optimizer_algorithm == 'ADAM':
                 optimizer = ADAM(maxiter=max_evals)
+            if optimizer_algorithm == 'L_BFGS_B':
+                optimizer = L_BFGS_B(maxfun=max_evals, maxiter=max_evals)
             if optimizer_algorithm == 'CRS':
                 optimizer = CRS(max_evals=max_evals)
             if optimizer_algorithm == 'DIRECT_L':

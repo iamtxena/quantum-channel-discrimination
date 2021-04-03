@@ -103,6 +103,8 @@ class OneShotOptimization(Optimization):
             using the configured optimization algorithm """
         eta_pairs_idx_to_optimize, optimal_configurations = self._select_eta_pairs_to_optimize(clone_setup)
 
+        print(f'number of eta_pairs_idx_to_optimize: {len(eta_pairs_idx_to_optimize)} -> {eta_pairs_idx_to_optimize}')
+
         program_start_time = time.time()
         print("Starting the execution")
 
@@ -149,7 +151,7 @@ class OneShotOptimization(Optimization):
                                                       'eta_pair': self._eta_pairs[eta_pair_idx]})
             configurations.append(cast(ChannelConfiguration, one_configuration))
 
-        return {'eta_pairs': self._eta_pairs,
+        return {'eta_pairs': [],
                 'best_algorithm': ['NA'] * elements_to_skip,
                 'probabilities': [0] * elements_to_skip,
                 'configurations': configurations,
@@ -160,19 +162,19 @@ class OneShotOptimization(Optimization):
         total_eta_pairs = len(self._eta_pairs)
 
         if clone_setup is None or clone_setup['total_clones'] <= 1:
-            return (0, total_eta_pairs - 1)
+            return (0, total_eta_pairs)
 
-        eta_pair_idx_init = np.ceil(clone_setup['id_clone'] * total_eta_pairs / clone_setup['total_clones'])
-        eta_pair_idx_end = min(np.ceil((clone_setup['id_clone'] + 1) *
-                                       total_eta_pairs / clone_setup['total_clones']) - 1, total_eta_pairs - 1)
+        eta_pair_idx_init = int(np.floor(clone_setup['id_clone'] * total_eta_pairs / clone_setup['total_clones']))
+        eta_pair_idx_end = min(int((clone_setup['id_clone'] + 1) *
+                                   total_eta_pairs / clone_setup['total_clones']), total_eta_pairs)
         return (eta_pair_idx_init, eta_pair_idx_end)
 
     def _build_eta_pair_index_lists(self, eta_pair_idx_init: int, eta_pair_idx_end: int) -> Dict:
         """ create two lists with the the eta pair index to be computed and the index to be skipped """
-        first_part_to_compute = list(range(0, eta_pair_idx_init))
-        last_part_to_compute = list(range(eta_pair_idx_end, len(self._eta_pairs)))
+        first_part_to_skip = list(range(0, eta_pair_idx_init))
+        last_part_to_skip = list(range(eta_pair_idx_end, len(self._eta_pairs)))
 
         return {
-            'eta_pair_idx_to_compute': first_part_to_compute + last_part_to_compute,
-            'eta_pair_idx_to_skip': list(range(eta_pair_idx_init, eta_pair_idx_end))
+            'eta_pair_idx_to_compute': list(range(eta_pair_idx_init, eta_pair_idx_end)),
+            'eta_pair_idx_to_skip': first_part_to_skip + last_part_to_skip
         }
