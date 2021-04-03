@@ -63,5 +63,5 @@ class GuessStrategy(enum.Enum):
 
 
 class DampingChannelStrategy(enum.Enum):
-    one_shot = 1
-    one_shot_side_entanglement = 2
+    one_shot = 'one_shot'
+    one_shot_side_entanglement = 'one_shot_side_entanglement'
