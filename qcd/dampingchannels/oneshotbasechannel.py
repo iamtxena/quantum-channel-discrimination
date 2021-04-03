@@ -3,7 +3,7 @@ from typing import Optional, List, Union, cast, Tuple
 from ..backends import DeviceBackend
 from ..configurations import OneShotSetupConfiguration
 from ..executions import Execution, OneShotExecution
-from ..typings import OneShotResults
+from ..typings import CloneSetup, OneShotResults
 from ..optimizations import OneShotOptimization
 from ..typings import (ResultStates,
                        ResultState,
@@ -20,6 +20,7 @@ from qiskit.quantum_info.states.utils import partial_trace
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from qcd import save_object_to_disk
 
 
 class OneShotDampingChannel(DampingChannel):
@@ -45,11 +46,16 @@ class OneShotDampingChannel(DampingChannel):
         return OneShotExecution(self._execute_all_circuits_one_backend(backend, iterations, timeout))
 
     @staticmethod
-    def find_optimal_configurations(optimization_setup: OptimizationSetup) -> OptimalConfigurations:
+    def find_optimal_configurations(optimization_setup: OptimizationSetup,
+                                    clone_setup: Optional[CloneSetup]) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
 
-        return OneShotOptimization(optimization_setup).find_optimal_configurations()
+        optimal_configurations = OneShotOptimization(optimization_setup).find_optimal_configurations(clone_setup)
+        if clone_setup is not None and clone_setup['file_name'] is not None:
+            save_object_to_disk(optimal_configurations,
+                                f"{clone_setup['file_name']}_{clone_setup['id_clone']}", clone_setup['path'])
+        return optimal_configurations
 
     def plot_first_channel(self):
         return self._circuits[0][0].draw('mpl')

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple
-from ..typings import OptimizationSetup, GuessStrategy
+from typing import List, Optional, Tuple
+from ..typings import OptimizationSetup, GuessStrategy, CloneSetup
 from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
 from ..configurations import ChannelConfiguration
 from .aux import set_random_eta, check_value, get_combinations_two_etas_without_repeats_from_etas
@@ -52,7 +52,7 @@ class Optimization(ABC):
         """
         pass
 
-    def find_optimal_configurations(self) -> OptimalConfigurations:
+    def find_optimal_configurations(self, clone_setup: Optional[CloneSetup]) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
         pass
