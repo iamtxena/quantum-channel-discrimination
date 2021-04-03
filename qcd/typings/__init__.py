@@ -60,3 +60,10 @@ class GuessStrategy(enum.Enum):
     one_bit_same_as_measured = 1
     two_bit_base = 2
     two_bit_neural_network = 3
+
+
+class CloneSetup(TypedDict):
+    total_clones: int
+    id_clone: int
+    file_name: str
+    path: str
