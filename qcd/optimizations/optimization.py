@@ -3,9 +3,9 @@ from typing import List, Tuple
 from ..typings import OptimizationSetup, GuessStrategy
 from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
 from ..configurations import ChannelConfiguration
-from .aux import set_random_eta, check_value, get_combinations_two_etas_without_repeats_from_lambdas
+from .aux import set_random_eta, check_value, get_combinations_two_etas_without_repeats_from_etas
 import math
-from qiskit.aqua.components.optimizers import CRS, DIRECT_L, DIRECT_L_RAND, ESCH, ISRES
+from qiskit.aqua.components.optimizers import ADAM, CRS, DIRECT_L, DIRECT_L_RAND, ESCH, ISRES
 
 
 class Optimization(ABC):
@@ -13,7 +13,7 @@ class Optimization(ABC):
 
     def __init__(self, optimization_setup: OptimizationSetup):
         self._setup = optimization_setup
-        self._eta_pairs = get_combinations_two_etas_without_repeats_from_lambdas(self._setup['attenuation_factors'])
+        self._eta_pairs = get_combinations_two_etas_without_repeats_from_etas(self._setup['attenuation_angles'])
         self._global_eta_pair = (0.0, 0.0)
 
     @abstractmethod
@@ -80,6 +80,8 @@ class Optimization(ABC):
 
         for optimizer_algorithm, max_evals in zip(optimizer_algorithms, optimizer_iterations):
             print("Analyzing Optimizer Algorithm: ", optimizer_algorithm)
+            if optimizer_algorithm == 'ADAM':
+                optimizer = ADAM(maxiter=max_evals)
             if optimizer_algorithm == 'CRS':
                 optimizer = CRS(max_evals=max_evals)
             if optimizer_algorithm == 'DIRECT_L':

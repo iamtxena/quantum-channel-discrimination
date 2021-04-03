@@ -1,10 +1,12 @@
 """ Auxiliary static methods """
 import pickle
+from qcd.typings import TheoreticalOptimizationSetup
+from qcd.optimizations.aux import get_combinations_two_etas_without_repeats_from_etas
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, cast, Tuple, Union, Dict, Optional
 from ..configurations import OneShotConfiguration
-from ..typings.configurations import (OptimalConfigurations,
+from ..typings.configurations import (OptimalConfigurations, TheoreticalOneShotEntangledOptimalConfigurations,
                                       TheoreticalOneShotOptimalConfigurations)
 
 
@@ -216,3 +218,27 @@ def save_result_to_disk(optimal_configurations: OptimalConfigurations, name: str
     """ save result to a file """
     with open(f'./{path}{name}.pkl', 'wb') as file:
         pickle.dump(optimal_configurations, file, pickle.HIGHEST_PROTOCOL)
+
+
+def get_theoretical_optimization_setup_from_number_of_etas(number_etas: int) -> TheoreticalOptimizationSetup:
+    """ compute the eta pairs given the number of etas to generate from 0 to pi/2 (including pi/2) """
+    eta_angles = np.append(np.arange(0, np.pi / 2, np.pi / 2 / (number_etas - 1)), np.pi / 2)
+    eta_pairs = get_combinations_two_etas_without_repeats_from_etas(eta_angles)
+    return {'eta_pairs': eta_pairs}
+
+
+def build_improvement_matrix(
+        optimal_configurations: TheoreticalOneShotEntangledOptimalConfigurations) -> List[List[float]]:
+    """ Returns the correspondent matrix of the improvement values """
+    sorted_etas, matrix = _init_matrix(optimal_configurations)
+    _assign_improvement(optimal_configurations, sorted_etas, matrix)
+    return matrix
+
+
+def _assign_improvement(result: TheoreticalOneShotEntangledOptimalConfigurations,
+                        sorted_etas: List[float],
+                        matrix: np.array):
+    for idx, improvement in enumerate(result['improvements']):
+        ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
+        ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][1])
+        matrix[ind_1, ind_0] = improvement

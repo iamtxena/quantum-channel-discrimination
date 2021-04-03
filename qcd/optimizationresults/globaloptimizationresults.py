@@ -33,14 +33,14 @@ class GlobalOptimizationResults(ABC):
             optimal_results = [optimal_configurations]
         optimal_results = cast(List[OptimalConfigurations], optimal_results)
         self._optimization_results = [build_optimization_result(optimal_result) for optimal_result in optimal_results]
-        self._build_all_theoretical_optimizations_results(optimal_results[0])
+        self._build_all_theoretical_optimizations_results(len(self._optimization_results[0].probabilities_matrix))
 
-    def _build_all_theoretical_optimizations_results(self, optimal_configurations: OptimalConfigurations) -> None:
+    def _build_all_theoretical_optimizations_results(self, number_etas: int) -> None:
         """ Build the theoretical optimization result for each damping channel supported """
         self._theoretical_results: TheoreticalResult = {
-            'one_shot': TheoreticalOneShotOptimizationResult(optimal_configurations),
+            'one_shot': TheoreticalOneShotOptimizationResult(number_etas),
             'one_shot_side_entanglement':
-            TheoreticalOneShotEntangledOptimizationResult(optimal_configurations),
+            TheoreticalOneShotEntangledOptimizationResult(number_etas),
         }
 
     def plot_probabilities(self,
@@ -99,16 +99,19 @@ class GlobalOptimizationResults(ABC):
 
     def plot_theoretical_probabilities_comparison(
             self,
-            first_strategy: STRATEGY = 'one_shot',
-            second_strategy: STRATEGY = 'one_shot_side_entanglement',
+            first_strategy: STRATEGY = 'one_shot_side_entanglement',
+            second_strategy: STRATEGY = 'one_shot',
             title: str = 'Difference in Probabilities from theoretical strategies',
             bar_label: str = 'Probabilities value',
-            vmin: float = -0.1,
-            vmax: float = 0.1,
-            cmap='RdBu') -> None:
+            vmin: float = 0,
+            vmax: float = 0.05,
+            cmap='viridis') -> None:
         """ Plot probabilities comparing two results """
         delta_probs = cast(np.ndarray, self._theoretical_results[first_strategy].probabilities_matrix) - \
             cast(np.ndarray, self._theoretical_results[second_strategy].probabilities_matrix)
+        vmin = np.min(delta_probs)
+        vmax = np.max(delta_probs)
+        print(f'min: {vmin}, max {vmax}')
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_probabilities_comparison_with_theoretical_result(
@@ -206,8 +209,12 @@ class GlobalOptimizationResults(ABC):
                                      title: str = 'Improvement on Side Entanglement Theory',
                                      bar_label: str = 'Improvement value',
                                      vmin: float = 0.0,
-                                     vmax: float = 1.0) -> None:
+                                     vmax: float = 0.05,
+                                     cmap='viridis') -> None:
         """ Plot theoretical improvement analysis """
+        vmin = np.min(self._theoretical_results['one_shot_side_entanglement']._improvement_matrix)
+        vmax = np.max(self._theoretical_results['one_shot_side_entanglement']._improvement_matrix)
+        print(f'min: {vmin}, max {vmax}')
         plot_one_result(cast(TheoreticalOneShotEntangledOptimizationResult,
                              self._theoretical_results['one_shot_side_entanglement'])._improvement_matrix,
-                        title, bar_label, vmin, vmax)
+                        title, bar_label, vmin, vmax, cmap)
