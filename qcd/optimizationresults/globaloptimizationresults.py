@@ -6,7 +6,7 @@ from .aux import (load_result_from_file, plot_one_result,
 from .global_aux import build_optimization_result
 from .theoreticaloptimizationresults import (
     TheoreticalOneShotOptimizationResult, TheoreticalOneShotEntangledOptimizationResult)
-from ..typings.theoreticalresult import DampingChannelStrategy, TheoreticalResult, STRATEGY
+from ..typings.theoreticalresult import TheoreticalResult, STRATEGY
 import numpy as np
 
 
@@ -53,7 +53,7 @@ class GlobalOptimizationResults(ABC):
         plot_one_result(self._optimization_results[results_index].probabilities_matrix, title, bar_label, vmin, vmax)
 
     def plot_theoretical_probabilities(self,
-                                       strategy: STRATEGY = DampingChannelStrategy.one_shot,
+                                       strategy: STRATEGY = 'one_shot',
                                        title: str = 'Probabilities from theory',
                                        bar_label: str = 'Probabilities value',
                                        vmin: float = 0.0,
@@ -72,7 +72,7 @@ class GlobalOptimizationResults(ABC):
         plot_one_result(self._optimization_results[results_index].amplitudes_matrix, title, bar_label, vmin, vmax)
 
     def plot_theoretical_amplitudes(self,
-                                    strategy: STRATEGY = DampingChannelStrategy.one_shot,
+                                    strategy: STRATEGY = 'one_shot',
                                     title: str = 'Input state amplitude |1> obtained from theory',
                                     bar_label: str = 'Amplitude value',
                                     vmin: float = 0.0,
@@ -88,27 +88,27 @@ class GlobalOptimizationResults(ABC):
                                       vmin: float = -0.1,
                                       vmax: float = 0.1) -> None:
         """ Plot probabilities comparing two results """
-        delta_probs = cast(np.ndarray, self._optimization_results[results_index1]) - \
-            cast(np.ndarray, self._optimization_results[results_index2])
+        delta_probs = cast(np.ndarray, self._optimization_results[results_index1].probabilities_matrix) - \
+            cast(np.ndarray, self._optimization_results[results_index2].probabilities_matrix)
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax)
 
     def plot_theoretical_probabilities_comparison(
             self,
-            fisrt_strategy: STRATEGY = DampingChannelStrategy.one_shot,
-            second_strategy: STRATEGY = DampingChannelStrategy.one_shot_side_entanglement,
+            first_strategy: STRATEGY = 'one_shot',
+            second_strategy: STRATEGY = 'one_shot_side_entanglement',
             title: str = 'Difference in Probabilities from theoretical strategies',
             bar_label: str = 'Probabilities value',
             vmin: float = -0.1,
             vmax: float = 0.1) -> None:
         """ Plot probabilities comparing two results """
-        delta_probs = cast(np.ndarray, self._theoretical_results[fisrt_strategy].probabilities_matrix) - \
+        delta_probs = cast(np.ndarray, self._theoretical_results[first_strategy].probabilities_matrix) - \
             cast(np.ndarray, self._theoretical_results[second_strategy].probabilities_matrix)
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax)
 
     def plot_probabilities_comparison_with_theoretical_result(
             self,
             results_index: int,
-            strategy: STRATEGY = DampingChannelStrategy.one_shot,
+            strategy: STRATEGY = 'one_shot',
             title: str = 'Difference in Probabilities' +
             '(theory vs. simulation)',
             bar_label: str = 'Probabilities Delta value',
@@ -133,21 +133,21 @@ class GlobalOptimizationResults(ABC):
 
     def plot_theoretical_amplitudes_comparison(
             self,
-            fisrt_strategy: STRATEGY = DampingChannelStrategy.one_shot,
-            second_strategy: STRATEGY = DampingChannelStrategy.one_shot_side_entanglement,
+            first_strategy: STRATEGY = 'one_shot',
+            second_strategy: STRATEGY = 'one_shot_side_entanglement',
             title: str = 'Difference in Amplitudes from theoretical strategies',
             bar_label: str = 'Amplitude value',
             vmin: float = -1.0,
             vmax: float = 1.0) -> None:
         """ Plot amplitudes comparing two theoretical results """
-        delta_probs = cast(np.ndarray, self._theoretical_results[fisrt_strategy].amplitudes_matrix) - \
+        delta_probs = cast(np.ndarray, self._theoretical_results[first_strategy].amplitudes_matrix) - \
             cast(np.ndarray, self._theoretical_results[second_strategy].amplitudes_matrix)
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax)
 
     def plot_amplitudes_comparison_with_theoretical_result(
             self,
             results_index: int,
-            strategy: STRATEGY = DampingChannelStrategy.one_shot,
+            strategy: STRATEGY = 'one_shot',
             title: str = 'Difference in Amplitudes' +
             '(theory vs. simulation)',
             bar_label: str = 'Amplitude Delta value',
@@ -161,7 +161,7 @@ class GlobalOptimizationResults(ABC):
     def plot_probabilities_comparison_percentage(
             self,
             results_index: int,
-            strategy: STRATEGY = DampingChannelStrategy.one_shot,
+            strategy: STRATEGY = 'one_shot',
             title: str = 'Deviation in % from theoric ' +
             'probability (thoery vs. simulation)',
             bar_label: str = 'Probabilities Delta (%)',
@@ -177,7 +177,7 @@ class GlobalOptimizationResults(ABC):
     def plot_amplitudes_comparison_percentage(
             self,
             results_index: int,
-            strategy: STRATEGY = DampingChannelStrategy.one_shot,
+            strategy: STRATEGY = 'one_shot',
             title: str = 'Deviation in % from theoric ' +
             'amplitude (theory vs. simulation)',
             bar_label: str = 'Amplitude Delta (%)',

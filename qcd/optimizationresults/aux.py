@@ -19,10 +19,10 @@ def build_probabilities_matrix(
 
 def build_amplitudes_matrix(
         result: Union[OptimalConfigurations, TheoreticalOneShotOptimalConfigurations]) -> List[List[float]]:
-    if isinstance(result['eta_pairs'][0][0], float) and _isOptimalConfigurations(result):
-        return _build_amplitudes_matrix(cast(OptimalConfigurations, result))
     if isinstance(result['eta_pairs'][0][0], float) and _isTheoreticalOneShotOptimalConfigurations(result):
         return _build_theoretical_amplitudes_matrix(cast(TheoreticalOneShotOptimalConfigurations, result))
+    if isinstance(result['eta_pairs'][0][0], float) and _isOptimalConfigurations(result):
+        return _build_amplitudes_matrix(cast(OptimalConfigurations, result))
     if isinstance(result['eta_pairs'][0][0], str):
         return cast(List[List[float]], _build_amplitudes_matrix_legacy(cast(Dict, result)))
     raise ValueError('Bad input results')

@@ -9,8 +9,7 @@ class DampingChannelStrategy(enum.Enum):
     one_shot_side_entanglement = 'one_shot_side_entanglement'
 
 
-STRATEGY = Literal[DampingChannelStrategy.one_shot,
-                   DampingChannelStrategy.one_shot_side_entanglement]
+STRATEGY = Literal['one_shot', 'one_shot_side_entanglement']
 
 
 class TheoreticalResult(TypedDict):
