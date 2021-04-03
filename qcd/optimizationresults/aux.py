@@ -147,10 +147,10 @@ def plot_one_result(result, title, bar_label, vmin, vmax, cmap='viridis'):
     plt.show()
 
 
-def plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax):
+def plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap='RdBu'):
     fig = plt.figure(title)
     ax1 = fig.add_subplot(111)
-    im = ax1.imshow(delta_probs, cmap='RdBu', extent=(0, 90, 90, 0), vmin=vmin, vmax=vmax)
+    im = ax1.imshow(delta_probs, cmap=cmap, extent=(0, 90, 90, 0), vmin=vmin, vmax=vmax)
     plt.colorbar(im, label=bar_label)
     ax1.set_xlabel('Channel 0 (angle $\eta$)')
     ax1.set_ylabel('Channel 1 (angle $\eta$)')
