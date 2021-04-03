@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from ..typings import TheoreticalOptimizationSetup
-from ..typings.configurations import TheoreticalOptimalConfiguration, TheoreticalOptimalConfigurations
+from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
 from .aux import parse_eta_pairs
 
 
@@ -12,11 +12,11 @@ class TheoreticalOptimization(ABC):
         self._global_eta_pair = (0.0, 0.0)
 
     @abstractmethod
-    def _compute_theoretical_best_configuration(self) -> TheoreticalOptimalConfiguration:
-        """ Find out the theoretical best configuration with a global pair of etas (channels) """
+    def compute_theoretical_optimal_results(self) -> OptimalConfigurations:
+        """ Finds out the theoretical optimal configuration for each pair of attenuation levels """
         pass
 
     @abstractmethod
-    def compute_theoretical_optimal_results(self) -> TheoreticalOptimalConfigurations:
-        """ Finds out the theoretical optimal configuration for each pair of attenuation levels """
+    def _compute_theoretical_best_configuration(self) -> OptimalConfiguration:
+        """ Find out the theoretical best configuration with a global pair of etas (channels) """
         pass

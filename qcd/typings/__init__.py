@@ -60,3 +60,8 @@ class GuessStrategy(enum.Enum):
     one_bit_same_as_measured = 1
     two_bit_base = 2
     two_bit_neural_network = 3
+
+
+class DampingChannelStrategy(enum.Enum):
+    one_shot = 1
+    one_shot_side_entanglement = 2

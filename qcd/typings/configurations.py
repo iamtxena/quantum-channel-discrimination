@@ -18,11 +18,7 @@ class OptimalConfigurations(TypedDict):
     number_calls_made: List[int]
 
 
-class TheoreticalOptimalConfiguration(TypedDict):
-    best_probability: float
-
-
-class TheoreticalOneShotOptimalConfiguration(TheoreticalOptimalConfiguration):
+class TheoreticalOneShotOptimalConfiguration(OptimalConfiguration):
     best_theoretical_amplitude: float
 
 
@@ -30,12 +26,7 @@ class TheoreticalOneShotEntangledOptimalConfiguration(TheoreticalOneShotOptimalC
     improvement: float
 
 
-class TheoreticalOptimalConfigurations(TypedDict):
-    eta_pairs: List[Tuple[float, float]]
-    probabilities: List[float]
-
-
-class TheoreticalOneShotOptimalConfigurations(TheoreticalOptimalConfigurations):
+class TheoreticalOneShotOptimalConfigurations(OptimalConfigurations):
     list_theoretical_amplitude: List[float]
 
 

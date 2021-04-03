@@ -1,7 +1,6 @@
-from abc import ABC, abstractmethod
-from typing import cast
-from ..typings import TheoreticalOptimizationSetup
-from ..typings.configurations import OptimalConfigurations, TheoreticalOptimalConfigurations
+from abc import ABC
+from typing import cast, List
+from ..typings.configurations import OptimalConfigurations
 from .aux import (build_probabilities_matrix, build_amplitudes_matrix,
                   plot_comparison_between_two_results, compute_percentage_delta_values, plot_one_result)
 import numpy as np
@@ -11,45 +10,16 @@ class OptimizationResult(ABC):
     """ Generic class acting as an interface for any Optimization Result """
 
     def __init__(self, optimal_configurations: OptimalConfigurations) -> None:
-        theoretical_result = self._prepare_etas_and_compute_theoretical_result(optimal_configurations)
-
         self._probabilities_matrix = build_probabilities_matrix(optimal_configurations)
         self._amplitudes_matrix = build_amplitudes_matrix(optimal_configurations)
-        self._theoretical_probabilities_matrix = build_probabilities_matrix(theoretical_result)
-        self._theoretical_amplitudes_matrix = build_amplitudes_matrix(theoretical_result)
 
-    def _prepare_etas_and_compute_theoretical_result(
-            self,
-            optimal_configurations: OptimalConfigurations) -> TheoreticalOptimalConfigurations:
-        eta_pairs = optimal_configurations.get('eta_pairs')
-        if eta_pairs is None:
-            raise ValueError('eta_pairs is mandatory')
-        theoretical_result = self._compute_theoretical_optimal_result(
-            {'eta_pairs': eta_pairs})
-        return theoretical_result
+    @property
+    def probabilities_matrix(self) -> List[List[float]]:
+        return self._probabilities_matrix
 
-    @abstractmethod
-    def _compute_theoretical_optimal_result(
-            self,
-            optimization_setup: TheoreticalOptimizationSetup) -> TheoreticalOptimalConfigurations:
-        pass
-
-    def plot_probabilities(self,
-                           results_index: int,
-                           title: str = 'Probabilities from simulation',
-                           bar_label: str = 'Probabilities value',
-                           vmin: float = 0.0,
-                           vmax: float = 1.0) -> None:
-        """ Plot probabilities analysis """
-        plot_one_result(self._probabilities_matrix[results_index], title, bar_label, vmin, vmax)
-
-    def plot_theoretical_probabilities(self,
-                                       title: str = 'Probabilities from theory',
-                                       bar_label: str = 'Probabilities value',
-                                       vmin: float = 0.0,
-                                       vmax: float = 1.0) -> None:
-        """ Plot theoretical probabilities analysis """
-        plot_one_result(self._theoretical_probabilities_matrix, title, bar_label, vmin, vmax)
+    @property
+    def amplitudes_matrix(self) -> List[List[float]]:
+        return self._amplitudes_matrix
 
     def plot_probabilities_comparison(self,
                                       results_index1: int,

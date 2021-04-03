@@ -1,8 +1,9 @@
 from abc import ABC
 from typing import Optional, List, Union, cast
 from ..typings.configurations import OptimalConfigurations
-from .aux import load_result_from_file
+from .aux import (load_result_from_file, plot_one_result)
 from .global_aux import build_optimization_result
+from . import TheoreticalResult, TheoreticalOneShotOptimizationResult, TheoreticalOneShotEntangledOptimizationResult
 
 
 class GlobalOptimizationResults(ABC):
@@ -28,3 +29,28 @@ class GlobalOptimizationResults(ABC):
             optimal_results = [optimal_configurations]
         optimal_results = cast(List[OptimalConfigurations], optimal_results)
         self._optimization_results = [build_optimization_result(optimal_result) for optimal_result in optimal_results]
+        self._build_all_theoretical_optimizations_results(optimal_results[0])
+
+    def _build_all_theoretical_optimizations_results(self, optimal_configurations: OptimalConfigurations) -> None:
+        """ Build the theoretical optimization result for each damping channel supported """
+        self._theoretical_results: TheoreticalResult = {
+            "one_shot": TheoreticalOneShotOptimizationResult(optimal_configurations),
+            "one_shot_side_entanglement": TheoreticalOneShotEntangledOptimizationResult(optimal_configurations),
+        }
+
+    def plot_probabilities(self,
+                           results_index: int,
+                           title: str = 'Probabilities from simulation',
+                           bar_label: str = 'Probabilities value',
+                           vmin: float = 0.0,
+                           vmax: float = 1.0) -> None:
+        """ Plot probabilities analysis """
+        plot_one_result(self._optimization_results[results_index].probabilities_matrix, title, bar_label, vmin, vmax)
+
+    def plot_theoretical_probabilities(self,
+                                       title: str = 'Probabilities from theory',
+                                       bar_label: str = 'Probabilities value',
+                                       vmin: float = 0.0,
+                                       vmax: float = 1.0) -> None:
+        """ Plot theoretical probabilities analysis """
+        plot_one_result(self._theoretical_results['one_shot'], title, bar_label, vmin, vmax)

@@ -1,4 +1,11 @@
+from typing import TypedDict
 from .optimizationresult import OptimizationResult
-from .oneshotoptimizationresult import OneShotOptimizationResult
-from .oneshotentangledoptimizationresult import OneShotEntangledOptimizationResult
 from .globaloptimizationresults import GlobalOptimizationResults
+from .theoreticaloptimizationresult import TheoreticalOptimizationResult
+from .theoreticaloneshotoptimizationresult import TheoreticalOneShotOptimizationResult
+from .theoreticaloneshotentangledoptimizationresult import TheoreticalOneShotEntangledOptimizationResult
+
+
+class TheoreticalResult(TypedDict):
+    one_shot: TheoreticalOneShotOptimizationResult
+    one_shot_side_entanglement: TheoreticalOneShotEntangledOptimizationResult

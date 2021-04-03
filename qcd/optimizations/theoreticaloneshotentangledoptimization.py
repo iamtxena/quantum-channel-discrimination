@@ -1,31 +1,39 @@
 from . import TheoreticalOneShotOptimization
-from ..typings.configurations import (TheoreticalOptimalConfigurations,
-                                      TheoreticalOneShotEntangledOptimalConfiguration,
+from ..typings.configurations import (TheoreticalOneShotEntangledOptimalConfiguration,
                                       TheoreticalOneShotEntangledOptimalConfigurations)
+from ..configurations.configuration import ChannelConfiguration
 import numpy as np
 
 
 class TheoreticalOneShotEntangledOptimization(TheoreticalOneShotOptimization):
     """ Representation of the theoretical One Shot Optimization """
 
-    def compute_theoretical_optimal_results(self) -> TheoreticalOptimalConfigurations:
+    def compute_theoretical_optimal_results(self) -> TheoreticalOneShotEntangledOptimalConfigurations:
         """ Finds out the theoretical optimal entangled configuration for each pair of attenuation levels """
         probabilities = []
         list_theoretical_amplitude = []
+        best_algorithms = []
+        configurations = []
+        list_number_calls_made = []
         improvements = []
 
         for eta_pair in self._eta_pairs:
             self._global_eta_pair = eta_pair
             result = self._compute_theoretical_best_configuration()
+            best_algorithms.append(result['best_algorithm'])
             probabilities.append(result['best_probability'])
+            configurations.append(result['best_configuration'])
+            list_number_calls_made.append(result['number_calls_made'])
             list_theoretical_amplitude.append(result['best_theoretical_amplitude'])
             improvements.append(result['improvement'])
 
-        return TheoreticalOneShotEntangledOptimalConfigurations({
-            'eta_pairs': self._eta_pairs,
-            'probabilities': probabilities,
-            'list_theoretical_amplitude': list_theoretical_amplitude,
-            'improvements': improvements})
+        return {'eta_pairs': self._eta_pairs,
+                'best_algorithm': best_algorithms,
+                'probabilities': probabilities,
+                'configurations': configurations,
+                'number_calls_made': list_number_calls_made,
+                'list_theoretical_amplitude': list_theoretical_amplitude,
+                'improvements': improvements}
 
     def _compute_theoretical_best_configuration(self) -> TheoreticalOneShotEntangledOptimalConfiguration:
         """ Find out the theoretical entangled best configuration with a global pair of etas (channels) """
@@ -47,6 +55,9 @@ class TheoreticalOneShotEntangledOptimization(TheoreticalOneShotOptimization):
                 (np.cos(self._global_eta_pair[1]) - np.cos(self._global_eta_pair[0])) + 1 / 2
             improvement = 0
 
-        return {'best_probability': best_probability,
+        return {'best_algorithm': 'One-Shot Side Entanglement Theory',
+                'best_probability': best_probability,
+                'best_configuration': ChannelConfiguration({'eta_pair': self._global_eta_pair}),
+                'number_calls_made': 1,
                 'best_theoretical_amplitude': max(0, theoretical_y),
                 'improvement': improvement}
