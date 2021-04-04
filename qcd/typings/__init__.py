@@ -62,7 +62,7 @@ class GuessStrategy(enum.Enum):
     two_bit_neural_network = 3
 
 
-class CloneSetup(TypedDict):
+class CloneSetup(TypedDict, total=False):
     total_clones: int
     id_clone: int
     file_name: str
