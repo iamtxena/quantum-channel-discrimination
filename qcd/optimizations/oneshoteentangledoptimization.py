@@ -3,32 +3,32 @@ from ..typings import GuessStrategy
 from typing import Tuple, cast
 from ..configurations import ChannelConfiguration, OneShotConfiguration
 from .aux import get_measured_value_from_counts
-import math
 import random
+import numpy as np
 from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
 
 
 class OneShotEntangledOptimization(OneShotOptimization):
     """ Representation of the One Shot EntangledChannel Optimization """
 
-    def _prepare_initial_state_entangled(self, theta: float) -> Tuple[complex, complex, complex, complex]:
-        """ Prepare initial state """
-        return (0, math.cos(theta), math.sin(theta), 0)
+    def _prepare_initial_state_entangled(self, state_probability: float) -> Tuple[complex, complex, complex, complex]:
+        """ Prepare initial state: computing 'y' as the amplitudes  """
+        return (0, np.sqrt(state_probability), np.sqrt(1 - state_probability), 0)
 
     def _guess_lambda_used_two_bit_strategy(self, counts: str) -> int:
         """ Decides which lambda was used on the real execution from the two 'counts' measured
             Setting eta0 >= eta1:
-                * outcome 00 -> eta1 as the most probable (more attenuation)
-                * outcome 01 -> eta0 as the most probable (less attenuation)
+                * outcome 00 -> eta0 as the most probable (more attenuation)
+                * outcome 01 -> eta1 as the most probable (less attenuation)
                 * outcome 10 -> 50% chance, random choice
                 * outcome 11 -> not possible, but in case we get it (from noisy simulation), 50% chance, random choice
         """
         if len(counts) != 2:
             raise ValueError('counts MUST be a two character length string')
         if counts == "00":
-            return 1
-        if counts == "01":
             return 0
+        if counts == "01":
+            return 1
         if counts == "10" or counts == "11":
             return random.choice([0, 1])
         raise ValueError("Accepted counts are '00', '01', '10', '11'")
@@ -55,7 +55,7 @@ class OneShotEntangledOptimization(OneShotOptimization):
         qreg_q = QuantumRegister(2, 'q')
         creg_c = ClassicalRegister(2, 'c')
 
-        initial_state = self._prepare_initial_state_entangled(configuration.theta)
+        initial_state = self._prepare_initial_state_entangled(configuration.state_probability)
 
         circuit = QuantumCircuit(qreg_q, creg_c)
         circuit.initialize(initial_state, [0, 1])

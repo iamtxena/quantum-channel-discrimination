@@ -46,9 +46,13 @@ def _build_probabilities_matrix_legacy(result: Dict) -> List[List[int]]:
 
 def _build_amplitudes_matrix(result: OptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
-    _assign_amplitudes(result, sorted_etas, matrix)
+    if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'state_probability'):
+        return _assign_amplitudes(result, sorted_etas, matrix)
+    if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'theta'):
+        # support for legacy results
+        return _assign_amplitudes_with_thetas(result, sorted_etas, matrix)
     # _reset_diagonal_matrix(sorted_etas, matrix, value=0)
-    return matrix
+    raise ValueError('Optimal Configurations require either state_probability or theta properties')
 
 
 def _build_theoretical_amplitudes_matrix(result: TheoreticalOneShotOptimalConfigurations) -> List[List[float]]:
@@ -67,8 +71,7 @@ def _build_amplitudes_matrix_legacy(result: Dict) -> List[List[int]]:
 
 def _assign_probabilities(result: OptimalConfigurations, sorted_etas: List[float], matrix: np.array):
     for idx, probability in enumerate(result['probabilities']):
-        ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
-        ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][1])
+        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = probability
 
 
@@ -79,19 +82,29 @@ def _assign_probabilities_legacy(result: Dict, sorted_etas: List[int], matrix: n
         matrix[ind_1, ind_0] = probability
 
 
-def _assign_amplitudes(result: OptimalConfigurations, sorted_etas: List[float], matrix: np.array):
+def _assign_amplitudes(result: OptimalConfigurations,
+                       sorted_etas: List[float],
+                       matrix: np.array) -> List[List[float]]:
     for idx, configuration in enumerate(result['configurations']):
-        ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
-        ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][1])
+        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
+        matrix[ind_1, ind_0] = cast(OneShotConfiguration, configuration).state_probability
+    return matrix
+
+
+def _assign_amplitudes_with_thetas(result: OptimalConfigurations,
+                                   sorted_etas: List[float],
+                                   matrix: np.array) -> List[List[float]]:
+    for idx, configuration in enumerate(result['configurations']):
+        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = np.sin(cast(OneShotConfiguration, configuration).theta)
+    return matrix
 
 
 def _assign_theoretical_amplitudes(result: TheoreticalOneShotOptimalConfigurations,
                                    sorted_etas: List[float],
                                    matrix: np.array):
     for idx, best_theoretical_amplitude in enumerate(result['list_theoretical_amplitude']):
-        ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
-        ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][1])
+        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = best_theoretical_amplitude
 
 
@@ -100,6 +113,13 @@ def _assign_amplitudes_legacy(result: Dict, sorted_etas: List[int], matrix: np.a
         ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(int(result['eta_pairs'][idx][0]))
         ind_1 = sorted_etas.index(int(result['eta_pairs'][idx][1]))
         matrix[ind_1, ind_0] = np.sin(configuration[0])
+
+
+def _get_matrix_index_from_eta_pair(result: OptimalConfigurations,
+                                    sorted_etas: List[float], idx: int) -> Tuple[int, int]:
+    ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
+    ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][1])
+    return ind_0, ind_1
 
 
 def _reset_diagonal_matrix(values: Union[List[float], List[int]], matrix: np.array, value: float = 0) -> None:

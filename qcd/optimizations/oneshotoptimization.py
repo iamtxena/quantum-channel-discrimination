@@ -4,7 +4,6 @@ from ..typings.configurations import OptimalConfigurations
 from typing import Optional, Tuple, cast, List, Dict
 from ..configurations import ChannelConfiguration, OneShotConfiguration
 from .aux import get_measured_value_from_counts
-import math
 import time
 import numpy as np
 from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
@@ -22,14 +21,14 @@ class OneShotOptimization(Optimization):
                                                             ) -> ChannelConfiguration:
         """ Convert the results of an optimization to a One Shot channel configuration """
         return OneShotConfiguration({
-            'theta': configuration[0],
+            'state_probability': configuration[0],
             'angle_rx': configuration[1],
             'angle_ry': configuration[2],
             'eta_pair': eta_pair})
 
-    def _prepare_initial_state(self, theta: float) -> Tuple[complex, complex]:
-        """ Prepare initial state """
-        return (math.cos(theta), math.sin(theta))
+    def _prepare_initial_state(self, state_probability: float) -> Tuple[complex, complex]:
+        """ Prepare initial state: computing 'x' as the amplitudes """
+        return (np.sqrt(1 - state_probability), np.sqrt(state_probability))
 
     def _guess_eta_used_one_bit_strategy(self, counts: str) -> int:
         """ Decides which eta was used on the real execution from the one bit 'counts' measured
@@ -64,7 +63,7 @@ class OneShotOptimization(Optimization):
         qreg_q = QuantumRegister(2, 'q')
         creg_c = ClassicalRegister(1, 'c')
 
-        initial_state = self._prepare_initial_state(configuration.theta)
+        initial_state = self._prepare_initial_state(configuration.state_probability)
 
         circuit = QuantumCircuit(qreg_q, creg_c)
         circuit.initialize([initial_state[0],
@@ -87,7 +86,7 @@ class OneShotOptimization(Optimization):
             Returns the Cost (error probability).
         """
         configuration = OneShotConfiguration({
-            'theta': params[0],
+            'state_probability': params[0],
             'angle_rx': params[1],
             'angle_ry': params[2],
             'eta_pair': self._global_eta_pair})
@@ -145,7 +144,7 @@ class OneShotOptimization(Optimization):
 
         configurations: List[ChannelConfiguration] = []
         for eta_pair_idx in eta_pair_idx_to_skip:
-            one_configuration = OneShotConfiguration({'theta': 0,
+            one_configuration = OneShotConfiguration({'state_probability': 0,
                                                       'angle_rx': 0,
                                                       'angle_ry': 0,
                                                       'eta_pair': self._eta_pairs[eta_pair_idx]})

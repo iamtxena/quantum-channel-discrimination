@@ -25,7 +25,7 @@ class Optimization(ABC):
         pass
 
     @abstractmethod
-    def _prepare_initial_state(self, theta: float) -> Tuple[complex, complex]:
+    def _prepare_initial_state(self, state_probability: float) -> Tuple[complex, complex]:
         """ Prepare initial state """
         pass
 
