@@ -53,7 +53,7 @@ class OneShotEntangledCircuit(OneShotCircuit):
         configuration = cast(OneShotConfiguration, channel_configuration)
         backend = backend = Aer.get_backend('qasm_simulator')
         eta = configuration.eta_pair[eta_index]
-        qreg_q = QuantumRegister(2, 'q')
+        qreg_q = QuantumRegister(3, 'q')
         creg_c = ClassicalRegister(2, 'c')
 
         initial_state = self._prepare_initial_state_entangled(configuration.state_probability)
@@ -66,7 +66,7 @@ class OneShotEntangledCircuit(OneShotCircuit):
         circuit.rx(configuration.angle_rx, qreg_q[1])
         circuit.ry(configuration.angle_ry, qreg_q[1])
         circuit.barrier()
-        circuit.measure(qreg_q[0, 1], creg_c)
+        circuit.measure([0, 1], creg_c)
 
         counts = execute(circuit, backend, shots=1).result().get_counts(circuit)
         return self._convert_counts_to_eta_used(counts, guess_strategy=GuessStrategy.two_bit_base)

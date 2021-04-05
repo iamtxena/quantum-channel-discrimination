@@ -1,3 +1,4 @@
+from qcd.optimizationresults.aux import load_result_from_file
 from qcd.configurations import OneShotSetupConfiguration
 from qcd.circuits import OneShotEntangledCircuit
 from typing import Optional
@@ -13,6 +14,11 @@ class OneShotEntangledDampingChannel(OneShotDampingChannel):
 
     def plot_first_channel(self):
         return self._circuits[0][0].draw('')
+
+    @staticmethod
+    def build_from_optimal_configurations(file_name: str, path: Optional[str] = ""):
+        """ Builds a Quantum Damping Channel from the optimal configuration for each pair of attenuation angles """
+        return OneShotEntangledDampingChannel(optimal_configurations=load_result_from_file(file_name, path))
 
     @staticmethod
     def find_optimal_configurations(optimization_setup: OptimizationSetup,

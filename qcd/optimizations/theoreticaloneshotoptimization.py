@@ -1,7 +1,7 @@
 from . import TheoreticalOptimization
 from ..typings.configurations import (TheoreticalOneShotOptimalConfiguration,
                                       TheoreticalOneShotOptimalConfigurations)
-from ..configurations.configuration import ChannelConfiguration
+from ..configurations import OneShotConfiguration
 import numpy as np
 
 
@@ -48,6 +48,9 @@ class TheoreticalOneShotOptimization(TheoreticalOptimization):
 
         return {'best_algorithm': 'One-Shot Theory',
                 'best_probability': best_probability,
-                'best_configuration': ChannelConfiguration({'eta_pair': self._global_eta_pair}),
+                'best_configuration': OneShotConfiguration({'eta_pair': self._global_eta_pair,
+                                                            'state_probability': 0,
+                                                            'angle_rx': 0,
+                                                            'angle_ry': 0}),
                 'number_calls_made': 1,
                 'best_theoretical_amplitude': best_theoretical_amplitude}

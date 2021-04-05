@@ -5,7 +5,6 @@ from qcd.backends import DeviceBackend, SimulatorBackend
 from typing import Optional, Tuple, cast, List, Dict
 from ..typings import GuessStrategy
 from ..typings.configurations import OptimalConfigurations
-from ..configurations import OneShotConfiguration
 from .aux import set_only_eta_pairs, fix_configurations
 import numpy as np
 import time
@@ -33,32 +32,44 @@ class Circuit(ABC):
                                                   'best_algorithm': self._optimal_configurations['best_algorithm'],
                                                   'probabilities': [0] * total_configurations,
                                                   'configurations': self._optimal_configurations['configurations'],
-                                                  'number_calls_made': [1] * total_configurations}
+                                                  'number_calls_made': [1] * total_configurations,
+                                                  'legacy': 'legacy' in self._optimal_configurations}
         program_start_time = time.time()
         print(f"Starting the computation for {total_configurations} configurations.")
         for idx, configuration in enumerate(self._optimal_configurations['configurations']):
-            start_time = time.time()
             optimal_results['probabilities'][idx] = self.compute_average_success_probability(
                 configuration, plays)
             end_time = time.time()
-            if idx % 10 == 0:
-                print(f"total minutes taken the configuration number {idx} of {total_configurations}:" +
-                      f'{int(np.round((end_time - start_time) / 60))}')
-                print("total minutes taken so far: ", int(np.round((end_time - program_start_time) / 60)))
+            if idx % 30 == 0 and (end_time - program_start_time <= 60):
+                print(f"Configuration # {idx} of {total_configurations}, time from start: " +
+                      f'{np.round((end_time - program_start_time), 0)} seconds')
+            if idx % 30 == 0 and (end_time - program_start_time > 60):
+                print(f"Configuration # {idx} of {total_configurations}, time from start: " +
+                      f'{np.round((end_time - program_start_time)/60, 0)} minutes' +
+                      f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
+            if idx % 30 == 0:
+                print(configuration.to_dict())
+                print(f"Configuration index: {idx}, Probabilities ->  computed: " +
+                      f"{optimal_results['probabilities'][idx]}, " +
+                      f"optimized: {self._optimal_configurations['probabilities'][idx]} and " +
+                      "Delta: ",
+                      np.round(optimal_results['probabilities'][idx] -
+                               self._optimal_configurations['probabilities'][idx], 2))
+
         end_time = time.time()
-        print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))
+        print("total minutes of execution time: " +
+              f'{np.round((end_time - program_start_time)/60, 0)} minutes' +
+              f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
         print(f"Probabilities from optimization: {self._optimal_configurations['probabilities']}")
         print(f"Probabilities computed: {optimal_results['probabilities']}")
-        delta_probabilities = [np.round(computed - optimized, 2) for computed,
-                               optimized in zip(
-            self._optimal_configurations['probabilities'],
-            optimal_results['probabilities'])]
-        print(f"Delta probabilities (Computed - Optimized): {delta_probabilities}")
+        delta_probabilities = np.array(
+            self._optimal_configurations['probabilities']) - np.array(optimal_results['probabilities'])
+        print(f"Delta probabilities (Computed - Optimized):\n {delta_probabilities}")
         self._optimal_results = optimal_results
         return optimal_results
 
     def compute_average_success_probability(self,
-                                            configuration=OneShotConfiguration,
+                                            configuration=ChannelConfiguration,
                                             plays: Optional[int] = 100) -> float:
         """ Computes the average success probability of running a specific configuration for the number of plays
             defined in the configuration.

@@ -14,6 +14,7 @@ class OneShotCircuit(Circuit):
     def _prepare_initial_state(self, state_probability: float) -> Tuple[complex, complex]:
         """ Prepare initial state: computing 'x' as the amplitudes """
         return (np.sqrt(1 - state_probability), np.sqrt(state_probability))
+        # return (np.cos(np.arcsin(state_probability)), state_probability)
 
     def _guess_eta_used_one_bit_strategy(self, counts: str) -> int:
         """ Decides which eta was used on the real execution from the one bit 'counts' measured

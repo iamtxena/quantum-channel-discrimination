@@ -1,5 +1,5 @@
-from abc import ABC
-from typing import Tuple, cast
+from abc import ABC, abstractmethod
+from typing import Tuple, cast, Dict
 
 
 class ChannelConfiguration(ABC):
@@ -11,3 +11,7 @@ class ChannelConfiguration(ABC):
     @property
     def eta_pair(self) -> Tuple[float, float]:
         return self._eta_pair
+
+    @abstractmethod
+    def to_dict(self) -> Dict:
+        pass

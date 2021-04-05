@@ -10,12 +10,13 @@ class OptimalConfiguration(TypedDict):
     number_calls_made: int
 
 
-class OptimalConfigurations(TypedDict):
+class OptimalConfigurations(TypedDict, total=False):
     eta_pairs: List[Tuple[float, float]]
     best_algorithm: List[str]
     probabilities: List[float]
     configurations: List[ChannelConfiguration]
     number_calls_made: List[int]
+    legacy: bool
 
 
 class TheoreticalOneShotOptimalConfiguration(OptimalConfiguration):

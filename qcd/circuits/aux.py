@@ -3,6 +3,7 @@ from qcd.configurations.oneshotbaseconfiguration import OneShotConfiguration
 from qcd.typings.configurations import OptimalConfigurations
 from typing import Dict, List, Tuple, cast
 import random
+import math
 
 
 def get_measured_value_from_counts(counts_dict: dict) -> str:
@@ -47,16 +48,37 @@ def fix_configurations(result: OptimalConfigurations) -> OptimalConfigurations:
     if (len(result['configurations']) > 0 and
             hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'state_probability')):
         return result
+    if (len(result['configurations']) > 0 and
+            hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'theta')):
+        return _adapt_result(result)
+
     """ We have to fix configurations, creating a new configuration object """
     fixed_result = result
     for idx, configuration in enumerate(cast(List[List[float]], result['configurations'])):
         new_configuration = OneShotConfiguration({
-            'state_probability': configuration[0],
+            'state_probability': (math.sin(configuration[0]))**2,
             'angle_rx': configuration[1],
             'angle_ry': configuration[2],
-            'eta_pair': result['eta_pairs'][idx]
+            'eta_pair': (result['eta_pairs'][idx] if isinstance(result['eta_pairs'][idx][0], float)
+                         else (math.radians(int(result['eta_pairs'][idx][0])),
+                               math.radians(int(result['eta_pairs'][idx][1]))))
         })
         fixed_result['configurations'][idx] = new_configuration
+        fixed_result['eta_pairs'][idx] = new_configuration._eta_pair
+
     fixed_result['legacy'] = True  # type: ignore
 
     return fixed_result
+
+
+def _adapt_result(result):
+    adapted_result = result
+    for idx, configuration in enumerate(cast(List[OneShotConfiguration], result['configurations'])):
+        new_configuration = OneShotConfiguration({
+            'state_probability': (math.sin(configuration.theta))**2,
+            'angle_rx': configuration.angle_rx,
+            'angle_ry': configuration.angle_ry,
+            'eta_pair': configuration.eta_pair
+        })
+        adapted_result['configurations'][idx] = new_configuration
+    return adapted_result

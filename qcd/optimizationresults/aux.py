@@ -56,13 +56,12 @@ def _build_probabilities_matrix_legacy(result: Dict) -> List[List[int]]:
 def _build_amplitudes_matrix(result: OptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
     if 'legacy' in result:
-        return _assign_amplitudes_new_legacy(result, sorted_etas, matrix)  # type: ignore
+        return _assign_amplitudes_different_order(result, sorted_etas, matrix)
     if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'state_probability'):
         return _assign_amplitudes(result, sorted_etas, matrix)
     if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'theta'):
         # support for legacy results
         return _assign_amplitudes_with_thetas(result, sorted_etas, matrix)
-    # _reset_diagonal_matrix(sorted_etas, matrix, value=0)
     raise ValueError('Optimal Configurations require either state_probability or theta properties')
 
 
@@ -108,6 +107,15 @@ def _assign_amplitudes(result: OptimalConfigurations,
                        matrix: np.array) -> List[List[float]]:
     for idx, configuration in enumerate(result['configurations']):
         ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
+        matrix[ind_1, ind_0] = cast(OneShotConfiguration, configuration).state_probability
+    return matrix
+
+
+def _assign_amplitudes_different_order(result: OptimalConfigurations,
+                                       sorted_etas: List[float],
+                                       matrix: np.array) -> List[List[float]]:
+    for idx, configuration in enumerate(result['configurations']):
+        ind_0, ind_1 = _get_matrix_index_from_eta_pair_different_order(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = cast(OneShotConfiguration, configuration).state_probability
     return matrix
 
