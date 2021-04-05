@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from qcd.circuits import Circuit
+from qcd.optimizationresults import GlobalOptimizationResults
 from typing import Optional, List, Union
 from ..backends import DeviceBackend
-from ..configurations import SetupConfiguration
 from ..executions import Execution
 from ..typings.configurations import OptimalConfigurations
 from ..typings import CloneSetup, OptimizationSetup
@@ -11,9 +12,22 @@ class DampingChannel(ABC):
     """ Generic class acting as an interface for any damping channel
         using a provided discrimantion strategy """
 
-    def __init__(self,
-                 channel_setup_configuration: Optional[SetupConfiguration] = None) -> None:
-        self._channel_setup_configuration = channel_setup_configuration
+    @staticmethod
+    @abstractmethod
+    def find_optimal_configurations(optimization_setup: OptimizationSetup,
+                                    clone_setup: Optional[CloneSetup] = None) -> OptimalConfigurations:
+        """ Finds out the optimal configuration for each pair of attenuation levels
+            using the configured optimization algorithm """
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def build_from_optimal_configurations(file_name: str, path: Optional[str] = ""):
+        """ Builds a Quantum Damping Channel from the optimal configuration for each pair of attenuation angles """
+        pass
+
+    def __init__(self) -> None:
+        self._one_shot_circuit: Circuit
 
     @abstractmethod
     def run(self, backend: Union[DeviceBackend, List[DeviceBackend]],
@@ -21,13 +35,12 @@ class DampingChannel(ABC):
         """ Runs all the experiments using the configured circuits launched to the provided backend """
         pass
 
-    @staticmethod
-    @abstractmethod
-    def find_optimal_configurations(optimization_setup: OptimizationSetup,
-                                    clone_setup: Optional[CloneSetup]) -> OptimalConfigurations:
-        """ Finds out the optimal configuration for each pair of attenuation levels
-            using the configured optimization algorithm """
-        pass
+    def one_shot_run(self, plays: Optional[int] = 100) -> GlobalOptimizationResults:
+        """ Runs all the experiments using the optimal configurations and computing the success probability """
+        if self._one_shot_circuit is None:
+            raise ValueError('Optimal configurations MUST be provided to execute one shot runs')
+
+        return GlobalOptimizationResults(self._one_shot_circuit.one_shot_run(plays))
 
     @abstractmethod
     def plot_first_channel(self):

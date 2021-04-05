@@ -1,3 +1,5 @@
+from qcd.configurations import OneShotSetupConfiguration
+from qcd.circuits import OneShotEntangledCircuit
 from typing import Optional
 from . import OneShotDampingChannel
 from ..typings import CloneSetup, OptimizationSetup
@@ -14,7 +16,7 @@ class OneShotEntangledDampingChannel(OneShotDampingChannel):
 
     @staticmethod
     def find_optimal_configurations(optimization_setup: OptimizationSetup,
-                                    clone_setup: Optional[CloneSetup]) -> OptimalConfigurations:
+                                    clone_setup: Optional[CloneSetup] = None) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
           using the configured optimization algorithm for an Entangled channel """
 
@@ -24,3 +26,10 @@ class OneShotEntangledDampingChannel(OneShotDampingChannel):
             save_object_to_disk(optimal_configurations,
                                 f"{clone_setup['file_name']}_{clone_setup['id_clone']}", clone_setup['path'])
         return optimal_configurations
+
+    def __init__(self,
+                 channel_setup_configuration: Optional[OneShotSetupConfiguration] = None,
+                 optimal_configurations: Optional[OptimalConfigurations] = None) -> None:
+        super().__init__(channel_setup_configuration, optimal_configurations)
+        if optimal_configurations is not None:
+            self._one_shot_circuit = OneShotEntangledCircuit(optimal_configurations)

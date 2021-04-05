@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
-from ..typings import OptimizationSetup, GuessStrategy, CloneSetup
+from ..typings import OptimizationSetup, CloneSetup
 from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
 from ..configurations import ChannelConfiguration
-from .aux import set_random_eta, check_value, get_combinations_two_etas_without_repeats_from_etas
+from .aux import get_combinations_two_etas_without_repeats_from_etas
 import math
 from qiskit.aqua.components.optimizers import L_BFGS_B, ADAM, CRS, DIRECT_L, DIRECT_L_RAND, ESCH, ISRES
 
@@ -25,15 +25,6 @@ class Optimization(ABC):
         pass
 
     @abstractmethod
-    def _prepare_initial_state(self, state_probability: float) -> Tuple[complex, complex]:
-        """ Prepare initial state """
-        pass
-
-    @abstractmethod
-    def _compute_damping_channel(self, channel_configuration: ChannelConfiguration, attenuation_index: int) -> int:
-        pass
-
-    @abstractmethod
     def _cost_function(self, params: List[float]) -> float:
         """ Computes the cost of running a specific configuration for the number of plays
               defined in the optimization setup.
@@ -43,30 +34,10 @@ class Optimization(ABC):
           """
         pass
 
-    @abstractmethod
-    def _convert_counts_to_eta_used(self,
-                                    counts_dict: dict,
-                                    guess_strategy: GuessStrategy) -> int:
-        """ Decides which eta was used on the real execution from the 'counts' measured
-            based on the guess strategy that is required to use
-        """
-        pass
-
     def find_optimal_configurations(self, clone_setup: Optional[CloneSetup]) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
         pass
-
-    def _play_and_guess_one_case(self, channel_configuration: ChannelConfiguration) -> int:
-        """ Execute a real execution with a random eta from the two passed,
-            guess which one was used on the execution and
-            check the result.
-            Returns 1 on success (it was a correct guess) or 0 on fail (it was an incorrect guess)
-        """
-        eta_index = set_random_eta(channel_configuration.eta_pair)
-        guess_index_eta = self._compute_damping_channel(channel_configuration, eta_index)
-
-        return check_value(eta_index, guess_index_eta)
 
     def _compute_best_configuration(self) -> OptimalConfiguration:
         """ Find out the best configuration with a global pair of etas (channels) trying out
@@ -110,7 +81,7 @@ class Optimization(ABC):
         print("Final Best Optimizer Algorithm: ", best_optimizer_algorithm)
         print("Final Best Average Probability:", best_probability)
         print("Number of cost function calls made:", number_calls_made)
-        print("Parameters Found: " + u"\u03B8" + " = " + str(int(math.degrees(best_configuration[0]))) + u"\u00B0" +
+        print("Parameters Found: state_probability = " + " = " + str(best_configuration[0]) +
               ", " + u"\u03D5" + "rx = " + str(int(math.degrees(best_configuration[1]))) + u"\u00B0" +
               ", " + u"\u03D5" + "ry = " + str(int(math.degrees(best_configuration[2]))) + u"\u00B0" +
               ", " + u"\u03B7" + u"\u2080" + " = " + str(int(math.degrees(self._global_eta_pair[0]))) + u"\u00B0" +
