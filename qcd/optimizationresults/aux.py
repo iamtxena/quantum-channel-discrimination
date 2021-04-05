@@ -12,10 +12,13 @@ from ..typings.configurations import (OptimalConfigurations, TheoreticalOneShotE
 
 def build_probabilities_matrix(
         result: Union[OptimalConfigurations, TheoreticalOneShotOptimalConfigurations]) -> List[List[float]]:
-    if isinstance(result['eta_pairs'][0][0], float):
+    if (isinstance(result['eta_pairs'][0][0], float) and
+            (_isTheoreticalOneShotOptimalConfigurations(result) or _isOptimalConfigurations(result))):
         return _build_probabilities_matrix(cast(OptimalConfigurations, result))
     if isinstance(result['eta_pairs'][0][0], str):
         return cast(List[List[float]], _build_probabilities_matrix_legacy(cast(Dict, result)))
+    if isinstance(result['eta_pairs'][0][0], float):
+        return cast(List[List[float]], _build_probabilities_matrix_new_legacy(cast(Dict, result)))
     raise ValueError('Bad input results')
 
 
@@ -25,27 +28,35 @@ def build_amplitudes_matrix(
         return _build_theoretical_amplitudes_matrix(cast(TheoreticalOneShotOptimalConfigurations, result))
     if isinstance(result['eta_pairs'][0][0], float) and _isOptimalConfigurations(result):
         return _build_amplitudes_matrix(cast(OptimalConfigurations, result))
+    if isinstance(result['eta_pairs'][0][0], float):
+        return cast(List[List[float]], _build_amplitudes_matrix_new_legacy(cast(Dict, result)))
     if isinstance(result['eta_pairs'][0][0], str):
         return cast(List[List[float]], _build_amplitudes_matrix_legacy(cast(Dict, result)))
+    print(f"result[eta_pairs][0]: {result['eta_pairs'][0]}")
     raise ValueError('Bad input results')
 
 
 def _build_probabilities_matrix(result: OptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
-    _assign_probabilities(result, sorted_etas, matrix)
-    # _reset_diagonal_matrix(sorted_etas, matrix, value=0.5)
-    return matrix
+    if 'legacy' in result:
+        return _assign_probabilities_new_legacy(result, sorted_etas, matrix)  # type: ignore
+    return _assign_probabilities(result, sorted_etas, matrix)
+
+
+def _build_probabilities_matrix_new_legacy(result: Dict) -> List[List[int]]:
+    sorted_etas, matrix = _init_matrix(result)
+    return _assign_probabilities_new_legacy(result, sorted_etas, matrix)
 
 
 def _build_probabilities_matrix_legacy(result: Dict) -> List[List[int]]:
     sorted_etas, matrix = _init_matrix_legacy(result)
-    _assign_probabilities_legacy(result, sorted_etas, matrix)
-    # _reset_diagonal_matrix(sorted_etas, matrix, value=0.5)
-    return matrix
+    return _assign_probabilities_legacy(result, sorted_etas, matrix)
 
 
 def _build_amplitudes_matrix(result: OptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
+    if 'legacy' in result:
+        return _assign_amplitudes_new_legacy(result, sorted_etas, matrix)  # type: ignore
     if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'state_probability'):
         return _assign_amplitudes(result, sorted_etas, matrix)
     if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'theta'):
@@ -57,22 +68,31 @@ def _build_amplitudes_matrix(result: OptimalConfigurations) -> List[List[float]]
 
 def _build_theoretical_amplitudes_matrix(result: TheoreticalOneShotOptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
-    _assign_theoretical_amplitudes(result, sorted_etas, matrix)
-    # _reset_diagonal_matrix(sorted_etas, matrix, value=0)
-    return matrix
+    return _assign_theoretical_amplitudes(result, sorted_etas, matrix)
+
+
+def _build_amplitudes_matrix_new_legacy(result: Dict) -> List[List[int]]:
+    sorted_etas, matrix = _init_matrix(result)
+    return _assign_amplitudes_new_legacy(result, sorted_etas, matrix)
 
 
 def _build_amplitudes_matrix_legacy(result: Dict) -> List[List[int]]:
     sorted_etas, matrix = _init_matrix_legacy(result)
-    _assign_amplitudes_legacy(result, sorted_etas, matrix)
-    # _reset_diagonal_matrix(sorted_etas, matrix, value=0)
-    return matrix
+    return _assign_amplitudes_legacy(result, sorted_etas, matrix)
 
 
 def _assign_probabilities(result: OptimalConfigurations, sorted_etas: List[float], matrix: np.array):
     for idx, probability in enumerate(result['probabilities']):
         ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = probability
+    return matrix
+
+
+def _assign_probabilities_new_legacy(result: Dict, sorted_etas: List[float], matrix: np.array):
+    for idx, probability in enumerate(result['probabilities']):
+        ind_0, ind_1 = _get_matrix_index_from_eta_pair_different_order(result, sorted_etas, idx)
+        matrix[ind_1, ind_0] = probability
+    return matrix
 
 
 def _assign_probabilities_legacy(result: Dict, sorted_etas: List[int], matrix: np.array):
@@ -80,6 +100,7 @@ def _assign_probabilities_legacy(result: Dict, sorted_etas: List[int], matrix: n
         ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(int(result['eta_pairs'][idx][0]))
         ind_1 = sorted_etas.index(int(result['eta_pairs'][idx][1]))
         matrix[ind_1, ind_0] = probability
+    return matrix
 
 
 def _assign_amplitudes(result: OptimalConfigurations,
@@ -106,6 +127,7 @@ def _assign_theoretical_amplitudes(result: TheoreticalOneShotOptimalConfiguratio
     for idx, best_theoretical_amplitude in enumerate(result['list_theoretical_amplitude']):
         ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = best_theoretical_amplitude
+    return matrix
 
 
 def _assign_amplitudes_legacy(result: Dict, sorted_etas: List[int], matrix: np.array):
@@ -113,12 +135,26 @@ def _assign_amplitudes_legacy(result: Dict, sorted_etas: List[int], matrix: np.a
         ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(int(result['eta_pairs'][idx][0]))
         ind_1 = sorted_etas.index(int(result['eta_pairs'][idx][1]))
         matrix[ind_1, ind_0] = np.sin(configuration[0])
+    return matrix
+
+
+def _assign_amplitudes_new_legacy(result: Dict, sorted_etas: List[float], matrix: np.array):
+    for idx, configuration in enumerate(result['configurations']):
+        ind_0, ind_1 = _get_matrix_index_from_eta_pair_different_order(result, sorted_etas, idx)
+        matrix[ind_1, ind_0] = configuration[0]
+    return matrix
 
 
 def _get_matrix_index_from_eta_pair(result: OptimalConfigurations,
                                     sorted_etas: List[float], idx: int) -> Tuple[int, int]:
     ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
     ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][1])
+    return ind_0, ind_1
+
+
+def _get_matrix_index_from_eta_pair_different_order(result, sorted_etas, idx):
+    ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][0])
+    ind_1 = sorted_etas.index(result['eta_pairs'][idx][1])
     return ind_0, ind_1
 
 

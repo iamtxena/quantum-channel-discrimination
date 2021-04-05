@@ -1,5 +1,6 @@
 from abc import ABC
-from typing import Optional, List, Union, cast
+from qcd.circuits.aux import set_only_eta_pairs
+from typing import Optional, List, Union, cast, Dict
 from ..typings.configurations import OptimalConfigurations
 from .aux import (load_result_from_file, plot_one_result,
                   plot_comparison_between_two_results, compute_percentage_delta_values)
@@ -28,11 +29,11 @@ class GlobalOptimizationResults(ABC):
         return GlobalOptimizationResults(results)
 
     def __init__(self, optimal_configurations: Union[OptimalConfigurations, List[OptimalConfigurations]]) -> None:
-        optimal_results = optimal_configurations
-        if not isinstance(optimal_configurations, List):
-            optimal_results = [optimal_configurations]
-        optimal_results = cast(List[OptimalConfigurations], optimal_results)
-        self._optimization_results = [build_optimization_result(optimal_result) for optimal_result in optimal_results]
+        self._optimal_configurations = optimal_configurations if isinstance(
+            optimal_configurations, List) else [optimal_configurations]
+        self._optimal_configurations = set_only_eta_pairs(cast(List[Dict], self._optimal_configurations))
+        self._optimization_results = [build_optimization_result(
+            optimal_result) for optimal_result in self._optimal_configurations]
         self._build_all_theoretical_optimizations_results(len(self._optimization_results[0].probabilities_matrix))
 
     def _build_all_theoretical_optimizations_results(self, number_etas: int) -> None:
@@ -43,8 +44,19 @@ class GlobalOptimizationResults(ABC):
             TheoreticalOneShotEntangledOptimizationResult(number_etas),
         }
 
+    def add_results(self, file_names: Union[str, List[str]], path: Optional[str] = "") -> None:
+        """ Load more results from given files and add them to the existing results """
+        names = file_names
+        if not isinstance(names, List):
+            names = [cast(str, file_names)]
+
+        new_results = [load_result_from_file(file_name, path) for file_name in names]
+        self._optimal_configurations.extend(new_results)
+        new_optimization_results = [build_optimization_result(optimal_result) for optimal_result in new_results]
+        self._optimization_results.extend(new_optimization_results)
+
     def plot_probabilities(self,
-                           results_index: int,
+                           results_index: int = 0,
                            title: str = 'Probabilities from simulation',
                            bar_label: str = 'Probabilities value',
                            vmin: float = 0.0,
@@ -66,7 +78,7 @@ class GlobalOptimizationResults(ABC):
             self._theoretical_results[strategy].probabilities_matrix, title, bar_label, vmin, vmax, cmap)
 
     def plot_amplitudes(self,
-                        results_index: int,
+                        results_index: int = 0,
                         title: str = 'Input state amplitude |1> obtained from simulation',
                         bar_label: str = 'Amplitude value',
                         vmin: float = 0.0,
@@ -116,7 +128,7 @@ class GlobalOptimizationResults(ABC):
 
     def plot_probabilities_comparison_with_theoretical_result(
             self,
-            results_index: int,
+            results_index: int = 0,
             strategy: STRATEGY = 'one_shot',
             title: str = 'Difference in Probabilities' +
             '(theory vs. simulation)',
@@ -158,7 +170,7 @@ class GlobalOptimizationResults(ABC):
 
     def plot_amplitudes_comparison_with_theoretical_result(
             self,
-            results_index: int,
+            results_index: int = 0,
             strategy: STRATEGY = 'one_shot',
             title: str = 'Difference in Amplitudes' +
             '(theory vs. simulation)',
@@ -173,7 +185,7 @@ class GlobalOptimizationResults(ABC):
 
     def plot_probabilities_comparison_percentage(
             self,
-            results_index: int,
+            results_index: int = 0,
             strategy: STRATEGY = 'one_shot',
             title: str = 'Deviation in % from theoric ' +
             'probability (theory vs. simulation)',
@@ -190,7 +202,7 @@ class GlobalOptimizationResults(ABC):
 
     def plot_amplitudes_comparison_percentage(
             self,
-            results_index: int,
+            results_index: int = 0,
             strategy: STRATEGY = 'one_shot',
             title: str = 'Deviation in % from theoric ' +
             'amplitude (theory vs. simulation)',

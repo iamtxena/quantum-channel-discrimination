@@ -2,10 +2,13 @@ from abc import ABC, abstractmethod
 from qcd.circuits.aux import check_value, set_random_eta
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.backends import DeviceBackend, SimulatorBackend
-from typing import Optional, Tuple
+from typing import Optional, Tuple, cast, List, Dict
 from ..typings import GuessStrategy
 from ..typings.configurations import OptimalConfigurations
 from ..configurations import OneShotConfiguration
+from .aux import set_only_eta_pairs, fix_configurations
+import numpy as np
+import time
 
 
 class Circuit(ABC):
@@ -14,7 +17,11 @@ class Circuit(ABC):
     def __init__(self,
                  optimal_configurations: Optional[OptimalConfigurations] = None,
                  backend: Optional[DeviceBackend] = SimulatorBackend()):
-        self._optimal_configurations = optimal_configurations
+        """ !!! THIS IS A FIX: to be able to read legacy format configuration """
+        self._optimal_configurations = set_only_eta_pairs(cast(List[Dict], [optimal_configurations])).pop()
+        """ !!! THIS IS ANOTHER FIX: to be able to read legacy format configuration """
+        if optimal_configurations is not None:
+            self._optimal_configurations = fix_configurations(optimal_configurations)
         self._backend = backend
 
     def one_shot_run(self, plays: Optional[int] = 100) -> OptimalConfigurations:
@@ -27,9 +34,27 @@ class Circuit(ABC):
                                                   'probabilities': [0] * total_configurations,
                                                   'configurations': self._optimal_configurations['configurations'],
                                                   'number_calls_made': [1] * total_configurations}
+        program_start_time = time.time()
+        print(f"Starting the computation for {total_configurations} configurations.")
         for idx, configuration in enumerate(self._optimal_configurations['configurations']):
-            self._optimal_configurations['probabilities'][idx] = self.compute_average_success_probability(
+            start_time = time.time()
+            optimal_results['probabilities'][idx] = self.compute_average_success_probability(
                 configuration, plays)
+            end_time = time.time()
+            if idx % 10 == 0:
+                print(f"total minutes taken the configuration number {idx} of {total_configurations}:" +
+                      f'{int(np.round((end_time - start_time) / 60))}')
+                print("total minutes taken so far: ", int(np.round((end_time - program_start_time) / 60)))
+        end_time = time.time()
+        print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))
+        print(f"Probabilities from optimization: {self._optimal_configurations['probabilities']}")
+        print(f"Probabilities computed: {optimal_results['probabilities']}")
+        delta_probabilities = [np.round(computed - optimized, 2) for computed,
+                               optimized in zip(
+            self._optimal_configurations['probabilities'],
+            optimal_results['probabilities'])]
+        print(f"Delta probabilities (Computed - Optimized): {delta_probabilities}")
+        self._optimal_results = optimal_results
         return optimal_results
 
     def compute_average_success_probability(self,
@@ -58,18 +83,18 @@ class Circuit(ABC):
 
         return check_value(eta_pair_index_to_use, eta_pair_index_guessed)
 
-    @abstractmethod
+    @ abstractmethod
     def _prepare_initial_state(self, state_probability: float) -> Tuple[complex, complex]:
         """ Prepare initial state """
         pass
 
-    @abstractmethod
+    @ abstractmethod
     def _compute_damping_channel(self,
                                  channel_configuration: ChannelConfiguration,
                                  eta_pair_index: int) -> int:
         pass
 
-    @abstractmethod
+    @ abstractmethod
     def _convert_counts_to_eta_used(self,
                                     counts_dict: dict,
                                     guess_strategy: GuessStrategy) -> int:
