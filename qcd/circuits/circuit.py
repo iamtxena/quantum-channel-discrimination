@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from qcd.optimizations.aux import reorder_pair
 from qcd.configurations.oneshotbaseconfiguration import OneShotConfiguration
 from qcd.circuits.aux import check_value, set_random_eta
 from qcd.configurations.configuration import ChannelConfiguration
@@ -32,33 +33,41 @@ class Circuit(ABC):
         if self._optimal_configurations is None:
             raise ValueError('Optimal Configurations must be provided on Circuit Constructor to run experiments')
         total_configurations = len(self._optimal_configurations['configurations'])
-        optimal_results: OptimalConfigurations = {'eta_pairs': self._optimal_configurations['eta_pairs'],
-                                                  'best_algorithm': self._optimal_configurations['best_algorithm'],
-                                                  'probabilities': [0] * total_configurations,
-                                                  'configurations': self._optimal_configurations['configurations'],
-                                                  'number_calls_made': [1] * total_configurations,
-                                                  'legacy': (True if
-                                                             ('legacy' in self._optimal_configurations and
-                                                              self._optimal_configurations['legacy'] is True)
-                                                             else False)}
+        optimal_results: OptimalConfigurations = {
+            'eta_pairs': self._optimal_configurations['eta_pairs'],
+            'best_algorithm': self._optimal_configurations['best_algorithm'],
+            'probabilities': [0] * total_configurations,
+            'configurations': self._optimal_configurations['configurations'],
+            'number_calls_made': [1] * total_configurations,
+            'legacy': (True if
+                       ('legacy' in self._optimal_configurations and
+                        self._optimal_configurations['legacy'] is True)
+                       else False)}
         program_start_time = time.time()
         print(f"Starting the computation for {total_configurations} configurations.")
-        for idx, configuration in enumerate(self._optimal_configurations['configurations']):
+        for idx, one_configuration in enumerate(self._optimal_configurations['configurations']):
+            configuration = OneShotConfiguration({
+                'state_probability': cast(OneShotConfiguration, one_configuration).state_probability,
+                'angle_rx': cast(OneShotConfiguration, one_configuration).angle_rx,
+                'angle_ry': cast(OneShotConfiguration, one_configuration).angle_ry,
+                "eta_pair": reorder_pair(self._optimal_configurations['eta_pairs'][idx])
+            })
             optimal_results['probabilities'][idx] = self.compute_average_success_probability(
                 configuration, plays)
             # optimal_results['probabilities'][idx] = self._optimization_one_iteration(
             #     cast(OneShotConfiguration, configuration))
+
             end_time = time.time()
-            if idx % 30 == 0 and (end_time - program_start_time <= 60):
+            if idx % 10 == 0 and (end_time - program_start_time <= 60):
                 print(f"Configuration # {idx} of {total_configurations}, time from start: " +
                       f'{np.round((end_time - program_start_time), 0)} seconds')
-            if idx % 30 == 0 and (end_time - program_start_time > 60):
+            if idx % 10 == 0 and (end_time - program_start_time > 60):
                 print(f"Configuration # {idx} of {total_configurations}, time from start: " +
                       f'{np.round((end_time - program_start_time)/60, 0)} minutes' +
                       f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
-            if idx % 30 == 0:
+            if idx % 10 == 0:
                 print(configuration.to_dict())
-                print(f"global eta_pair: {self._optimal_configurations['eta_pairs'][idx]}")
+                print(f"eta_pair: {configuration.eta_pair}")
                 print(f"Configuration index: {idx}, Probabilities ->  computed: " +
                       f"{optimal_results['probabilities'][idx]}, " +
                       f"optimized: {self._optimal_configurations['probabilities'][idx]} and " +
@@ -72,14 +81,14 @@ class Circuit(ABC):
               f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
         print(f"Probabilities from optimization: {self._optimal_configurations['probabilities']}")
         print(f"Probabilities computed: {optimal_results['probabilities']}")
-        delta_probabilities = np.array(
-            self._optimal_configurations['probabilities']) - np.array(optimal_results['probabilities'])
-        print(f"Delta probabilities (Computed - Optimized):\n {delta_probabilities}")
+        # delta_probabilities = np.array(
+        #     self._optimal_configurations['probabilities']) - np.array(optimal_results['probabilities'])
+        # # print(f"Delta probabilities (Computed - Optimized):\n {delta_probabilities}")
         self._optimal_results = optimal_results
         return optimal_results
 
     def _optimization_one_iteration(self, configuration: OneShotConfiguration) -> float:
-        optimizer_algorithm = 'SLSQP'
+        optimizer_algorithm = 'DIRECT_L_RAND'
         max_evals = 1
         # print("Analyzing Optimizer Algorithm: ", optimizer_algorithm)
         if optimizer_algorithm == 'ADAM':
@@ -99,7 +108,7 @@ class Circuit(ABC):
         if optimizer_algorithm == 'ISRES':
             optimizer = ISRES(max_evals=max_evals)
 
-        self._global_eta_pair = configuration.eta_pair
+        self._global_eta_pair = reorder_pair(configuration.eta_pair)
         initial_parameters = [
             configuration.state_probability,
             configuration.angle_rx,
@@ -115,7 +124,7 @@ class Circuit(ABC):
                                  objective_function=self._cost_function,
                                  variable_bounds=variable_bounds,
                                  initial_point=initial_parameters)
-        # print("Best Average Probability:", 1 - ret[1])
+        print("Best Average Probability:", 1 - ret[1])
         return ret[1]
 
     @abstractmethod
@@ -145,7 +154,6 @@ class Circuit(ABC):
         """
         eta_pair_index_to_use = set_random_eta(channel_configuration.eta_pair)
         eta_pair_index_guessed = self._compute_damping_channel(channel_configuration, eta_pair_index_to_use)
-
         return check_value(eta_pair_index_to_use, eta_pair_index_guessed)
 
     @ abstractmethod

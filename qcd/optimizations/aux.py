@@ -35,9 +35,14 @@ def reorder_pairs(pairs: List[Tuple[float, float]]) -> List[Tuple[float, float]]
     """
     reordered_pairs = pairs
     for idx, pair in enumerate(pairs):
-        if pair[0] < pair[1]:
-            reordered_pairs[idx] = (pair[1], pair[0])
+        reordered_pairs[idx] = reorder_pair(pair)
     return reordered_pairs
+
+
+def reorder_pair(pair: Tuple[float, float]) -> Tuple[float, float]:
+    if pair[0] < pair[1]:
+        return (pair[1], pair[0])
+    return pair
 
 
 def get_combinations_two_etas_without_repeats_from_lambdas(

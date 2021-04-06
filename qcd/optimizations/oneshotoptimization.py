@@ -71,13 +71,14 @@ class OneShotOptimization(Optimization):
                   f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
             remaining_time = (len(eta_pairs_idx_to_optimize) * (end_time -
                                                                 program_start_time)) / (eta_pair_idx + 1)
-            remaining_days = int(np.round(remaining_time / 60 / 60 / 24, 0))
-            remaining_hours = int(np.round((remaining_time % 60 / 60 / 24) * 24, 0))
-            remaining_minutes = int(np.round((math.modf((remaining_time % 60 / 60 / 24) * 24)[0]) * 60, 0))
-            remaining_seconds = remaining_time - (remaining_days * 60 * 60 * 24 +
-                                                  remaining_hours * 60 * 60 + remaining_minutes * 60)
+            remaining_days = np.round(remaining_time / 60 / 60 / 24, 0)
+            remaining_hours = np.round((remaining_time % 60 / 60 / 24) * 24, 0)
+            float_minutes = (math.modf((remaining_time % 60 / 60 / 24) * 24)[0]) * 60
+            remaining_minutes = np.round(float_minutes, 0)
+            float_seconds = (math.modf(float_minutes)[0]) * 60
+            remaining_seconds = np.round(float_seconds, 0)
             print(f"estimated remaining time: {remaining_days} days, {remaining_hours} hours, " +
-                  f"{remaining_minutes} minutes and {remaining_seconds} seconds")
+                  f" {remaining_minutes} minutes and {remaining_seconds}")
 
         end_time = time.time()
         print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))

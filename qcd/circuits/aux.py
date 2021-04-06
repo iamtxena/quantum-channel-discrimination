@@ -59,14 +59,14 @@ def fix_configurations(result: OptimalConfigurations) -> OptimalConfigurations:
             'state_probability': (math.sin(configuration[0]))**2,
             'angle_rx': configuration[1],
             'angle_ry': configuration[2],
-            'eta_pair': (result['eta_pairs'][idx] if isinstance(result['eta_pairs'][idx][0], float)
-                         else (math.radians(int(result['eta_pairs'][idx][0])),
-                               math.radians(int(result['eta_pairs'][idx][1]))))
+            'eta_pair': result['eta_pairs'][idx] if isinstance(result['eta_pairs'][idx][0], float)
+            else (math.radians(int(result['eta_pairs'][idx][0])),
+                  math.radians(int(result['eta_pairs'][idx][1])))
         })
         fixed_result['configurations'][idx] = new_configuration
         fixed_result['eta_pairs'][idx] = new_configuration._eta_pair
 
-    fixed_result['legacy'] = True  # type: ignore
+    fixed_result['legacy'] = True
 
     return fixed_result
 

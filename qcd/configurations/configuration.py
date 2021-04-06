@@ -12,6 +12,11 @@ class ChannelConfiguration(ABC):
     def eta_pair(self) -> Tuple[float, float]:
         return self._eta_pair
 
+    def reorder_pair(self):
+        self._eta_pair = self._eta_pair if self._eta_pair[0] > self._eta_pair[1] else (
+            self._eta_pair[1], self._eta_pair[0])
+        return self
+
     @abstractmethod
     def to_dict(self) -> Dict:
         pass

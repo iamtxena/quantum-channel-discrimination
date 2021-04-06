@@ -32,16 +32,13 @@ def build_amplitudes_matrix(
         return cast(List[List[float]], _build_amplitudes_matrix_new_legacy(cast(Dict, result)))
     if isinstance(result['eta_pairs'][0][0], str):
         return cast(List[List[float]], _build_amplitudes_matrix_legacy(cast(Dict, result)))
-    print(f"result[eta_pairs][0]: {result['eta_pairs'][0]}")
     raise ValueError('Bad input results')
 
 
 def _build_probabilities_matrix(result: OptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
     if 'legacy' in result and result['legacy'] is True:
-        print(f"entering in new legacy mode for probabilities with result['legacy']: {result['legacy']}")
         return _assign_probabilities_new_legacy(result, sorted_etas, matrix)  # type: ignore
-    print('entering in normal mode for probabilities')
     return _assign_probabilities(result, sorted_etas, matrix)
 
 
