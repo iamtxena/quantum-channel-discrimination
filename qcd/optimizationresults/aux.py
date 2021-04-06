@@ -38,8 +38,10 @@ def build_amplitudes_matrix(
 
 def _build_probabilities_matrix(result: OptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
-    if 'legacy' in result:
+    if 'legacy' in result and result['legacy'] is True:
+        print(f"entering in new legacy mode for probabilities with result['legacy']: {result['legacy']}")
         return _assign_probabilities_new_legacy(result, sorted_etas, matrix)  # type: ignore
+    print('entering in normal mode for probabilities')
     return _assign_probabilities(result, sorted_etas, matrix)
 
 
@@ -55,7 +57,7 @@ def _build_probabilities_matrix_legacy(result: Dict) -> List[List[int]]:
 
 def _build_amplitudes_matrix(result: OptimalConfigurations) -> List[List[float]]:
     sorted_etas, matrix = _init_matrix(result)
-    if 'legacy' in result:
+    if 'legacy' in result and result['legacy'] is True:
         return _assign_amplitudes_different_order(result, sorted_etas, matrix)
     if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'state_probability'):
         return _assign_amplitudes(result, sorted_etas, matrix)

@@ -3,7 +3,7 @@ from qcd.configurations import OneShotConfiguration
 from qcd.typings import GuessStrategy
 from qcd.configurations.configuration import ChannelConfiguration
 from . import Circuit
-from typing import Tuple, cast
+from typing import Tuple, cast, List
 import numpy as np
 from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
 
@@ -63,3 +63,11 @@ class OneShotCircuit(Circuit):
 
         counts = execute(circuit, backend, shots=1).result().get_counts(circuit)
         return self._convert_counts_to_eta_used(counts, guess_strategy=GuessStrategy.one_bit_same_as_measured)
+
+    def _cost_function(self, params: List[float]) -> float:
+        configuration = OneShotConfiguration({
+            'state_probability': params[0],
+            'angle_rx': params[1],
+            'angle_ry': params[2],
+            'eta_pair': self._global_eta_pair})
+        return 1 - self.compute_average_success_probability(configuration=configuration)

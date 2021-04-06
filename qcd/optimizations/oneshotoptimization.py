@@ -6,6 +6,7 @@ from ..configurations import ChannelConfiguration, OneShotConfiguration
 from ..circuits import OneShotCircuit
 import time
 import numpy as np
+import math
 
 
 class OneShotOptimization(Optimization):
@@ -61,8 +62,22 @@ class OneShotOptimization(Optimization):
             optimal_configurations['best_algorithm'].append(result['best_algorithm'])
             optimal_configurations['number_calls_made'].append(result['number_calls_made'])
             end_time = time.time()
+            print(f"Pair of etas # {eta_pair_idx} of {len(eta_pairs_idx_to_optimize)}, time taken this pair of etas: " +
+                  f'{np.round((end_time - start_time)/60, 0)} minutes' +
+                  f' and {np.round((end_time - start_time) % 60, 0)} seconds')
             print("total minutes taken this pair of etas: ", int(np.round((end_time - start_time) / 60)))
-            print("total minutes taken so far: ", int(np.round((end_time - program_start_time) / 60)))
+            print("total time taken so far: " +
+                  f'{np.round((end_time - program_start_time)/60, 0)} minutes' +
+                  f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
+            remaining_time = (len(eta_pairs_idx_to_optimize) * (end_time -
+                                                                program_start_time)) / (eta_pair_idx + 1)
+            remaining_days = int(np.round(remaining_time / 60 / 60 / 24, 0))
+            remaining_hours = int(np.round((remaining_time % 60 / 60 / 24) * 24, 0))
+            remaining_minutes = int(np.round((math.modf((remaining_time % 60 / 60 / 24) * 24)[0]) * 60, 0))
+            remaining_seconds = remaining_time - (remaining_days * 60 * 60 * 24 +
+                                                  remaining_hours * 60 * 60 + remaining_minutes * 60)
+            print(f"estimated remaining time: {remaining_days} days, {remaining_hours} hours, " +
+                  f"{remaining_minutes} minutes and {remaining_seconds} seconds")
 
         end_time = time.time()
         print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))

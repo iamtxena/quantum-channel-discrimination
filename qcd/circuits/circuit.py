@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from qcd.configurations.oneshotbaseconfiguration import OneShotConfiguration
 from qcd.circuits.aux import check_value, set_random_eta
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.backends import DeviceBackend, SimulatorBackend
@@ -8,6 +9,7 @@ from ..typings.configurations import OptimalConfigurations
 from .aux import set_only_eta_pairs, fix_configurations
 import numpy as np
 import time
+from qiskit.aqua.components.optimizers import SLSQP, L_BFGS_B, ADAM, CRS, DIRECT_L, DIRECT_L_RAND, ESCH, ISRES
 
 
 class Circuit(ABC):
@@ -16,11 +18,13 @@ class Circuit(ABC):
     def __init__(self,
                  optimal_configurations: Optional[OptimalConfigurations] = None,
                  backend: Optional[DeviceBackend] = SimulatorBackend()):
-        """ !!! THIS IS A FIX: to be able to read legacy format configuration """
-        self._optimal_configurations = set_only_eta_pairs(cast(List[Dict], [optimal_configurations])).pop()
-        """ !!! THIS IS ANOTHER FIX: to be able to read legacy format configuration """
+
         if optimal_configurations is not None:
+            """ !!! THIS IS ANOTHER FIX: to be able to read legacy format configuration """
+            self._optimal_configurations = set_only_eta_pairs(cast(List[Dict], [optimal_configurations])).pop()
+            """ !!! THIS IS A FIX: to be able to read legacy format configuration """
             self._optimal_configurations = fix_configurations(optimal_configurations)
+            # print(self._optimal_configurations)
         self._backend = backend
 
     def one_shot_run(self, plays: Optional[int] = 100) -> OptimalConfigurations:
@@ -33,12 +37,17 @@ class Circuit(ABC):
                                                   'probabilities': [0] * total_configurations,
                                                   'configurations': self._optimal_configurations['configurations'],
                                                   'number_calls_made': [1] * total_configurations,
-                                                  'legacy': 'legacy' in self._optimal_configurations}
+                                                  'legacy': (True if
+                                                             ('legacy' in self._optimal_configurations and
+                                                              self._optimal_configurations['legacy'] is True)
+                                                             else False)}
         program_start_time = time.time()
         print(f"Starting the computation for {total_configurations} configurations.")
         for idx, configuration in enumerate(self._optimal_configurations['configurations']):
             optimal_results['probabilities'][idx] = self.compute_average_success_probability(
                 configuration, plays)
+            # optimal_results['probabilities'][idx] = self._optimization_one_iteration(
+            #     cast(OneShotConfiguration, configuration))
             end_time = time.time()
             if idx % 30 == 0 and (end_time - program_start_time <= 60):
                 print(f"Configuration # {idx} of {total_configurations}, time from start: " +
@@ -49,6 +58,7 @@ class Circuit(ABC):
                       f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
             if idx % 30 == 0:
                 print(configuration.to_dict())
+                print(f"global eta_pair: {self._optimal_configurations['eta_pairs'][idx]}")
                 print(f"Configuration index: {idx}, Probabilities ->  computed: " +
                       f"{optimal_results['probabilities'][idx]}, " +
                       f"optimized: {self._optimal_configurations['probabilities'][idx]} and " +
@@ -67,6 +77,50 @@ class Circuit(ABC):
         print(f"Delta probabilities (Computed - Optimized):\n {delta_probabilities}")
         self._optimal_results = optimal_results
         return optimal_results
+
+    def _optimization_one_iteration(self, configuration: OneShotConfiguration) -> float:
+        optimizer_algorithm = 'SLSQP'
+        max_evals = 1
+        # print("Analyzing Optimizer Algorithm: ", optimizer_algorithm)
+        if optimizer_algorithm == 'ADAM':
+            optimizer = ADAM(maxiter=max_evals)
+        if optimizer_algorithm == 'SLSQP':
+            optimizer = SLSQP(maxiter=max_evals)
+        if optimizer_algorithm == 'L_BFGS_B':
+            optimizer = L_BFGS_B(maxfun=max_evals, maxiter=max_evals)
+        if optimizer_algorithm == 'CRS':
+            optimizer = CRS(max_evals=max_evals)
+        if optimizer_algorithm == 'DIRECT_L':
+            optimizer = DIRECT_L(max_evals=max_evals)
+        if optimizer_algorithm == 'DIRECT_L_RAND':
+            optimizer = DIRECT_L_RAND(max_evals=max_evals)
+        if optimizer_algorithm == 'ESCH':
+            optimizer = ESCH(max_evals=max_evals)
+        if optimizer_algorithm == 'ISRES':
+            optimizer = ISRES(max_evals=max_evals)
+
+        self._global_eta_pair = configuration.eta_pair
+        initial_parameters = [
+            configuration.state_probability,
+            configuration.angle_rx,
+            configuration.angle_ry,
+        ]
+        variable_bounds = [
+            (0, 1),
+            (0, 2 * np.pi),
+            (0, 2 * np.pi)
+        ]
+
+        ret = optimizer.optimize(num_vars=3,
+                                 objective_function=self._cost_function,
+                                 variable_bounds=variable_bounds,
+                                 initial_point=initial_parameters)
+        # print("Best Average Probability:", 1 - ret[1])
+        return ret[1]
+
+    @abstractmethod
+    def _cost_function(self, params: List[float]) -> float:
+        pass
 
     def compute_average_success_probability(self,
                                             configuration=ChannelConfiguration,
