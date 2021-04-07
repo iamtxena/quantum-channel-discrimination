@@ -17,20 +17,25 @@ class OneShotEntangledCircuit(OneShotCircuit):
         return (0, np.sqrt(state_probability), np.sqrt(1 - state_probability), 0)
 
     def _guess_lambda_used_two_bit_strategy(self, counts: str) -> int:
-        """ Decides which lambda was used on the real execution from the two 'counts' measured
+        """ Decides which eta was used on the real execution from the two 'counts' measured
+            Qubits order MATTER!!!!
+            "01" means that:
+              the LEFTMOST bit (0) corresponds to the measurement of the qubit that goes THROUGH the channel
+              and the RIGHTMOST bit (1) corresponds to the measurement of the qubit that goes OUTSIDE the channel
+            Remember that we are only sending |01> + |10> entangles states
             Setting eta0 >= eta1:
                 * outcome 00 -> eta0 as the most probable (more attenuation)
-                * outcome 01 -> eta1 as the most probable (less attenuation)
-                * outcome 10 -> 50% chance, random choice
+                * outcome 01 -> we do not know if there has been attenuation. 50% chance, random choice
+                * outcome 10 -> eta1 as the most probable (less attenuation)
                 * outcome 11 -> not possible, but in case we get it (from noisy simulation), 50% chance, random choice
         """
         if len(counts) != 2:
             raise ValueError('counts MUST be a two character length string')
         if counts == "00":
-            return 1
-        if counts == "01":
             return 0
-        if counts == "10" or counts == "11":
+        if counts == "10":
+            return 1
+        if counts == "01" or counts == "11":
             return random.choice([0, 1])
         raise ValueError("Accepted counts are '00', '01', '10', '11'")
 

@@ -48,16 +48,16 @@ class Circuit(ABC):
                 configuration, plays)
 
             end_time = time.time()
-            if idx % 10 == 0 and (end_time - program_start_time <= 60):
+            if idx % 30 == 0 and (end_time - program_start_time <= 60):
                 print(f"Configuration # {idx} of {total_configurations}, time from start: " +
                       f'{np.round((end_time - program_start_time), 0)} seconds')
-            if idx % 10 == 0 and (end_time - program_start_time > 60):
+            if idx % 30 == 0 and (end_time - program_start_time > 60):
                 print(f"Configuration # {idx} of {total_configurations}, time from start: " +
                       f'{np.round((end_time - program_start_time)/60, 0)} minutes' +
                       f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
-            if idx % 10 == 0:
-                print(configuration.to_dict())
-                print(f"eta_pair: {configuration.eta_pair}")
+            if idx % 30 == 0:
+                print('computed ',
+                      (self._create_one_configuration(configuration, reorder_pair(configuration.eta_pair)).to_dict()))
                 print(f"Configuration index: {idx}, Probabilities ->  computed: " +
                       f"{optimal_results['probabilities'][idx]}, " +
                       f"optimized: {self._optimal_configurations['probabilities'][idx]} and " +
@@ -69,8 +69,6 @@ class Circuit(ABC):
         print("total minutes of execution time: " +
               f'{np.round((end_time - program_start_time)/60, 0)} minutes' +
               f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
-        print(f"Probabilities from optimization: {self._optimal_configurations['probabilities']}")
-        print(f"Probabilities computed: {optimal_results['probabilities']}")
         self._optimal_results = optimal_results
         return optimal_results
 
