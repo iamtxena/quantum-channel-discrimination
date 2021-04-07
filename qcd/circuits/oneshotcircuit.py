@@ -1,3 +1,4 @@
+from qcd.backends.devicebackend import DeviceBackend
 from qcd.circuits.aux import get_measured_value_from_counts
 from qcd.configurations import OneShotConfiguration
 from qcd.typings import GuessStrategy
@@ -5,7 +6,7 @@ from qcd.configurations.configuration import ChannelConfiguration
 from . import Circuit
 from typing import Tuple, cast
 import numpy as np
-from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute
 
 
 class OneShotCircuit(Circuit):
@@ -38,18 +39,23 @@ class OneShotCircuit(Circuit):
         counts = get_measured_value_from_counts(counts_dict)
         return self._guess_eta_used_one_bit_strategy(counts)
 
-    def _compute_damping_channel(self, channel_configuration: ChannelConfiguration, eta_index: int) -> int:
+    def _compute_damping_channel(self,
+                                 circuit: QuantumCircuit,
+                                 backend: DeviceBackend) -> int:
         """ one-time execution of the amplitude damping circuit using the passed parameters
             Returns: the execution measured result: either 0 or 1
         """
-        configuration = cast(OneShotConfiguration, channel_configuration)
-        backend = Aer.get_backend('qasm_simulator') if self._backend is None else self._backend.backend
-        eta = configuration.eta_pair[eta_index]
+        counts = execute(circuit, backend.backend, shots=1).result().get_counts(circuit)
+        return self._convert_counts_to_eta_used(counts, guess_strategy=GuessStrategy.one_bit_same_as_measured)
+
+    def _create_one_circuit(self,
+                            configuration: ChannelConfiguration,
+                            eta: float) -> QuantumCircuit:
+        """ Creates one circuit from a given  configuration and eta """
+        configuration = cast(OneShotConfiguration, configuration)
         qreg_q = QuantumRegister(2, 'q')
         creg_c = ClassicalRegister(1, 'c')
-
         initial_state = self._prepare_initial_state(configuration.state_probability)
-
         circuit = QuantumCircuit(qreg_q, creg_c)
         circuit.initialize([initial_state[0],
                             initial_state[1]], qreg_q[0])
@@ -59,9 +65,7 @@ class OneShotCircuit(Circuit):
         circuit.rx(configuration.angle_rx, qreg_q[0])
         circuit.ry(configuration.angle_ry, qreg_q[0])
         circuit.measure(qreg_q[0], creg_c[0])
-
-        counts = execute(circuit, backend, shots=1).result().get_counts(circuit)
-        return self._convert_counts_to_eta_used(counts, guess_strategy=GuessStrategy.one_bit_same_as_measured)
+        return circuit
 
     def _create_one_configuration(self,
                                   configuration: ChannelConfiguration,

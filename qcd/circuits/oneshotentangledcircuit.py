@@ -1,11 +1,12 @@
+from qcd.configurations.configuration import ChannelConfiguration
+from qcd.backends.devicebackend import DeviceBackend
 from qcd.circuits.aux import get_measured_value_from_counts
 from qcd.configurations import OneShotConfiguration
 from qcd.typings import GuessStrategy
-from qcd.configurations.configuration import ChannelConfiguration
 from . import OneShotCircuit
 from typing import Tuple, cast
 import numpy as np
-from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute
 import random
 
 
@@ -51,13 +52,20 @@ class OneShotEntangledCircuit(OneShotCircuit):
         counts = get_measured_value_from_counts(counts_dict)
         return self._guess_lambda_used_two_bit_strategy(counts)
 
-    def _compute_damping_channel(self, channel_configuration: ChannelConfiguration, eta_index: int) -> int:
-        """ one-time execution of the two-qubit entangled amplitude damping circuit using the passed parameters
+    def _compute_damping_channel(self,
+                                 circuit: QuantumCircuit,
+                                 backend: DeviceBackend) -> int:
+        """ one-time execution of the amplitude damping circuit using the passed parameters
             Returns: the execution measured result: either 0 or 1
         """
-        configuration = cast(OneShotConfiguration, channel_configuration)
-        backend = Aer.get_backend('qasm_simulator') if self._backend is None else self._backend.backend
-        eta = configuration.eta_pair[eta_index]
+        counts = execute(circuit, backend.backend, shots=1).result().get_counts(circuit)
+        return self._convert_counts_to_eta_used(counts, guess_strategy=GuessStrategy.two_bit_base)
+
+    def _create_one_circuit(self,
+                            configuration: ChannelConfiguration,
+                            eta: float) -> QuantumCircuit:
+        """ Creates one circuit from a given  configuration and eta """
+        configuration = cast(OneShotConfiguration, configuration)
         qreg_q = QuantumRegister(3, 'q')
         creg_c = ClassicalRegister(2, 'c')
 
@@ -72,6 +80,4 @@ class OneShotEntangledCircuit(OneShotCircuit):
         circuit.ry(configuration.angle_ry, qreg_q[1])
         circuit.barrier()
         circuit.measure([0, 1], creg_c)
-
-        counts = execute(circuit, backend, shots=1).result().get_counts(circuit)
-        return self._convert_counts_to_eta_used(counts, guess_strategy=GuessStrategy.two_bit_base)
+        return circuit
