@@ -1,3 +1,4 @@
+from qcd.configurations.configuration import ChannelConfiguration
 from qcd.circuits import OneShotCircuit
 from qcd.optimizationresults.aux import load_result_from_file
 from . import DampingChannel
@@ -44,6 +45,13 @@ class OneShotDampingChannel(DampingChannel):
             save_object_to_disk(optimal_configurations,
                                 f"{clone_setup['file_name']}_{clone_setup['id_clone']}", clone_setup['path'])
         return optimal_configurations
+
+    @staticmethod
+    def discriminate_channel(configuration: ChannelConfiguration, plays: Optional[int] = 100) -> float:
+        """ Computes the average success probability of running a specific configuration
+            for the number of plays specified.
+        """
+        return OneShotCircuit().compute_average_success_probability(configuration, plays)
 
     def __init__(self,
                  channel_setup_configuration: Optional[OneShotSetupConfiguration] = None,

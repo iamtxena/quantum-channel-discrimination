@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from qcd.configurations.configuration import ChannelConfiguration
 from qcd.circuits import Circuit
 from qcd.optimizationresults import GlobalOptimizationResults
 from typing import Optional, List, Union
@@ -27,6 +28,14 @@ class DampingChannel(ABC):
 
     def __init__(self) -> None:
         self._one_shot_circuit: Circuit
+
+    @staticmethod
+    @abstractmethod
+    def discriminate_channel(configuration: ChannelConfiguration, plays: Optional[int] = 100) -> float:
+        """ Computes the average success probability of running a specific configuration
+            for the number of plays specified.
+        """
+        pass
 
     @abstractmethod
     def run(self, backend: Union[DeviceBackend, List[DeviceBackend]],

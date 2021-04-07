@@ -51,7 +51,7 @@ class OneShotEntangledCircuit(OneShotCircuit):
             Returns: the execution measured result: either 0 or 1
         """
         configuration = cast(OneShotConfiguration, channel_configuration)
-        backend = backend = Aer.get_backend('qasm_simulator')
+        backend = Aer.get_backend('qasm_simulator') if self._backend is None else self._backend.backend
         eta = configuration.eta_pair[eta_index]
         qreg_q = QuantumRegister(3, 'q')
         creg_c = ClassicalRegister(2, 'c')
