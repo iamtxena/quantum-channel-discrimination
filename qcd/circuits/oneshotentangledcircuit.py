@@ -27,9 +27,9 @@ class OneShotEntangledCircuit(OneShotCircuit):
         if len(counts) != 2:
             raise ValueError('counts MUST be a two character length string')
         if counts == "00":
-            return 0
-        if counts == "01":
             return 1
+        if counts == "01":
+            return 0
         if counts == "10" or counts == "11":
             return random.choice([0, 1])
         raise ValueError("Accepted counts are '00', '01', '10', '11'")
