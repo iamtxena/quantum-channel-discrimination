@@ -1,12 +1,11 @@
-from qcd.backends.devicebackend import DeviceBackend
+
 from qcd.circuits.aux import get_measured_value_from_counts
 from qcd.configurations import OneShotConfiguration
-from qcd.typings import GuessStrategy
 from qcd.configurations.configuration import ChannelConfiguration
 from . import Circuit
-from typing import Tuple, cast
+from typing import List, Tuple, cast
 import numpy as np
-from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 
 
 class OneShotCircuit(Circuit):
@@ -27,26 +26,20 @@ class OneShotCircuit(Circuit):
             return 0
         return 1
 
-    def _convert_counts_to_eta_used(self,
-                                    counts_dict: dict,
-                                    guess_strategy: GuessStrategy) -> int:
+    def _convert_counts_to_eta_used(self, counts_dict: dict) -> int:
         """ Decides which eta was used on the real execution from the 'counts' measured
             based on the guess strategy that is required to use
         """
-        if guess_strategy != GuessStrategy.one_bit_same_as_measured:
-            raise ValueError('Invalid Guess Strategy. Only GuessStrategy.one_bit_same_as_measured supported')
-
         counts = get_measured_value_from_counts(counts_dict)
         return self._guess_eta_used_one_bit_strategy(counts)
 
-    def _compute_damping_channel(self,
-                                 circuit: QuantumCircuit,
-                                 backend: DeviceBackend) -> int:
-        """ one-time execution of the amplitude damping circuit using the passed parameters
-            Returns: the execution measured result: either 0 or 1
+    def _convert_all_counts_to_all_eta_used(self,
+                                            counts_all_circuits: List[dict]) -> List[int]:
+        """ Decides which eta was used on the real execution from the 'counts' measured
+            based on the guess strategy that is required to use
         """
-        counts = execute(circuit, backend.backend, shots=1).result().get_counts(circuit)
-        return self._convert_counts_to_eta_used(counts, guess_strategy=GuessStrategy.one_bit_same_as_measured)
+        return [self._convert_counts_to_eta_used(counts)
+                for counts in counts_all_circuits]
 
     def _create_one_circuit(self,
                             configuration: ChannelConfiguration,

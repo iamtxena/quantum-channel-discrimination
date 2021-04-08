@@ -1,15 +1,17 @@
 from abc import ABC, abstractmethod
 from qiskit import QuantumCircuit
+from qiskit.compiler import assemble, transpile
+from qiskit.qobj import Qobj
 from qcd.optimizations.aux import reorder_pair
-from qcd.circuits.aux import check_value, set_random_eta
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.backends import DeviceBackend, SimulatorBackend
 from typing import Optional, Tuple, cast, List, Dict
-from ..typings import GuessStrategy
 from ..typings.configurations import OptimalConfigurations
 from .aux import set_only_eta_pairs, fix_configurations
 import numpy as np
 import time
+from bitarray.util import urandom, count_xor
+from bitarray import frozenbitarray
 
 
 class Circuit(ABC):
@@ -34,16 +36,11 @@ class Circuit(ABC):
         total_configurations = len(self._optimal_configurations['configurations'])
         optimal_results = self.init_optimal_results(total_configurations)
         program_start_time = time.time()
-        circuit_pairs = self._create_all_circuit_pairs(self._optimal_configurations['configurations'])
 
         print(f"Starting the computation for {total_configurations} configurations.")
-        for idx, (configuration, circuit_pair) in enumerate(zip(
-                self._optimal_configurations['configurations'],
-                circuit_pairs)):
-
+        for idx, configuration in enumerate(self._optimal_configurations['configurations']):
             optimal_results['probabilities'][idx] = self.compute_average_success_probability(
-                reordered_configuration=self._reorder_configuration(configuration),
-                circuit_pair=circuit_pair,
+                configuration=configuration,
                 plays=plays)
 
             self.print_computation_time(total_configurations, optimal_results, program_start_time, idx, configuration)
@@ -75,14 +72,14 @@ class Circuit(ABC):
                                idx,
                                configuration):
         end_time = time.time()
-        if idx % 30 == 0 and (end_time - program_start_time <= 60):
+        if idx % 10 == 0 and (end_time - program_start_time <= 60):
             print(f"Configuration # {idx} of {total_configurations}, time from start: " +
                   f'{np.round((end_time - program_start_time), 0)} seconds')
-        if idx % 30 == 0 and (end_time - program_start_time > 60):
+        if idx % 10 == 0 and (end_time - program_start_time > 60):
             print(f"Configuration # {idx} of {total_configurations}, time from start: " +
                   f'{np.round((end_time - program_start_time)/60, 0)} minutes' +
                   f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
-        if idx % 30 == 0:
+        if idx % 10 == 0:
             print('computed ',
                   (self._create_one_configuration(configuration, reorder_pair(configuration.eta_pair)).to_dict()))
             print(f"Configuration index: {idx}, Probabilities ->  computed: " +
@@ -93,83 +90,63 @@ class Circuit(ABC):
                            self._optimal_configurations['probabilities'][idx], 2))
 
     def compute_average_success_probability(self,
-                                            reordered_configuration: ChannelConfiguration,
-                                            circuit_pair: Optional[Tuple[QuantumCircuit,
-                                                                         QuantumCircuit]] = None,
+                                            configuration: ChannelConfiguration,
                                             plays: Optional[int] = 100,) -> float:
-        """ Computes the average success probability of running a specific configuration for the number of plays
-            defined in the configuration.
+        """ Computes the average success probability of running a specific configuration
+            for the number of plays defined in the configuration.
         """
         if plays is None:
             plays = 100
 
-        if circuit_pair is None:
-            (circuit_pair,
-             reordered_configuration) = self._reordered_configuration_and_create_circuit_pair(reordered_configuration)
+        random_etas = frozenbitarray(urandom(plays))  # creates a bitstring of plays length
+        circuit_pair = self._create_transpiled_circuit_pair(configuration)
+        guesses = frozenbitarray([self._run_circuit_and_return_gues(circuit_pair[random_eta])
+                                  for random_eta in random_etas])
+        # count the number of total correct guesses and compute the average success probability
+        return 1 - (count_xor(random_etas, guesses) / plays)
 
-        success_counts = 0
-        for play in range(plays):
-            success_counts += self._play_and_guess_one_case(circuit_pair,
-                                                            reordered_configuration.eta_pair,
-                                                            backend=SimulatorBackend()
-                                                            if self._backend is None
-                                                            else self._backend)
+    def _run_circuit_and_return_gues(self, obj: Qobj) -> int:
+        """ ONE SHOT run for all given circuits and for each resulting counts, guess the eta used """
+        counts = self._backend.backend.run(obj).result().get_counts()
+        return self._convert_counts_to_eta_used(counts)
 
-        return (success_counts / plays)
-
-    def _reordered_configuration_and_create_circuit_pair(self, configuration):
+    def _create_transpiled_circuit_pair(self,
+                                        configuration: ChannelConfiguration) -> Tuple[Qobj,
+                                                                                      Qobj]:
+        """ Create a pair of Quantum Circuits, in its transpiled form, from a given configuration """
         reordered_configuration = self._reorder_configuration(configuration)
-        circuit_pair = self._create_circuit_pair(reordered_configuration)
-        return circuit_pair, reordered_configuration
+        self._backend = SimulatorBackend() if self._backend is None else self._backend
+        experiments = [self._create_transpiled_circuit(reordered_configuration, self._backend, eta)
+                       for eta in reordered_configuration.eta_pair]
+        if len(experiments) > 2:
+            raise ValueError('Transpiled circuits must have length 2')
+        return (experiments[0], experiments[1])
+
+    def _create_transpiled_circuit(self, reordered_configuration, backend, eta) -> Qobj:
+        one_circuit = self._create_one_circuit(reordered_configuration, eta)
+        transpiled_circuit = transpile(one_circuit, backend=backend.backend)
+        return assemble(transpiled_circuit, backend=self._backend.backend, shots=1)
 
     def _reorder_configuration(self, configuration):
         return self._create_one_configuration(
             configuration,
             reorder_pair(configuration.eta_pair))
 
-    def _play_and_guess_one_case(self,
-                                 circuit_pair: Tuple[QuantumCircuit, QuantumCircuit],
-                                 eta_pair: Tuple[float, float],
-                                 backend: DeviceBackend) -> int:
-        """ Execute a real execution with a random eta from the two passed,
-            guess which one was used on the execution and
-            check the result.
-            Returns 1 on success (it was a correct guess) or 0 on fail (it was an incorrect guess)
-        """
-        eta_pair_index_to_use = set_random_eta(eta_pair)
-        eta_pair_index_guessed = self._compute_damping_channel(
-            circuit_pair[eta_pair_index_to_use],
-            backend)
-        return check_value(eta_pair_index_to_use, eta_pair_index_guessed)
-
-    def _create_all_circuit_pairs(self,
-                                  configurations: List[ChannelConfiguration]) -> List[Tuple[QuantumCircuit,
-                                                                                            QuantumCircuit]]:
-        """ creates two circuits for each given configuration, one per eta pair """
-        return [self._create_circuit_pair(configuration) for configuration in configurations]
-
-    def _create_circuit_pair(self,
-                             configuration: ChannelConfiguration) -> Tuple[QuantumCircuit,
-                                                                           QuantumCircuit]:
-        """ Creates each circuit defined by the given configuration and each eta """
-        return (self._create_one_circuit(configuration, configuration.eta_pair[0]),
-                self._create_one_circuit(configuration, configuration.eta_pair[1]))
-
     @ abstractmethod
     def _prepare_initial_state(self, state_probability: float) -> Tuple[complex, complex]:
         """ Prepare initial state """
         pass
 
-    @ abstractmethod
-    def _compute_damping_channel(self,
-                                 circuit: QuantumCircuit,
-                                 backend: DeviceBackend) -> int:
+    @abstractmethod
+    def _convert_counts_to_eta_used(self, counts_dict: dict) -> int:
+        """ Decides which eta was used on the real execution from the 'counts' measured
+            based on the guess strategy that is required to use
+        """
         pass
 
     @ abstractmethod
-    def _convert_counts_to_eta_used(self,
-                                    counts_dict: dict,
-                                    guess_strategy: GuessStrategy) -> int:
+    def _convert_all_counts_to_all_eta_used(self,
+                                            counts_all_circuits: List[dict]) -> List[int]:
         """ Decides which eta was used on the real execution from the 'counts' measured
             based on the guess strategy that is required to use
         """
