@@ -51,7 +51,7 @@ class OneShotDampingChannel(DampingChannel):
         """ Computes the average success probability of running a specific configuration
             for the number of plays specified.
         """
-        return OneShotCircuit().compute_average_success_probability(configuration, plays)
+        return OneShotCircuit().compute_new_average_success_probability(configuration, plays)
 
     def __init__(self,
                  channel_setup_configuration: Optional[OneShotSetupConfiguration] = None,

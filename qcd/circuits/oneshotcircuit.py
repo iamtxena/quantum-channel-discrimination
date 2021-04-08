@@ -26,6 +26,12 @@ class OneShotCircuit(Circuit):
             return 0
         return 1
 
+    def _guess_eta_from_counts(self, counts: str) -> int:
+        """ Decides which eta was used on the real execution from the 'counts' measured
+            based on the guess strategy that is required to use
+        """
+        return self._guess_eta_used_one_bit_strategy(counts)
+
     def _convert_counts_to_eta_used(self, counts_dict: dict) -> int:
         """ Decides which eta was used on the real execution from the 'counts' measured
             based on the guess strategy that is required to use

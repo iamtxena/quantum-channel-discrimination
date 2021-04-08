@@ -15,7 +15,7 @@ class OneShotEntangledCircuit(OneShotCircuit):
         """ Prepare initial state: computing 'y' as the amplitudes  """
         return (0, np.sqrt(state_probability), np.sqrt(1 - state_probability), 0)
 
-    def _guess_lambda_used_two_bit_strategy(self, counts: str) -> int:
+    def _guess_eta_used_two_bit_strategy(self, counts: str) -> int:
         """ Decides which eta was used on the real execution from the two 'counts' measured
             Qubits order MATTER!!!!
             "01" means that:
@@ -38,12 +38,18 @@ class OneShotEntangledCircuit(OneShotCircuit):
             return random.choice([0, 1])
         raise ValueError("Accepted counts are '00', '01', '10', '11'")
 
+    def _guess_eta_from_counts(self, counts: str) -> int:
+        """ Decides which eta was used on the real execution from the 'counts' measured
+            based on the guess strategy that is required to use
+        """
+        return self._guess_eta_used_two_bit_strategy(counts)
+
     def _convert_counts_to_eta_used(self, counts_dict: dict) -> int:
         """ Decides which eta was used on the real execution from the 'counts' measured
             based on the guess strategy that is required to use
         """
         counts = get_measured_value_from_counts(counts_dict)
-        return self._guess_lambda_used_two_bit_strategy(counts)
+        return self._guess_eta_used_two_bit_strategy(counts)
 
     def _convert_all_counts_to_all_eta_used(self,
                                             counts_all_circuits: List[dict]) -> List[int]:
