@@ -106,7 +106,7 @@ def _assign_amplitudes(result: OptimalConfigurations,
                        matrix: np.array) -> List[List[float]]:
     for idx, configuration in enumerate(result['configurations']):
         ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
-        matrix[ind_1, ind_0] = cast(OneShotConfiguration, configuration).state_probability
+        matrix[ind_1, ind_0] = 1 - cast(OneShotConfiguration, configuration).state_probability
     return matrix
 
 

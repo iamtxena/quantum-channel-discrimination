@@ -117,16 +117,11 @@ class Circuit(ABC):
 
         random_etas, eta_shots = self._get_random_etas_and_eta_shots(plays)
         guesses_eta = self._run_all_circuits_and_return_guess(configuration, eta_shots)
+        return self._check_guesses_and_return_average_success_probability(plays, random_etas, guesses_eta)
 
-        success = 0
-        for random_eta in random_etas:
-            value_to_compare = -1
-            if random_eta is False:
-                value_to_compare = guesses_eta[0].pop(0)
-            else:
-                value_to_compare = guesses_eta[1].pop(0)
-            success += (random_eta == value_to_compare)
-        return success / plays
+    def _check_guesses_and_return_average_success_probability(self, plays, random_etas, guesses_eta):
+        guesses = frozenbitarray([guesses_eta[random_eta].pop(0) for random_eta in random_etas])
+        return 1 - (count_xor(random_etas, guesses) / plays)
 
     def _get_random_etas_and_eta_shots(self, plays) -> Tuple[frozenbitarray, Tuple[int, int]]:
         random_etas = frozenbitarray(urandom(plays))
