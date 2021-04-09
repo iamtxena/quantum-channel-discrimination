@@ -40,8 +40,8 @@ class OneShotOptimization(Optimization):
             'angle_ry': params[2],
             'eta_pair': self._global_eta_pair})
 
-        return 1 - self._one_shot_circuit.compute_new_average_success_probability(configuration=configuration,
-                                                                                  plays=self._setup['plays'])
+        return 1 - self._one_shot_circuit.compute_average_success_probability(configuration=configuration,
+                                                                              plays=self._setup['plays'])
 
     def find_optimal_configurations(self, clone_setup: Optional[CloneSetup]) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels

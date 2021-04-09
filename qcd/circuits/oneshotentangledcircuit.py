@@ -1,8 +1,7 @@
 from qcd.configurations.configuration import ChannelConfiguration
-from qcd.circuits.aux import get_measured_value_from_counts
 from qcd.configurations import OneShotConfiguration
 from . import OneShotCircuit
-from typing import List, Tuple, cast
+from typing import Tuple, cast
 import numpy as np
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 import random
@@ -45,21 +44,6 @@ class OneShotEntangledCircuit(OneShotCircuit):
             based on the guess strategy that is required to use
         """
         return self._guess_eta_used_two_bit_strategy(counts)
-
-    def _convert_counts_to_eta_used(self, counts_dict: dict) -> int:
-        """ Decides which eta was used on the real execution from the 'counts' measured
-            based on the guess strategy that is required to use
-        """
-        counts = get_measured_value_from_counts(counts_dict)
-        return self._guess_eta_used_two_bit_strategy(counts)
-
-    def _convert_all_counts_to_all_eta_used(self,
-                                            counts_all_circuits: List[dict]) -> List[int]:
-        """ Decides which eta was used on the real execution from the 'counts' measured
-            based on the guess strategy that is required to use
-        """
-        return [self._convert_counts_to_eta_used(counts)
-                for counts in counts_all_circuits]
 
     def _create_one_circuit(self,
                             configuration: ChannelConfiguration,
