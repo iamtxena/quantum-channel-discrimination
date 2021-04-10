@@ -61,6 +61,8 @@ def _build_amplitudes_matrix(result: OptimalConfigurations) -> List[List[float]]
     if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'theta'):
         # support for legacy results
         return _assign_amplitudes_with_thetas(result, sorted_etas, matrix)
+    if 'state_probability' in cast(Dict, result)['configurations'][0]:
+        return _assign_amplitudes_dict(result, sorted_etas, matrix)
     raise ValueError('Optimal Configurations require either state_probability or theta properties')
 
 
@@ -107,6 +109,15 @@ def _assign_amplitudes(result: OptimalConfigurations,
     for idx, configuration in enumerate(result['configurations']):
         ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = 1 - cast(OneShotConfiguration, configuration).state_probability
+    return matrix
+
+
+def _assign_amplitudes_dict(result: OptimalConfigurations,
+                            sorted_etas: List[float],
+                            matrix: np.array) -> List[List[float]]:
+    for idx, configuration in enumerate(result['configurations']):
+        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
+        matrix[ind_1, ind_0] = 1 - cast(Dict, configuration)['state_probability']
     return matrix
 
 
