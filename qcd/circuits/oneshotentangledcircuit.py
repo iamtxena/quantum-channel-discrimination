@@ -12,9 +12,7 @@ class OneShotEntangledCircuit(OneShotCircuit):
 
     def _prepare_initial_state_entangled(self, state_probability: float) -> Tuple[complex, complex, complex, complex]:
         """ Prepare initial state: computing 'y' as the amplitudes  """
-        # ORIGINAL
-        #  return (0, np.sqrt(state_probability), np.sqrt(1 - state_probability), 0)
-        return (0, np.sqrt(1 - state_probability), np.sqrt(state_probability), 0)
+        return (0, np.sqrt(state_probability), np.sqrt(1 - state_probability), 0)
 
     def _guess_eta_used_two_bit_strategy(self, counts: str) -> int:
         """ Decides which eta was used on the real execution from the two 'counts' measured
