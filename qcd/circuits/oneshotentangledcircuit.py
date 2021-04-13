@@ -1,10 +1,9 @@
 from qcd.configurations.configuration import ChannelConfiguration
-from qcd.configurations import OneShotConfiguration
+from qcd.configurations import OneShotConfiguration, OneShotEntangledConfiguration
 from . import OneShotCircuit
-from typing import Tuple, cast
+from typing import List, Tuple, cast
 import numpy as np
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
-import random
 
 
 class OneShotEntangledCircuit(OneShotCircuit):
@@ -14,40 +13,45 @@ class OneShotEntangledCircuit(OneShotCircuit):
         """ Prepare initial state: computing 'y' as the amplitudes  """
         return (0, np.sqrt(state_probability), np.sqrt(1 - state_probability), 0)
 
-    def _guess_eta_used_two_bit_strategy(self, counts: str) -> int:
-        """ Decides which eta was used on the real execution from the two 'counts' measured
-            Qubits order MATTER!!!!
-            "01" means that:
-              the LEFTMOST bit (0) corresponds to the measurement of the qubit that goes THROUGH the channel
-              and the RIGHTMOST bit (1) corresponds to the measurement of the qubit that goes OUTSIDE the channel
-            Remember that we are only sending |01> + |10> entangles states
-            Setting eta0 >= eta1:
-                * outcome 00 -> eta0 as the most probable (more attenuation)
-                * outcome 01 -> we do not know if there has been attenuation. 50% chance, random choice
-                * outcome 10 -> eta1 as the most probable (less attenuation)
-                * outcome 11 -> not possible, but in case we get it (from noisy simulation), 50% chance, random choice
-        """
-        if len(counts) != 2:
-            raise ValueError('counts MUST be a two character length string')
-        if counts == "00":
-            return 0
-        if counts == "10":
-            return 1
-        if counts == "01" or counts == "11":
-            return random.choice([0, 1])
-        raise ValueError("Accepted counts are '00', '01', '10', '11'")
+    def _get_max_counts_distribution_for_all_channels(
+            self,
+            all_channel_counts: List[dict],
+            counts_distribution: List[float]) -> List[float]:
+        """ returns the max counts between the max counts up to that moment and the circuit counts """
+        if not all_channel_counts:
+            return counts_distribution
 
-    def _guess_eta_from_counts(self, counts: str) -> int:
+        one_channel_counts = all_channel_counts.pop()
+        max_counts = [0.0, 0.0, 0.0, 0.0]
+        if '00' in one_channel_counts:
+            max_counts[0] = max([counts_distribution[0], one_channel_counts['00']])
+        if '01' in one_channel_counts:
+            max_counts[1] = max([counts_distribution[1], one_channel_counts['01']])
+        if '10' in one_channel_counts:
+            max_counts[2] = max([counts_distribution[2], one_channel_counts['10']])
+        if '11' in one_channel_counts:
+            max_counts[3] = max([counts_distribution[3], one_channel_counts['11']])
+
+        return self._get_max_counts_distribution_for_all_channels(all_channel_counts, max_counts)
+
+    def _guess_probability_from_counts(self,
+                                       eta_counts: List[dict],
+                                       plays: int,
+                                       eta_group_length: int) -> float:
         """ Decides which eta was used on the real execution from the 'counts' measured
             based on the guess strategy that is required to use
         """
-        return self._guess_eta_used_two_bit_strategy(counts)
+        counts_distribution = self._get_max_counts_distribution_for_all_channels(eta_counts, [0.0, 0.0, 0.0, 0.0])
+        return (counts_distribution[0] +
+                counts_distribution[1] +
+                counts_distribution[2] +
+                counts_distribution[3]) / (plays * eta_group_length)
 
     def _create_one_circuit(self,
                             configuration: ChannelConfiguration,
                             eta: float) -> QuantumCircuit:
         """ Creates one circuit from a given  configuration and eta """
-        configuration = cast(OneShotConfiguration, configuration)
+        configuration = cast(OneShotEntangledConfiguration, configuration)
         qreg_q = QuantumRegister(3, 'q')
         creg_c = ClassicalRegister(2, 'c')
 
@@ -58,8 +62,24 @@ class OneShotEntangledCircuit(OneShotCircuit):
         circuit.reset(qreg_q[2])
         circuit.cry(2 * eta, qreg_q[1], qreg_q[2])
         circuit.cx(qreg_q[2], qreg_q[1])
-        circuit.rx(configuration.angle_rx, qreg_q[1])
-        circuit.ry(configuration.angle_ry, qreg_q[1])
-        circuit.barrier()
+        circuit.rx(configuration.angle_rx1, qreg_q[1])
+        circuit.ry(configuration.angle_ry1, qreg_q[1])
+        circuit.rx(configuration.angle_rx0, qreg_q[0])
+        circuit.ry(configuration.angle_ry0, qreg_q[0])
+        circuit.cx(qreg_q[0], qreg_q[1])
+        circuit.h(qreg_q[0])
         circuit.measure([0, 1], creg_c)
         return circuit
+
+    def _create_one_configuration(self,
+                                  configuration: ChannelConfiguration,
+                                  eta_group: List[float]) -> OneShotConfiguration:
+        """ Creates a specific configuration setting a specific eta group """
+        return OneShotEntangledConfiguration({
+            'state_probability': cast(OneShotEntangledConfiguration, configuration).state_probability,
+            'angle_rx0': cast(OneShotEntangledConfiguration, configuration).angle_rx0,
+            'angle_ry0': cast(OneShotEntangledConfiguration, configuration).angle_ry0,
+            'angle_rx1': cast(OneShotEntangledConfiguration, configuration).angle_rx1,
+            'angle_ry1': cast(OneShotEntangledConfiguration, configuration).angle_ry1,
+            'eta_group': eta_group
+        })

@@ -29,13 +29,16 @@ def check_value(real_index_eta: int, guess_index_eta: int):
     return 0
 
 
-def set_only_eta_pairs(results: List[Dict]) -> List[OptimalConfigurations]:
-    """ Return a fixed results setting eta_pairs instead of lambda_pairs """
+def set_only_eta_groups(results: List[Dict]) -> List[OptimalConfigurations]:
+    """ Return a fixed results setting eta_groups instead of eta_pairs or lambda_pairs """
     fixed_results = []
     for result in results:
         if 'lambda_pairs' in result:
-            result['eta_pairs'] = result['lambda_pairs']
+            result['eta_groups'] = result['lambda_pairs']
             del result['lambda_pairs']
+        if 'eta_pairs' in result:
+            result['eta_groups'] = result['eta_pairs']
+            del result['eta_pairs']
         fixed_results.append(cast(OptimalConfigurations, result))
     return fixed_results
 
@@ -59,12 +62,13 @@ def fix_configurations(result: OptimalConfigurations) -> OptimalConfigurations:
             'state_probability': (math.sin(configuration[0]))**2,
             'angle_rx': configuration[1],
             'angle_ry': configuration[2],
-            'eta_pair': result['eta_pairs'][idx] if isinstance(result['eta_pairs'][idx][0], float)
-            else (math.radians(int(result['eta_pairs'][idx][0])),
-                  math.radians(int(result['eta_pairs'][idx][1])))
+            'eta_group': cast(dict, result)['eta_group'][idx]
+            if isinstance(cast(dict, result)['eta_pairs'][idx][0], float)
+            else (math.radians(int(cast(dict, result)['eta_pairs'][idx][0])),
+                  math.radians(int(cast(dict, result)['eta_pairs'][idx][1])))
         })
         fixed_result['configurations'][idx] = new_configuration
-        fixed_result['eta_pairs'][idx] = new_configuration._eta_pair
+        fixed_result['eta_groups'][idx] = new_configuration._eta_group
 
     fixed_result['legacy'] = True
 

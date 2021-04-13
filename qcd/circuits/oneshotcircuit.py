@@ -2,7 +2,7 @@
 from qcd.configurations import OneShotConfiguration
 from qcd.configurations.configuration import ChannelConfiguration
 from . import Circuit
-from typing import Tuple, cast
+from typing import List, Tuple, cast
 import numpy as np
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 
@@ -14,22 +14,33 @@ class OneShotCircuit(Circuit):
         """ Prepare initial state: computing 'x' as the amplitudes """
         return (np.sqrt(1 - state_probability), np.sqrt(state_probability))
 
-    def _guess_eta_used_one_bit_strategy(self, counts: str) -> int:
-        """ Decides which eta was used on the real execution from the one bit 'counts' measured
-            It is a silly guess.
-            It returns the same eta index used as the measured result
-        """
-        if len(counts) != 1:
-            raise ValueError('counts MUST be a one character length string')
-        if "0" in counts:
-            return 0
-        return 1
+    def _get_max_counts_distribution_for_all_channels(
+            self,
+            all_channel_counts: List[dict],
+            counts_distribution: List[float]) -> List[float]:
+        """ returns the max counts between the max counts up to that moment and the circuit counts """
+        if not all_channel_counts:
+            return counts_distribution
 
-    def _guess_eta_from_counts(self, counts: str) -> int:
+        one_channel_counts = all_channel_counts.pop()
+        max_counts = [0.0, 0.0]
+        if '0' in one_channel_counts:
+            max_counts[0] = max([counts_distribution[0], one_channel_counts['0']])
+        if '1' in one_channel_counts:
+            max_counts[1] = max([counts_distribution[1], one_channel_counts['1']])
+
+        return self._get_max_counts_distribution_for_all_channels(all_channel_counts, max_counts)
+
+    def _guess_probability_from_counts(self,
+                                       eta_counts: List[dict],
+                                       plays: int,
+                                       eta_group_length: int) -> float:
         """ Decides which eta was used on the real execution from the 'counts' measured
             based on the guess strategy that is required to use
         """
-        return self._guess_eta_used_one_bit_strategy(counts)
+        counts_distribution = self._get_max_counts_distribution_for_all_channels(eta_counts, [0.0, 0.0])
+        return (counts_distribution[0] +
+                counts_distribution[1]) / (plays * eta_group_length)
 
     def _create_one_circuit(self,
                             configuration: ChannelConfiguration,
@@ -52,11 +63,11 @@ class OneShotCircuit(Circuit):
 
     def _create_one_configuration(self,
                                   configuration: ChannelConfiguration,
-                                  eta_pair: Tuple[float, float]) -> OneShotConfiguration:
-        """ Creates a specific configuration setting a specific eta pair """
+                                  eta_group: List[float]) -> OneShotConfiguration:
+        """ Creates a specific configuration setting a specific eta group """
         return OneShotConfiguration({
             'state_probability': cast(OneShotConfiguration, configuration).state_probability,
             'angle_rx': cast(OneShotConfiguration, configuration).angle_rx,
             'angle_ry': cast(OneShotConfiguration, configuration).angle_ry,
-            'eta_pair': eta_pair
+            'eta_group': eta_group
         })

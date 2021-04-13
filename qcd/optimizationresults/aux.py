@@ -1,7 +1,7 @@
 """ Auxiliary static methods """
 import pickle
 from qcd.typings import TheoreticalOptimizationSetup
-from qcd.optimizations.aux import get_combinations_two_etas_without_repeats_from_etas
+from qcd.optimizations.aux import get_combinations_n_etas_without_repeats
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, cast, Tuple, Union, Dict, Optional
@@ -12,25 +12,25 @@ from ..typings.configurations import (OptimalConfigurations, TheoreticalOneShotE
 
 def build_probabilities_matrix(
         result: Union[OptimalConfigurations, TheoreticalOneShotOptimalConfigurations]) -> List[List[float]]:
-    if (isinstance(result['eta_pairs'][0][0], float) and
+    if (isinstance(result['eta_groups'][0][0], float) and
             (_isTheoreticalOneShotOptimalConfigurations(result) or _isOptimalConfigurations(result))):
         return _build_probabilities_matrix(cast(OptimalConfigurations, result))
-    if isinstance(result['eta_pairs'][0][0], str):
+    if isinstance(result['eta_groups'][0][0], str):
         return cast(List[List[float]], _build_probabilities_matrix_legacy(cast(Dict, result)))
-    if isinstance(result['eta_pairs'][0][0], float):
+    if isinstance(result['eta_groups'][0][0], float):
         return cast(List[List[float]], _build_probabilities_matrix_new_legacy(cast(Dict, result)))
     raise ValueError('Bad input results')
 
 
 def build_amplitudes_matrix(
         result: Union[OptimalConfigurations, TheoreticalOneShotOptimalConfigurations]) -> List[List[float]]:
-    if isinstance(result['eta_pairs'][0][0], float) and _isTheoreticalOneShotOptimalConfigurations(result):
+    if isinstance(result['eta_groups'][0][0], float) and _isTheoreticalOneShotOptimalConfigurations(result):
         return _build_theoretical_amplitudes_matrix(cast(TheoreticalOneShotOptimalConfigurations, result))
-    if isinstance(result['eta_pairs'][0][0], float) and _isOptimalConfigurations(result):
+    if isinstance(result['eta_groups'][0][0], float) and _isOptimalConfigurations(result):
         return _build_amplitudes_matrix(cast(OptimalConfigurations, result))
-    if isinstance(result['eta_pairs'][0][0], float):
+    if isinstance(result['eta_groups'][0][0], float):
         return cast(List[List[float]], _build_amplitudes_matrix_new_legacy(cast(Dict, result)))
-    if isinstance(result['eta_pairs'][0][0], str):
+    if isinstance(result['eta_groups'][0][0], str):
         return cast(List[List[float]], _build_amplitudes_matrix_legacy(cast(Dict, result)))
     raise ValueError('Bad input results')
 
@@ -83,22 +83,22 @@ def _build_amplitudes_matrix_legacy(result: Dict) -> List[List[int]]:
 
 def _assign_probabilities(result: OptimalConfigurations, sorted_etas: List[float], matrix: np.array):
     for idx, probability in enumerate(result['probabilities']):
-        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
+        ind_0, ind_1 = _get_matrix_index_from_eta_group(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = probability
     return matrix
 
 
 def _assign_probabilities_new_legacy(result: Dict, sorted_etas: List[float], matrix: np.array):
     for idx, probability in enumerate(result['probabilities']):
-        ind_0, ind_1 = _get_matrix_index_from_eta_pair_different_order(result, sorted_etas, idx)
+        ind_0, ind_1 = _get_matrix_index_from_eta_group_different_order(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = probability
     return matrix
 
 
 def _assign_probabilities_legacy(result: Dict, sorted_etas: List[int], matrix: np.array):
     for idx, probability in enumerate(result['probabilities']):
-        ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(int(result['eta_pairs'][idx][0]))
-        ind_1 = sorted_etas.index(int(result['eta_pairs'][idx][1]))
+        ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(int(result['eta_groups'][idx][0]))
+        ind_1 = sorted_etas.index(int(result['eta_groups'][idx][1]))
         matrix[ind_1, ind_0] = probability
     return matrix
 
@@ -107,7 +107,7 @@ def _assign_amplitudes(result: OptimalConfigurations,
                        sorted_etas: List[float],
                        matrix: np.array) -> List[List[float]]:
     for idx, configuration in enumerate(result['configurations']):
-        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
+        ind_0, ind_1 = _get_matrix_index_from_eta_group(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = 1 - cast(OneShotConfiguration, configuration).state_probability
     return matrix
 
@@ -116,7 +116,7 @@ def _assign_amplitudes_dict(result: OptimalConfigurations,
                             sorted_etas: List[float],
                             matrix: np.array) -> List[List[float]]:
     for idx, configuration in enumerate(result['configurations']):
-        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
+        ind_0, ind_1 = _get_matrix_index_from_eta_group(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = 1 - cast(Dict, configuration)['state_probability']
     return matrix
 
@@ -125,7 +125,7 @@ def _assign_amplitudes_different_order(result: OptimalConfigurations,
                                        sorted_etas: List[float],
                                        matrix: np.array) -> List[List[float]]:
     for idx, configuration in enumerate(result['configurations']):
-        ind_0, ind_1 = _get_matrix_index_from_eta_pair_different_order(result, sorted_etas, idx)
+        ind_0, ind_1 = _get_matrix_index_from_eta_group_different_order(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = cast(OneShotConfiguration, configuration).state_probability
     return matrix
 
@@ -134,7 +134,7 @@ def _assign_amplitudes_with_thetas(result: OptimalConfigurations,
                                    sorted_etas: List[float],
                                    matrix: np.array) -> List[List[float]]:
     for idx, configuration in enumerate(result['configurations']):
-        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
+        ind_0, ind_1 = _get_matrix_index_from_eta_group(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = np.sin(cast(OneShotConfiguration, configuration).theta)
     return matrix
 
@@ -143,36 +143,36 @@ def _assign_theoretical_amplitudes(result: TheoreticalOneShotOptimalConfiguratio
                                    sorted_etas: List[float],
                                    matrix: np.array):
     for idx, best_theoretical_amplitude in enumerate(result['list_theoretical_amplitude']):
-        ind_0, ind_1 = _get_matrix_index_from_eta_pair(result, sorted_etas, idx)
+        ind_0, ind_1 = _get_matrix_index_from_eta_group(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = best_theoretical_amplitude
     return matrix
 
 
 def _assign_amplitudes_legacy(result: Dict, sorted_etas: List[int], matrix: np.array):
     for idx, configuration in enumerate(result['configurations']):
-        ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(int(result['eta_pairs'][idx][0]))
-        ind_1 = sorted_etas.index(int(result['eta_pairs'][idx][1]))
+        ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(int(result['eta_groups'][idx][0]))
+        ind_1 = sorted_etas.index(int(result['eta_groups'][idx][1]))
         matrix[ind_1, ind_0] = np.sin(configuration[0])
     return matrix
 
 
 def _assign_amplitudes_new_legacy(result: Dict, sorted_etas: List[float], matrix: np.array):
     for idx, configuration in enumerate(result['configurations']):
-        ind_0, ind_1 = _get_matrix_index_from_eta_pair_different_order(result, sorted_etas, idx)
+        ind_0, ind_1 = _get_matrix_index_from_eta_group_different_order(result, sorted_etas, idx)
         matrix[ind_1, ind_0] = configuration[0]
     return matrix
 
 
-def _get_matrix_index_from_eta_pair(result: OptimalConfigurations,
-                                    sorted_etas: List[float], idx: int) -> Tuple[int, int]:
-    ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
-    ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][1])
+def _get_matrix_index_from_eta_group(result: OptimalConfigurations,
+                                     sorted_etas: List[float], idx: int) -> Tuple[int, int]:
+    ind_0 = sorted_etas.index(result['eta_groups'][idx][0])
+    ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_groups'][idx][1])
     return ind_0, ind_1
 
 
-def _get_matrix_index_from_eta_pair_different_order(result, sorted_etas, idx):
-    ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][0])
-    ind_1 = sorted_etas.index(result['eta_pairs'][idx][1])
+def _get_matrix_index_from_eta_group_different_order(result, sorted_etas, idx):
+    ind_0 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_groups'][idx][0])
+    ind_1 = sorted_etas.index(result['eta_groups'][idx][1])
     return ind_0, ind_1
 
 
@@ -181,31 +181,31 @@ def _reset_diagonal_matrix(values: Union[List[float], List[int]], matrix: np.arr
         matrix[idx, idx] = value
 
 
-def _get_sorted_etas_in_degrees(eta_pairs: List[Tuple[float, float]]) -> List[float]:
+def _get_sorted_etas_in_degrees(eta_groups: List[Tuple[float, float]]) -> List[float]:
     X1 = []
-    for eta_pair in eta_pairs:
-        X1.append(eta_pair[0])
-        X1.append(eta_pair[1])
+    for eta_group in eta_groups:
+        X1.append(eta_group[0])
+        X1.append(eta_group[1])
     return sorted(list(set(X1)))
 
 
-def _get_sorted_etas_in_degrees_legacy(eta_pairs: List[Tuple[float, float]]) -> List[int]:
+def _get_sorted_etas_in_degrees_legacy(eta_groups: List[Tuple[float, float]]) -> List[int]:
     X1 = []
-    for eta_pair in eta_pairs:
-        X1.append(int(eta_pair[0]))
-        X1.append(int(eta_pair[1]))
+    for eta_group in eta_groups:
+        X1.append(int(eta_group[0]))
+        X1.append(int(eta_group[1]))
     return sorted(list(set(X1)))
 
 
 def _init_matrix(result) -> Tuple[List[float], np.array]:
-    sorted_etas = _get_sorted_etas_in_degrees(result['eta_pairs'])
+    sorted_etas = _get_sorted_etas_in_degrees(result['eta_groups'])
     lenx1 = len(sorted_etas)
     amp1 = np.zeros((lenx1, lenx1))
     return sorted_etas, amp1
 
 
 def _init_matrix_legacy(result) -> Tuple[List[int], np.array]:
-    sorted_etas = _get_sorted_etas_in_degrees_legacy(result['eta_pairs'])
+    sorted_etas = _get_sorted_etas_in_degrees_legacy(result['eta_groups'])
     lenx1 = len(sorted_etas)
     amp1 = np.zeros((lenx1, lenx1))
     return sorted_etas, amp1
@@ -262,7 +262,7 @@ def _isOptimalConfigurations(input_dict: Union[OptimalConfigurations,
                                                TheoreticalOneShotOptimalConfigurations]) -> bool:
     """ check if input dictionary is an OptimalConfigurations one """
     tmp_dict = cast(OptimalConfigurations, input_dict)
-    if (tmp_dict.get('eta_pairs') and
+    if (tmp_dict.get('eta_groups') and
         tmp_dict.get('best_algorithm') and
         tmp_dict.get('probabilities') and
         tmp_dict.get('configurations') and
@@ -275,7 +275,7 @@ def _isTheoreticalOneShotOptimalConfigurations(input_dict: Union[OptimalConfigur
                                                                  TheoreticalOneShotOptimalConfigurations]) -> bool:
     """ check if input dictionary is an TheoreticalOneShotOptimalConfigurations one """
     tmp_dict = cast(TheoreticalOneShotOptimalConfigurations, input_dict)
-    if (tmp_dict.get('eta_pairs') and
+    if (tmp_dict.get('eta_groups') and
         tmp_dict.get('probabilities') and
             tmp_dict.get('list_theoretical_amplitude')):
         return True
@@ -294,11 +294,12 @@ def save_result_to_disk(optimal_configurations: OptimalConfigurations, name: str
         pickle.dump(optimal_configurations, file, pickle.HIGHEST_PROTOCOL)
 
 
-def get_theoretical_optimization_setup_from_number_of_etas(number_etas: int) -> TheoreticalOptimizationSetup:
-    """ compute the eta pairs given the number of etas to generate from 0 to pi/2 (including pi/2) """
-    eta_angles = np.append(np.arange(0, np.pi / 2, np.pi / 2 / (number_etas - 1)), np.pi / 2)
-    eta_pairs = get_combinations_two_etas_without_repeats_from_etas(eta_angles)
-    return {'eta_pairs': eta_pairs}
+def get_theoretical_optimization_setup_from_number_of_etas(
+        number_channels_to_discriminate: int = 2,
+        eta_partitions: int = 20) -> TheoreticalOptimizationSetup:
+    """ compute the eta groups given the number of etas to generate from 0 to pi/2 (including pi/2) """
+    eta_groups = get_combinations_n_etas_without_repeats(number_channels_to_discriminate, eta_partitions)
+    return {'eta_groups': eta_groups}
 
 
 def build_improvement_matrix(
@@ -313,6 +314,6 @@ def _assign_improvement(result: TheoreticalOneShotEntangledOptimalConfigurations
                         sorted_etas: List[float],
                         matrix: np.array):
     for idx, improvement in enumerate(result['improvements']):
-        ind_0 = sorted_etas.index(result['eta_pairs'][idx][0])
-        ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_pairs'][idx][1])
+        ind_0 = sorted_etas.index(result['eta_groups'][idx][0])
+        ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_groups'][idx][1])
         matrix[ind_1, ind_0] = improvement

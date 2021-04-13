@@ -36,5 +36,5 @@ class OneShotConfiguration(ChannelConfiguration):
         return {'state_probability': self._state_probability if hasattr(self, 'state_probability') else self._theta,
                 'angle_rx': self._angle_rx,
                 'angle_ry': self._angle_ry,
-                'eta_pair': self._eta_pair,
+                'eta_group': self._eta_group,
                 }

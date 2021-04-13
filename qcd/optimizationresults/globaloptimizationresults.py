@@ -1,5 +1,5 @@
 from abc import ABC
-from qcd.circuits.aux import set_only_eta_pairs
+from qcd.circuits.aux import set_only_eta_groups
 from typing import Optional, List, Union, cast, Dict
 from ..typings.configurations import OptimalConfigurations
 from .aux import (load_result_from_file, plot_one_result,
@@ -31,7 +31,7 @@ class GlobalOptimizationResults(ABC):
     def __init__(self, optimal_configurations: Union[OptimalConfigurations, List[OptimalConfigurations]]) -> None:
         self._optimal_configurations = optimal_configurations if isinstance(
             optimal_configurations, List) else [optimal_configurations]
-        self._optimal_configurations = set_only_eta_pairs(cast(List[Dict], self._optimal_configurations))
+        self._optimal_configurations = set_only_eta_groups(cast(List[Dict], self._optimal_configurations))
         self._optimization_results = [build_optimization_result(
             optimal_result) for optimal_result in self._optimal_configurations]
         self._build_all_theoretical_optimizations_results(len(self._optimization_results[0].probabilities_matrix))

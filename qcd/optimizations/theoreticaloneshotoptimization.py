@@ -16,8 +16,8 @@ class TheoreticalOneShotOptimization(TheoreticalOptimization):
         configurations = []
         list_number_calls_made = []
 
-        for eta_pair in self._eta_pairs:
-            self._global_eta_pair = eta_pair
+        for eta_group in self._eta_groups:
+            self._global_eta_group = eta_group
             result = self._compute_theoretical_best_configuration()
             best_algorithms.append(result['best_algorithm'])
             probabilities.append(result['best_probability'])
@@ -25,7 +25,7 @@ class TheoreticalOneShotOptimization(TheoreticalOptimization):
             list_number_calls_made.append(result['number_calls_made'])
             list_theoretical_amplitude.append(result['best_theoretical_amplitude'])
 
-        return {'eta_pairs': self._eta_pairs,
+        return {'eta_groups': self._eta_groups,
                 'best_algorithm': best_algorithms,
                 'probabilities': probabilities,
                 'configurations': configurations,
@@ -34,21 +34,21 @@ class TheoreticalOneShotOptimization(TheoreticalOptimization):
 
     def _compute_theoretical_best_configuration(self) -> TheoreticalOneShotOptimalConfiguration:
         """ Find out the theoretical best configuration with a global pair of etas (channels) """
-        gamma = np.cos(self._global_eta_pair[1]) + np.cos(self._global_eta_pair[0])
+        gamma = np.cos(self._global_eta_group[1]) + np.cos(self._global_eta_group[0])
         best_probability = 0
         best_theoretical_amplitude = 0
         if gamma < 1 / np.sqrt(2):
             best_probability = 1 / 2 + 1 / 4 * \
-                (np.cos(self._global_eta_pair[1]) - np.cos(self._global_eta_pair[0])) / np.sqrt(1 - gamma * gamma)
+                (np.cos(self._global_eta_group[1]) - np.cos(self._global_eta_group[0])) / np.sqrt(1 - gamma * gamma)
             best_theoretical_amplitude = np.sqrt(1 / (2 - 2 * gamma * gamma))
         else:
-            best_probability = 1 / 2 * (np.sin(self._global_eta_pair[0]) * np.sin(
-                self._global_eta_pair[0]) + np.cos(self._global_eta_pair[1]) * np.cos(self._global_eta_pair[1]))
+            best_probability = 1 / 2 * (np.sin(self._global_eta_group[0]) * np.sin(
+                self._global_eta_group[0]) + np.cos(self._global_eta_group[1]) * np.cos(self._global_eta_group[1]))
             best_theoretical_amplitude = 1
 
         return {'best_algorithm': 'One-Shot Theory',
                 'best_probability': best_probability,
-                'best_configuration': OneShotConfiguration({'eta_pair': self._global_eta_pair,
+                'best_configuration': OneShotConfiguration({'eta_group': self._global_eta_group,
                                                             'state_probability': 0,
                                                             'angle_rx': 0,
                                                             'angle_ry': 0}),

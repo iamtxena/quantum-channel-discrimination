@@ -1,5 +1,5 @@
 """ Typings from all qcd module """
-from typing import List, TypedDict, Tuple
+from typing import List, TypedDict
 from ..configurations.configuration import ChannelConfiguration
 
 
@@ -11,7 +11,7 @@ class OptimalConfiguration(TypedDict):
 
 
 class OptimalConfigurations(TypedDict, total=False):
-    eta_pairs: List[Tuple[float, float]]
+    eta_groups: List[List[float]]
     best_algorithm: List[str]
     probabilities: List[float]
     configurations: List[ChannelConfiguration]

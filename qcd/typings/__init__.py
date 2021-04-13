@@ -43,17 +43,19 @@ class OneShotResults(TypedDict):
     backend_name: str
 
 
-class OptimizationSetup(TypedDict):
+class OptimizationSetup(TypedDict, total=False):
     optimizer_algorithms: List[str]
     optimizer_iterations: List[int]
-    attenuation_angles: List[float]
+    eta_partitions: int
+    number_channels_to_discriminate: int
+    plays: int
     initial_parameters: List[float]
     variable_bounds: List[Tuple[float, float]]
-    plays: int
 
 
 class TheoreticalOptimizationSetup(TypedDict):
-    eta_pairs: List[Tuple[float, float]]
+    eta_groups: List[List[float]]
+    number_channels_to_discriminate: int
 
 
 class GuessStrategy(enum.Enum):
