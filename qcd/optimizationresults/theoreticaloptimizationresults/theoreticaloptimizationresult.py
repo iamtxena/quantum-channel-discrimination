@@ -16,7 +16,7 @@ class TheoreticalOptimizationResult(OptimizationResult):
             self,
             number_etas: int) -> OptimalConfigurations:
         theoretical_result = self._compute_theoretical_optimal_result(
-            get_theoretical_optimization_setup_from_number_of_etas(number_etas))
+            get_theoretical_optimization_setup_from_number_of_etas(eta_partitions=number_etas))
         return theoretical_result
 
     @abstractmethod

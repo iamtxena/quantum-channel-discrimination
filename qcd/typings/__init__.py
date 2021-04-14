@@ -56,7 +56,6 @@ class OptimizationSetup(TypedDict, total=False):
 
 class TheoreticalOptimizationSetup(TypedDict):
     eta_groups: List[List[float]]
-    number_channels_to_discriminate: int
 
 
 class GuessStrategy(enum.Enum):

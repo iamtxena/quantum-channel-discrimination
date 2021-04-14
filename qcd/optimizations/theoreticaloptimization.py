@@ -8,7 +8,7 @@ class TheoreticalOptimization(ABC):
 
     def __init__(self, optimization_setup: TheoreticalOptimizationSetup):
         self._eta_groups = optimization_setup['eta_groups']
-        self._global_eta_group = [0.0] * optimization_setup['number_channels_to_discriminate']
+        self._global_eta_group = [0.0]
 
     @abstractmethod
     def compute_theoretical_optimal_results(self) -> OptimalConfigurations:
