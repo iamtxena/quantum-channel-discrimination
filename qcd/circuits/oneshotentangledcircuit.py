@@ -62,12 +62,10 @@ class OneShotEntangledCircuit(OneShotCircuit):
         circuit.reset(qreg_q[2])
         circuit.cry(2 * eta, qreg_q[1], qreg_q[2])
         circuit.cx(qreg_q[2], qreg_q[1])
-        circuit.rx(configuration.angle_rx1, qreg_q[1])
-        circuit.ry(configuration.angle_ry1, qreg_q[1])
-        circuit.rx(configuration.angle_rx0, qreg_q[0])
-        circuit.ry(configuration.angle_ry0, qreg_q[0])
         circuit.cx(qreg_q[0], qreg_q[1])
         circuit.h(qreg_q[0])
+        circuit.rx(configuration.angle_rx, qreg_q[0])
+        circuit.ry(configuration.angle_ry, qreg_q[0])
         circuit.measure([0, 1], creg_c)
         return circuit
 
@@ -77,9 +75,7 @@ class OneShotEntangledCircuit(OneShotCircuit):
         """ Creates a specific configuration setting a specific eta group """
         return OneShotEntangledConfiguration({
             'state_probability': cast(OneShotEntangledConfiguration, configuration).state_probability,
-            'angle_rx0': cast(OneShotEntangledConfiguration, configuration).angle_rx0,
-            'angle_ry0': cast(OneShotEntangledConfiguration, configuration).angle_ry0,
-            'angle_rx1': cast(OneShotEntangledConfiguration, configuration).angle_rx1,
-            'angle_ry1': cast(OneShotEntangledConfiguration, configuration).angle_ry1,
+            'angle_rx': cast(OneShotEntangledConfiguration, configuration).angle_rx,
+            'angle_ry': cast(OneShotEntangledConfiguration, configuration).angle_ry,
             'eta_group': eta_group
         })

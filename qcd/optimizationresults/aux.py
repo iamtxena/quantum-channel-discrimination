@@ -296,10 +296,14 @@ def save_result_to_disk(optimal_configurations: OptimalConfigurations, name: str
 
 def get_theoretical_optimization_setup_from_number_of_etas(
         number_channels_to_discriminate: int = 2,
-        eta_partitions: int = 20) -> TheoreticalOptimizationSetup:
+        eta_partitions: int = 20,
+        number_third_channels: int = 5) -> TheoreticalOptimizationSetup:
     """ compute the eta groups given the number of etas to generate from 0 to pi/2 (including pi/2) """
-    eta_groups = get_combinations_n_etas_without_repeats(number_channels_to_discriminate, eta_partitions)
-    return {'eta_groups': eta_groups}
+    eta_groups = get_combinations_n_etas_without_repeats(number_channels_to_discriminate,
+                                                         eta_partitions,
+                                                         number_third_channels)
+    return {'eta_groups': eta_groups,
+            'number_channels_to_discriminate': number_channels_to_discriminate}
 
 
 def build_improvement_matrix(

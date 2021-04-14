@@ -83,7 +83,8 @@ def get_combinations_two_etas_without_repeats_from_etas(angles_etas: List[float]
 
 
 def get_combinations_n_etas_without_repeats(number_channels_to_discriminate: int = 2,
-                                            eta_partitions: int = 20) -> List[List[float]]:
+                                            eta_partitions: int = 20,
+                                            number_third_channels: int = 5) -> List[List[float]]:
     """ from a given list of attenuations factors create a
         list of all combinatorial groups of n possible etas
         without repeats
@@ -91,12 +92,18 @@ def get_combinations_n_etas_without_repeats(number_channels_to_discriminate: int
         than first eta 0.2 and second eta 0.1
         Though, we will always put the greater value as the first group element
     """
+
     if number_channels_to_discriminate <= 1:
         raise ValueError('number_channels_to_discriminate must be at least 2')
     etas = np.append(np.arange(0, np.pi / 2, np.pi / 2 / eta_partitions), np.pi / 2)
+    third_etas = np.append(np.arange(0, np.pi / 2, np.pi / 2 / (number_third_channels - 1)),
+                           np.pi / 2) if number_third_channels > 1 else [0.0]
     # get combinations of etas without repeats
-    eta_groups = list(itertools.combinations(etas, number_channels_to_discriminate))
-    return [sorted(eta_group, reverse=True) for eta_group in eta_groups]
+    eta_pairs = list(itertools.combinations(etas, 2))
+    eta_pairs.sort()
+    third_etas.sort()
+    eta_groups = [list(eta_pair) + [third_eta] for third_eta in third_etas for eta_pair in eta_pairs]
+    return eta_groups
 
 
 def convert_eta_pairs_from_string_degrees_to_float_radians(
