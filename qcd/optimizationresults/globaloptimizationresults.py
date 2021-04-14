@@ -39,9 +39,9 @@ class GlobalOptimizationResults(ABC):
     def _build_all_theoretical_optimizations_results(self, number_etas: int) -> None:
         """ Build the theoretical optimization result for each damping channel supported """
         self._theoretical_results: TheoreticalResult = {
-            'one_shot': TheoreticalOneShotOptimizationResult(number_etas),
+            'one_shot': TheoreticalOneShotOptimizationResult(number_etas=number_etas),
             'one_shot_side_entanglement':
-            TheoreticalOneShotEntangledOptimizationResult(number_etas),
+            TheoreticalOneShotEntangledOptimizationResult(number_etas=number_etas),
         }
 
     def add_results(self, file_names: Union[str, List[str]], path: Optional[str] = "") -> None:
