@@ -34,7 +34,7 @@ class GlobalOptimizationResults(ABC):
         self._optimal_configurations = set_only_eta_groups(cast(List[Dict], self._optimal_configurations))
         self._optimization_results = [build_optimization_result(
             optimal_result) for optimal_result in self._optimal_configurations]
-        self._build_all_theoretical_optimizations_results(len(self._optimization_results[0].probabilities_matrix))
+        self._build_all_theoretical_optimizations_results(len(self._optimization_results[0].probabilities_matrix) - 1)
 
     def _build_all_theoretical_optimizations_results(self, number_etas: int) -> None:
         """ Build the theoretical optimization result for each damping channel supported """
@@ -64,7 +64,7 @@ class GlobalOptimizationResults(ABC):
                            cmap='viridis') -> None:
         """ Plot probabilities analysis """
         plot_one_result(
-            self._optimization_results[results_index].probabilities_matrix, title, bar_label, vmin, vmax, cmap)
+            self._optimization_results[0].probabilities_matrices[results_index], title, bar_label, vmin, vmax, cmap)
 
     def plot_theoretical_probabilities(self,
                                        strategy: STRATEGY = 'one_shot',
@@ -85,7 +85,8 @@ class GlobalOptimizationResults(ABC):
                         vmax: float = 1.0,
                         cmap='viridis') -> None:
         """ Plot amplitudes analysis """
-        plot_one_result(self._optimization_results[results_index].amplitudes_matrix, title, bar_label, vmin, vmax, cmap)
+        plot_one_result(
+            self._optimization_results[0].amplitudes_matrices[results_index], title, bar_label, vmin, vmax, cmap)
 
     def plot_theoretical_amplitudes(self,
                                     strategy: STRATEGY = 'one_shot',
@@ -105,8 +106,8 @@ class GlobalOptimizationResults(ABC):
                                       vmax: float = 0.1,
                                       cmap='RdBu') -> None:
         """ Plot probabilities comparing two results """
-        delta_probs = cast(np.ndarray, self._optimization_results[results_index1].probabilities_matrix) - \
-            cast(np.ndarray, self._optimization_results[results_index2].probabilities_matrix)
+        delta_probs = cast(np.ndarray, self._optimization_results[0].probabilities_matrices[results_index1]) - \
+            cast(np.ndarray, self._optimization_results[0].probabilities_matrices[results_index2])
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_theoretical_probabilities_comparison(
@@ -138,7 +139,7 @@ class GlobalOptimizationResults(ABC):
             cmap='RdBu') -> None:
         """ Plot probabilities comparing theoretical results """
         delta_probs = cast(np.ndarray, self._theoretical_results[strategy].probabilities_matrix) - \
-            cast(np.ndarray, self._optimization_results[results_index].probabilities_matrix)
+            cast(np.ndarray, self._optimization_results[0].probabilities_matrices[results_index])
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_amplitudes_comparison(self,
@@ -150,8 +151,8 @@ class GlobalOptimizationResults(ABC):
                                    vmax: float = 1.0,
                                    cmap='RdBu') -> None:
         """ Plot amplitudes comparing two results """
-        delta_probs = cast(np.ndarray, self._optimization_results[results_index1].amplitudes_matrix) - \
-            cast(np.ndarray, self._optimization_results[results_index2].amplitudes_matrix)
+        delta_probs = cast(np.ndarray, self._optimization_results[0].amplitudes_matrices[results_index1]) - \
+            cast(np.ndarray, self._optimization_results[0].amplitudes_matrices[results_index2])
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_theoretical_amplitudes_comparison(
@@ -180,7 +181,7 @@ class GlobalOptimizationResults(ABC):
             cmap='RdBu') -> None:
         """ Plot amplitudes comparing theoretical results """
         delta_probs = cast(np.ndarray, self._theoretical_results[strategy].amplitudes_matrix) - \
-            cast(np.ndarray, self._optimization_results[results_index].amplitudes_matrix)
+            cast(np.ndarray, self._optimization_results[0].amplitudes_matrices[results_index])
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_probabilities_comparison_percentage(
@@ -195,7 +196,7 @@ class GlobalOptimizationResults(ABC):
             cmap='RdBu') -> None:
         """ Plot probabilities comparing theoretical results displaying relative differences """
         delta_probs = cast(np.ndarray, self._theoretical_results[strategy].probabilities_matrix) - \
-            cast(np.ndarray, self._optimization_results[results_index].probabilities_matrix)
+            cast(np.ndarray, self._optimization_results[0].probabilities_matrices[results_index])
         percentage_delta_probs = compute_percentage_delta_values(
             delta_probs, self._theoretical_results[strategy].probabilities_matrix)
         plot_comparison_between_two_results(percentage_delta_probs, title, bar_label, vmin, vmax, cmap)
@@ -212,7 +213,7 @@ class GlobalOptimizationResults(ABC):
             cmap='RdBu') -> None:
         """ Plot amplitudes comparing theoretical results displaying relative differences """
         delta_amplitudes = cast(np.ndarray, self._theoretical_results[strategy].amplitudes_matrix) - \
-            cast(np.ndarray, self._optimization_results[results_index].amplitudes_matrix)
+            cast(np.ndarray, self._optimization_results[0].amplitudes_matrices[results_index])
         percentage_delta_amplitudes = compute_percentage_delta_values(
             delta_amplitudes, self._theoretical_results[strategy].amplitudes_matrix)
         plot_comparison_between_two_results(percentage_delta_amplitudes, title, bar_label, vmin, vmax, cmap)

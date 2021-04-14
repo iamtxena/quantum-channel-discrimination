@@ -1,4 +1,4 @@
-from qcd.configurations.oneshotbaseconfiguration import OneShotConfiguration
+from qcd.configurations.oneshotentangledconfiguration import OneShotEntangledConfiguration
 from . import TheoreticalOneShotOptimization
 from ..typings.configurations import (TheoreticalOneShotEntangledOptimalConfiguration,
                                       TheoreticalOneShotEntangledOptimalConfigurations)
@@ -57,10 +57,12 @@ class TheoreticalOneShotEntangledOptimization(TheoreticalOneShotOptimization):
 
         return {'best_algorithm': 'One-Shot Side Entanglement Theory',
                 'best_probability': best_probability,
-                'best_configuration': OneShotConfiguration({'eta_group': self._global_eta_group,
-                                                            'state_probability': 0,
-                                                            'angle_rx': 0,
-                                                            'angle_ry': 0}),
+                'best_configuration': OneShotEntangledConfiguration({'eta_group': self._global_eta_group,
+                                                                     'state_probability': 0,
+                                                                     'angle_rx0': 0,
+                                                                     'angle_ry0': 0,
+                                                                     'angle_rx1': 0,
+                                                                     'angle_ry1': 0}),
                 'number_calls_made': 1,
                 'best_theoretical_amplitude': max(0, theoretical_y),
                 'improvement': improvement}
