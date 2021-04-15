@@ -1,2 +1,4 @@
 from .optimizationresult import OptimizationResult
+from .optimizationresultfullinput import OptimizationResultFullInput
 from .globaloptimizationresults import GlobalOptimizationResults
+from .globaloptimizationresultsFullInput import GlobalOptimizationResultsFullInput

@@ -1,5 +1,5 @@
 from typing import List
-from . import OptimizationResult
+from . import OptimizationResult, OptimizationResultFullInput
 from ..typings.configurations import OptimalConfigurations
 
 
@@ -12,6 +12,17 @@ def build_optimization_result(
         raise ValueError('configurations MUST be specified')
 
     return OptimizationResult(optimal_configurations)
+
+
+def build_optimization_result_full_input(
+        optimal_configurations: OptimalConfigurations) -> OptimizationResultFullInput:
+    """ Create a Optimization Result subtype class based on its structure """
+
+    configurations = optimal_configurations.get('configurations')
+    if configurations is None:
+        raise ValueError('configurations MUST be specified')
+
+    return OptimizationResultFullInput(optimal_configurations)
 
 
 def get_max_result(results: List[OptimalConfigurations]) -> OptimalConfigurations:
