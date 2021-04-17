@@ -67,10 +67,12 @@ class OptimizationResult(ABC):
         return list_configs
 
     def _get_number_eta_pairs(self, eta_groups) -> int:
-        eta_third = eta_groups[0][2]
         number_eta_pairs = 0
+        eta0 = -1
+        eta1 = -1
         for eta_group in eta_groups:
-            if eta_group[2] != eta_third:
-                return number_eta_pairs
-            number_eta_pairs += 1
+            if eta_group[0] != eta0 or eta_group[1] != eta1:
+                number_eta_pairs += 1
+                eta0 = eta_group[0]
+                eta1 = eta_group[1]
         return number_eta_pairs
