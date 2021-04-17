@@ -15,7 +15,8 @@ class Optimization(ABC):
         self._setup = optimization_setup
         self._add_initial_parameters_and_variable_bounds_to_optimization_setup()
         self._eta_groups = get_combinations_n_etas_without_repeats(self._setup['number_channels_to_discriminate'],
-                                                                   self._setup['eta_partitions'])
+                                                                   self._setup['eta_partitions'],
+                                                                   self._setup['number_third_channels'])
         self._global_eta_group = [0.0] * optimization_setup['number_channels_to_discriminate']
 
     @abstractmethod

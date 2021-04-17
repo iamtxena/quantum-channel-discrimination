@@ -51,6 +51,7 @@ class OptimizationSetup(TypedDict, total=False):
     plays: int
     initial_parameters: List[float]
     variable_bounds: List[Tuple[float, float]]
+    number_third_channels: int
 
 
 class TheoreticalOptimizationSetup(TypedDict):
