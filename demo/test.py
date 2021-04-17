@@ -13,7 +13,7 @@ from qcd import save_object_to_disk
 
 def main():
     print("Testing Optimization")
-    optimization_setup = {'optimizer_algorithms': ['DIRECT_L'],
+    optimization_setup = {'optimizer_algorithms': ['ESCH', 'ISRES'],
                           'optimizer_iterations': [1000],
                           'eta_partitions': 3,  # number of partitions for the eta ranging from 0 to pi/2
                           'number_channels_to_discriminate': 3,
@@ -21,7 +21,7 @@ def main():
                           'plays': 10000}
 
     results = OneShotEntangledDampingChannel.find_optimal_configurations(optimization_setup=optimization_setup)
-    filename = '20210414b_C2_A2_1000_10000_3_1_20'
+    filename = '20210416b_C2_A4_A5_1000_10000_3_6_20'
     print(f'saving results to {filename}')
     save_object_to_disk(results, name=filename, path="demo/data/")
 
