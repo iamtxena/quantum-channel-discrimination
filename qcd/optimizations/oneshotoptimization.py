@@ -67,7 +67,7 @@ class OneShotOptimization(Optimization):
                   "time taken this group of etas: " +
                   f'{np.round((end_time - start_time)/60, 0)} minutes' +
                   f' and {np.round((end_time - start_time) % 60, 0)} seconds')
-            print("total minutes taken this group of etas: ", int(np.round((end_time - start_time) / 60)))
+            print(f"total minutes taken this group of etas: {np.round((end_time - start_time) / 60)}")
             print("total time taken so far: " +
                   f'{np.round((end_time - program_start_time)/60, 0)} minutes' +
                   f' and {np.round((end_time - program_start_time) % 60, 0)} seconds')
@@ -83,7 +83,7 @@ class OneShotOptimization(Optimization):
                   f" {remaining_minutes} minutes and {remaining_seconds}")
 
         end_time = time.time()
-        print("total minutes of execution time: ", int(np.round((end_time - program_start_time) / 60)))
+        print(f"total minutes of execution time: {np.round((end_time - program_start_time) / 60)}")
         print(f'Number eta groups optimized: {len(eta_groups_idx_to_optimize)}' +
               f'from the total eta groups: {len(self._eta_groups)} ')
         optimal_configurations['eta_groups'] = self._eta_groups

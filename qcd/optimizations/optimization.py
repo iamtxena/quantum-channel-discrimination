@@ -100,8 +100,8 @@ class Optimization(ABC):
 
     def _add_initial_parameters_and_variable_bounds_to_optimization_setup(self) -> None:
         """ Update the optimization setup with intial parameters and variable bounds """
-        self._setup['initial_parameters'] = [0] * ((self._setup['number_channels_to_discriminate'] * 2) + 1)
+        self._setup['initial_parameters'] = [0] * 5
         variable_bounds = [(0, 1)]  # amplitude_probability
         variable_bounds += [(0, 2 * np.pi)
-                            for i in range(self._setup['number_channels_to_discriminate'] * 2)]
+                            for i in range(4)]
         self._setup['variable_bounds'] = cast(List[Tuple[float, float]], variable_bounds)

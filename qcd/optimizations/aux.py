@@ -101,7 +101,7 @@ def get_combinations_n_etas_without_repeats(number_channels_to_discriminate: int
     eta_pairs = list(itertools.combinations(etas, 2))
     eta_pairs.sort()
     third_etas.sort()
-    eta_groups = [list(eta_pair) + [third_eta] for third_eta in third_etas for eta_pair in eta_pairs]
+    eta_groups = [[eta_pair[0], eta_pair[1], third_eta] for eta_pair in eta_pairs for third_eta in third_etas]
     return eta_groups
 
 
