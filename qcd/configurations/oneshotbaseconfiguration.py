@@ -8,8 +8,10 @@ class OneShotConfiguration(ChannelConfiguration):
 
     def __init__(self, configuration: OneShotConfigurationDict) -> None:
         self._state_probability = configuration['state_probability']
-        self._angle_rx = configuration['angle_rx']
-        self._angle_ry = configuration['angle_ry']
+        if 'angle_rx' in configuration:
+            self._angle_rx = configuration['angle_rx']
+        if 'angle_ry' in configuration:
+            self._angle_ry = configuration['angle_ry']
         if 'theta' in configuration:
             self._theta = configuration['theta']
         super().__init__(cast(dict, configuration))
@@ -36,5 +38,5 @@ class OneShotConfiguration(ChannelConfiguration):
         return {'state_probability': self._state_probability if hasattr(self, 'state_probability') else self._theta,
                 'angle_rx': self._angle_rx,
                 'angle_ry': self._angle_ry,
-                'eta_pair': self._eta_pair,
+                'eta_group': self._eta_group,
                 }

@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 from ..typings import OptimizationSetup, CloneSetup
 from ..typings.configurations import OptimalConfiguration, OptimalConfigurations
 from ..configurations import ChannelConfiguration
-from .aux import get_combinations_two_etas_without_repeats_from_etas
-import math
+from .aux import get_combinations_n_etas_without_repeats
+import numpy as np
 from qiskit.aqua.components.optimizers import SLSQP, L_BFGS_B, ADAM, CRS, DIRECT_L, DIRECT_L_RAND, ESCH, ISRES
 
 
@@ -13,13 +13,16 @@ class Optimization(ABC):
 
     def __init__(self, optimization_setup: OptimizationSetup):
         self._setup = optimization_setup
-        self._eta_pairs = get_combinations_two_etas_without_repeats_from_etas(self._setup['attenuation_angles'])
-        self._global_eta_pair = (0.0, 0.0)
+        self._add_initial_parameters_and_variable_bounds_to_optimization_setup()
+        self._eta_groups = get_combinations_n_etas_without_repeats(self._setup['number_channels_to_discriminate'],
+                                                                   self._setup['eta_partitions'],
+                                                                   self._setup['number_third_channels'])
+        self._global_eta_group = [0.0] * optimization_setup['number_channels_to_discriminate']
 
     @abstractmethod
     def _convert_optimizer_results_to_channel_configuration(self,
                                                             configuration: List[float],
-                                                            eta_pair: Tuple[float, float]
+                                                            eta_group: List[float]
                                                             ) -> ChannelConfiguration:
         """ Convert the results of an optimization to a channel configuration """
         pass
@@ -32,6 +35,10 @@ class Optimization(ABC):
               all the plays with the given configuration
               Returns the Cost (error probability).
           """
+        pass
+
+    @abstractmethod
+    def _best_configuration_to_print(self, best_configuration: List[float]) -> str:
         pass
 
     def find_optimal_configurations(self, clone_setup: Optional[CloneSetup]) -> OptimalConfigurations:
@@ -72,25 +79,29 @@ class Optimization(ABC):
                                      objective_function=self._cost_function,
                                      variable_bounds=self._setup['variable_bounds'],
                                      initial_point=self._setup['initial_parameters'])
-            print("Best Average Probability:", 1 - ret[1])
-            if (1 - ret[1]) > best_probability:
-                best_configuration = ret[0]
-                best_probability = 1 - ret[1]
-                number_calls_made = ret[2]
-                best_optimizer_algorithm = optimizer_algorithm
+        print("Best Average Probability:", -ret[1])
+        if (-ret[1]) > best_probability:
+            best_configuration = ret[0]
+            best_probability = -ret[1]
+            number_calls_made = ret[2]
+            best_optimizer_algorithm = optimizer_algorithm
 
         # Print results
         print("Final Best Optimizer Algorithm: ", best_optimizer_algorithm)
         print("Final Best Average Probability:", best_probability)
         print("Number of cost function calls made:", number_calls_made)
-        print("Parameters Found: state_probability = " + " = " + str(best_configuration[0]) +
-              ", " + u"\u03D5" + "rx = " + str(int(math.degrees(best_configuration[1]))) + u"\u00B0" +
-              ", " + u"\u03D5" + "ry = " + str(int(math.degrees(best_configuration[2]))) + u"\u00B0" +
-              ", " + u"\u03B7" + u"\u2080" + " = " + str(int(math.degrees(self._global_eta_pair[0]))) + u"\u00B0" +
-              ", " + u"\u03B7" + u"\u2081" + " = " + str(int(math.degrees(self._global_eta_pair[1]))) + u"\u00B0")
+        print(self._best_configuration_to_print(best_configuration))
 
         return {'best_algorithm': best_optimizer_algorithm,
                 'best_probability': best_probability,
                 'best_configuration': self._convert_optimizer_results_to_channel_configuration(best_configuration,
-                                                                                               self._global_eta_pair),
+                                                                                               self._global_eta_group),
                 'number_calls_made': number_calls_made}
+
+    def _add_initial_parameters_and_variable_bounds_to_optimization_setup(self) -> None:
+        """ Update the optimization setup with intial parameters and variable bounds """
+        self._setup['initial_parameters'] = [0] * 5
+        variable_bounds = [(0, 1)]  # amplitude_probability
+        variable_bounds += [(0, 2 * np.pi)
+                            for i in range(4)]
+        self._setup['variable_bounds'] = cast(List[Tuple[float, float]], variable_bounds)
