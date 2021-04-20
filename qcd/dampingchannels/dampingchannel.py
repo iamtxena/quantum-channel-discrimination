@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from qcd.typings.configurations import OptimalConfigurations
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.circuits import Circuit
 from qcd.optimizationresults import GlobalOptimizationResults
@@ -15,7 +16,7 @@ class DampingChannel(ABC):
     @staticmethod
     @abstractmethod
     def find_optimal_configurations(optimization_setup: OptimizationSetup,
-                                    clone_setup: Optional[CloneSetup] = None):
+                                    clone_setup: Optional[CloneSetup] = None) -> OptimalConfigurations:
         """ Finds out the optimal configuration for each pair of attenuation levels
             using the configured optimization algorithm """
         pass
