@@ -7,10 +7,14 @@ class OneShotEntangledConfiguration(OneShotConfiguration):
     """ Definition for One Shot Entangled channel configuration """
 
     def __init__(self, configuration: OneShotEntangledConfigurationDict) -> None:
-        self._angle_rx0 = configuration['angle_rx0']
-        self._angle_ry0 = configuration['angle_ry0']
-        self._angle_rx1 = configuration['angle_rx1']
-        self._angle_ry1 = configuration['angle_ry1']
+        if 'angle_rx0' in configuration:
+            self._angle_rx0 = configuration['angle_rx0']
+        if 'angle_ry0' in configuration:
+            self._angle_ry0 = configuration['angle_ry0']
+        if 'angle_rx1' in configuration:
+            self._angle_rx1 = configuration['angle_rx1']
+        if 'angle_ry0' in configuration:
+            self._angle_ry1 = configuration['angle_ry1']
         super().__init__(configuration)
 
     @property
