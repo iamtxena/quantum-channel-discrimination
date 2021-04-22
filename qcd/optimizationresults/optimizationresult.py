@@ -50,20 +50,23 @@ class OptimizationResult(ABC):
                                     eta_groups_length: int) -> List[OptimalConfigurations]:
 
         number_third_channels = int(len(optimal_configurations['eta_groups']) / number_eta_pairs)
+
         list_configs = []
-        for i in range(number_third_channels):
+        for i in range(number_eta_pairs):
             new_config = OptimalConfigurations({
-                'eta_groups': optimal_configurations['eta_groups'][i * number_eta_pairs:(i + 1) * number_eta_pairs],
+                'eta_groups': optimal_configurations['eta_groups']
+                [i * number_third_channels:(i + 1) * number_third_channels],
                 'best_algorithm': optimal_configurations['best_algorithm']
-                [i * number_eta_pairs:(i + 1) * number_eta_pairs],
+                [i * number_third_channels:(i + 1) * number_third_channels],
                 'probabilities': optimal_configurations['probabilities']
-                [i * number_eta_pairs:(i + 1) * number_eta_pairs],
+                [i * number_third_channels:(i + 1) * number_third_channels],
                 'configurations': optimal_configurations['configurations']
-                [i * number_eta_pairs:(i + 1) * number_eta_pairs],
+                [i * number_third_channels:(i + 1) * number_third_channels],
                 'number_calls_made': optimal_configurations['number_calls_made']
-                [i * number_eta_pairs:(i + 1) * number_eta_pairs]
+                [i * number_third_channels:(i + 1) * number_third_channels]
             })
             list_configs.append(new_config)
+
         return list_configs
 
     def _get_number_eta_pairs(self, eta_groups) -> int:
