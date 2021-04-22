@@ -7,7 +7,8 @@ class OneShotConfiguration(ChannelConfiguration):
     """ Definition for One Shot channel configuration """
 
     def __init__(self, configuration: OneShotConfigurationDict) -> None:
-        self._state_probability = configuration['state_probability']
+        if 'state_probability' in configuration:
+            self._state_probability = configuration['state_probability']
         if 'angle_rx' in configuration:
             self._angle_rx = configuration['angle_rx']
         if 'angle_ry' in configuration:

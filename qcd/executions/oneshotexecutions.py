@@ -68,13 +68,15 @@ class OneShotExecution(Execution):
         # Next subplots
         # ===============
         attenuation_factors = results['attenuation_factors']
-        modulus_number = np.round(len(results['final_states_reshaped']) / (rows * cols - 1))
+        # modulus_number = np.round(len(results['final_states_reshaped']) / (rows * cols - 1))
         index_to_print = 0
         for idx, final_state_reshaped in enumerate(results['final_states_reshaped']):
-            if ((index_to_print == 0 or len(results['final_states_reshaped']) < modulus_number) or
-                    (index_to_print != 0 and idx % modulus_number == 0 and
-                     index_to_print < (rows * cols - 1)) or
-                    (idx == len(results['final_states_reshaped']) - 1)):
+            if (idx == 0 or idx == 5 or idx == 6 or idx == 8 or idx == 10 or
+                    idx == 12 or idx == 14 or idx == 16 or idx == 20):
+                # if ((index_to_print == 0 or len(results['final_states_reshaped']) < modulus_number) or
+                #         (index_to_print != 0 and idx % modulus_number == 0 and
+                #          index_to_print < (rows * cols - 1)) or
+                #         (idx == len(results['final_states_reshaped']) - 1)):
                 # set up the axes for the second plot
                 ax = fig.add_subplot(rows, cols, 1 + index_to_print, projection='3d')
                 draw_cube(ax)

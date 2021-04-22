@@ -3,7 +3,7 @@ from qiskit import QuantumCircuit, execute
 from qiskit.result.result import Result
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.backends import DeviceBackend, SimulatorBackend
-from typing import Optional, Tuple, cast, List, Dict
+from typing import Optional, cast, List, Dict
 from ..typings.configurations import OptimalConfigurations
 from .aux import set_only_eta_groups, fix_configurations
 import numpy as np
@@ -102,11 +102,6 @@ class Circuit(ABC):
                       for eta in configuration.eta_group]
 
         return self._guess_probability_from_counts(eta_counts, plays, len(configuration.eta_group))
-
-    @abstractmethod
-    def _prepare_initial_state(self, state_probability: float) -> Tuple[complex, complex]:
-        """ Prepare initial state """
-        pass
 
     @abstractmethod
     def _guess_probability_from_counts(self, counts: List[dict], plays: int,
