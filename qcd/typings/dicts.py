@@ -48,3 +48,30 @@ class OneShotEntangledUniversalConfigurationDict(OneShotEntangledFullInputConfig
     theta7: float
     phi7: float
     lambda7: float
+
+
+class OneShotEntangledFullUniversalConfigurationDict(OneShotEntangledUniversalConfigurationDict, total=False):
+    input_theta0: float
+    input_phi0: float
+    input_lambda0: float
+    input_theta1: float
+    input_phi1: float
+    input_lambda1: float
+    input_theta2: float
+    input_phi2: float
+    input_lambda2: float
+    input_theta3: float
+    input_phi3: float
+    input_lambda3: float
+    input_theta4: float
+    input_phi4: float
+    input_lambda4: float
+    input_theta5: float
+    input_phi5: float
+    input_lambda5: float
+    input_theta6: float
+    input_phi6: float
+    input_lambda6: float
+    input_theta7: float
+    input_phi7: float
+    input_lambda7: float

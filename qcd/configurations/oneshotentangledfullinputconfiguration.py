@@ -7,10 +7,14 @@ class OneShotEntangledFullInputConfiguration(OneShotEntangledConfiguration):
     """ Definition for One Shot Entangled channel configuration with Full Input"""
 
     def __init__(self, configuration: OneShotEntangledFullInputConfigurationDict) -> None:
-        self._angle_rx_input0 = configuration['angle_rx_input0']
-        self._angle_ry_input0 = configuration['angle_ry_input0']
-        self._angle_rx_input1 = configuration['angle_rx_input1']
-        self._angle_ry_input1 = configuration['angle_ry_input1']
+        if 'angle_rx_input0' in configuration:
+            self._angle_rx_input0 = configuration['angle_rx_input0']
+        if 'angle_ry_input0' in configuration:
+            self._angle_ry_input0 = configuration['angle_ry_input0']
+        if 'angle_rx_input1' in configuration:
+            self._angle_rx_input1 = configuration['angle_rx_input1']
+        if 'angle_ry_input1' in configuration:
+            self._angle_ry_input1 = configuration['angle_ry_input1']
         super().__init__(configuration)
 
     @property
