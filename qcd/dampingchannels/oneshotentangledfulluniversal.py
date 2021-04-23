@@ -1,6 +1,6 @@
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qcd.configurations.configuration import ChannelConfiguration
-from qcd.optimizationresults.aux import load_result_from_file
+from qcd.optimizationresults.aux import load_result_from_file, save_result_to_disk
 from qcd.configurations import OneShotSetupConfiguration
 from qcd.circuits import OneShotEntangledFullUniversalCircuit
 from typing import List, Optional, Tuple
@@ -8,7 +8,6 @@ from . import OneShotEntangledUniversalDampingChannel
 from ..typings import CloneSetup, OptimizationSetup, ResultStates
 from ..optimizations import OneShotEntangledFullUniversalOptimization
 from ..typings.configurations import OptimalConfigurations, ValidatedConfiguration
-from qcd import save_object_to_disk
 import numpy as np
 
 
@@ -30,7 +29,7 @@ class OneShotEntangledFullUniversalDampingChannel(OneShotEntangledUniversalDampi
         optimal_configurations = OneShotEntangledFullUniversalOptimization(
             optimization_setup).find_optimal_configurations(clone_setup)
         if clone_setup is not None and clone_setup['file_name'] is not None:
-            save_object_to_disk(optimal_configurations,
+            save_result_to_disk(optimal_configurations,
                                 f"{clone_setup['file_name']}_{clone_setup['id_clone']}", clone_setup['path'])
         return optimal_configurations
 

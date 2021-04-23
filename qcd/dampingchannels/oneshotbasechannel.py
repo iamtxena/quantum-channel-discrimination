@@ -1,6 +1,6 @@
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.circuits import OneShotCircuit
-from qcd.optimizationresults.aux import load_result_from_file
+from qcd.optimizationresults.aux import load_result_from_file, save_result_to_disk
 from . import DampingChannel
 from typing import Optional, List, Union, cast, Tuple
 from ..backends import DeviceBackend
@@ -23,7 +23,6 @@ from qiskit.quantum_info.states.utils import partial_trace
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from qcd import save_object_to_disk
 
 
 class OneShotDampingChannel(DampingChannel):
@@ -42,7 +41,7 @@ class OneShotDampingChannel(DampingChannel):
 
         optimal_configurations = OneShotOptimization(optimization_setup).find_optimal_configurations(clone_setup)
         if clone_setup is not None and 'file_name' in clone_setup:
-            save_object_to_disk(optimal_configurations,
+            save_result_to_disk(optimal_configurations,
                                 f"{clone_setup['file_name']}_{clone_setup['id_clone']}", clone_setup['path'])
         return optimal_configurations
 

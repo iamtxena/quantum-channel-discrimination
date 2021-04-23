@@ -1,4 +1,5 @@
 
+from qcd.typings.configurations import Fidelities, ValidatedConfiguration
 from qcd.configurations import OneShotConfiguration
 from qcd.configurations.configuration import ChannelConfiguration
 from . import Circuit
@@ -76,3 +77,15 @@ class OneShotCircuit(Circuit):
             'angle_ry': cast(OneShotConfiguration, configuration).angle_ry,
             'eta_group': eta_group
         })
+
+    def _compute_upper_and_lower_fidelity_bounds(self, state_vectors: List[np.ndarray]) -> Fidelities:
+        """ Computes upper and lower fidelity bounds from the given state vectors """
+        raise NotImplementedError('Method not implemented yet')
+
+    def _get_probabilities_and_etas_assigned_from_counts(self, counts: List[dict], plays: int,
+                                                         eta_group_length: int) -> ValidatedConfiguration:
+        """ Computes the validated probability from the 'counts' measured
+            based on the guess strategy that is required to use and returns the
+            etas assigned for each measured state
+        """
+        raise NotImplementedError('Method not implemented yet')
