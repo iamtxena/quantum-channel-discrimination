@@ -24,6 +24,11 @@ class OptimalConfiguration(TypedDict):
     number_calls_made: int
 
 
+class Fidelities(TypedDict):
+    upper_bound_fidelity: float
+    lower_bound_fidelity: float
+
+
 class OptimalConfigurations(TypedDict, total=False):
     eta_groups: List[List[float]]
     best_algorithm: List[str]
@@ -34,6 +39,7 @@ class OptimalConfigurations(TypedDict, total=False):
     validated_probabilities: List[float]
     eta_probabilities: List[Tuple[float, float, float]]
     measured_states_eta_assignment: List[MeasuredStatesEtaAssignment]
+    fidelities: List[Fidelities]
 
 
 class TheoreticalOneShotOptimalConfiguration(OptimalConfiguration):
