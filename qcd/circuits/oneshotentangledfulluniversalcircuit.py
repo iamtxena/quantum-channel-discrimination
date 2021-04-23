@@ -1,21 +1,20 @@
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.configurations import OneShotConfiguration, OneShotEntangledFullUniversalConfiguration
 from . import OneShotEntangledUniversalCircuit
-from typing import List, cast
+from typing import List, cast, Tuple
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 
 
 class OneShotEntangledFullUniversalCircuit(OneShotEntangledUniversalCircuit):
     """ Representation of the One Shot Entangled Channel circuit """
 
-    def _create_one_circuit(self,
-                            configuration: ChannelConfiguration,
-                            eta: float) -> QuantumCircuit:
+    def _create_one_circuit_without_measurement(self,
+                                                configuration: ChannelConfiguration,
+                                                eta: float) -> Tuple[ClassicalRegister, QuantumCircuit]:
         """ Creates one circuit from a given  configuration and eta """
         configuration = cast(OneShotEntangledFullUniversalConfiguration, configuration)
         qreg_q = QuantumRegister(3, 'q')
         creg_c = ClassicalRegister(2, 'c')
-
         circuit = QuantumCircuit(qreg_q, creg_c)
         circuit.u3(configuration.input_theta0, configuration.input_phi0, configuration.input_lambda0, qreg_q[0])
         circuit.u3(configuration.input_theta1, configuration.input_phi1, configuration.input_lambda1, qreg_q[1])
@@ -44,8 +43,7 @@ class OneShotEntangledFullUniversalCircuit(OneShotEntangledUniversalCircuit):
         circuit.cx(qreg_q[1], qreg_q[0])
         circuit.u3(configuration.theta6, configuration.phi6, configuration.lambda6, qreg_q[0])
         circuit.u3(configuration.theta7, configuration.phi7, configuration.lambda7, qreg_q[1])
-        circuit.measure([0, 1], creg_c)
-        return circuit
+        return creg_c, circuit
 
     def _create_one_configuration(self,
                                   configuration: ChannelConfiguration,

@@ -1,5 +1,6 @@
 from abc import ABC
-from typing import Optional, List, Union, cast
+from qcd.dampingchannels.oneshotentangledfulluniversal import OneShotEntangledFullUniversalDampingChannel
+from typing import Optional
 from ..typings.configurations import OptimalConfigurations
 from .aux import load_result_from_file
 
@@ -8,44 +9,47 @@ class GlobalOptimizationResultsFullUniversal(ABC):
     """ Global class to load, process and plot any Optimization Results """
 
     @staticmethod
-    def load_results(file_names: Union[str, List[str]], path: Optional[str] = ""):
+    def load_results(file_name: str, str, path: Optional[str] = ""):
         """
           1. Load results from file for all file names
           2. build probability matrices for each loaded result
           3. build amplitude matrix for each loaded result
         """
-        names = file_names
-        if not isinstance(names, List):
-            names = [cast(str, file_names)]
 
-        results = [load_result_from_file(file_name, path) for file_name in names]
+        results = load_result_from_file(file_name, path)
         return GlobalOptimizationResultsFullUniversal(results)
 
     def __init__(self, optimal_configurations: OptimalConfigurations) -> None:
-        self._optimal_configurations = self._update_optimal_configurations(optimal_configurations)
+        self._optimal_configurations = optimal_configurations
 
     @property
     def optimal_configurations(self):
         return self._optimal_configurations
 
-    def _update_optimal_configurations(self, configurations: OptimalConfigurations) -> OptimalConfigurations:
+    @property
+    def validated_optimal_configurations(self):
+        return self._validated_optimal_configurations
+
+    def validate_optimal_configurations(self,
+                                        optimal_configurations: OptimalConfigurations,
+                                        plays: Optional[int] = 10000) -> None:
         """ Runs the circuit with the given optimal configurations computing the success average probability
-            for each eta (and also the global), the selected eta for each measured state and finally the 
+            for each eta (and also the global), the selected eta for each measured state and finally the
             upper and lower bound fidelities
         """
-        return configurations
+        validated_configurations = optimal_configurations
+        validated_configurations['validated_probabilities'] = []
+        validated_configurations['eta_probabilities'] = []
+        validated_configurations['measured_states_eta_assignment'] = []
+        validated_configurations['fidelities'] = []
 
-
-"""
-class OptimalConfigurations(TypedDict, total=False):
-    eta_groups: List[List[float]]
-    best_algorithm: List[str]
-    probabilities: List[float]
-    configurations: List[ChannelConfiguration]
-    number_calls_made: List[int]
-    legacy: bool
-    validated_probabilities: List[float]
-    eta_probabilities: List[Tuple[float, float, float]]
-    measured_states_eta_assignment: List[MeasuredStatesEtaAssignment]
-    fidelities: List[Fidelities]
-"""
+        for configuration in optimal_configurations['configurations']:
+            validated_configuration = OneShotEntangledFullUniversalDampingChannel.validate_optimal_configuration(
+                configuration, plays
+            )
+            validated_configurations['validated_probabilities'].append(validated_configuration['validated_probability'])
+            validated_configurations['eta_probabilities'].append(validated_configuration['etas_probability'])
+            validated_configurations['measured_states_eta_assignment'].append(
+                validated_configuration['measured_states_eta_assignment'])
+            validated_configurations['fidelities'].append(validated_configuration['fidelities'])
+        self._validated_optimal_configurations = validated_configurations

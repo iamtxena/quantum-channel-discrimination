@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple
 from . import OneShotEntangledUniversalDampingChannel
 from ..typings import CloneSetup, OptimizationSetup, ResultStates
 from ..optimizations import OneShotEntangledFullUniversalOptimization
-from ..typings.configurations import OptimalConfigurations
+from ..typings.configurations import OptimalConfigurations, ValidatedConfiguration
 from qcd import save_object_to_disk
 import numpy as np
 
@@ -40,6 +40,15 @@ class OneShotEntangledFullUniversalDampingChannel(OneShotEntangledUniversalDampi
             for the number of plays specified.
         """
         return OneShotEntangledFullUniversalCircuit().compute_average_success_probability(configuration, plays)
+
+    @staticmethod
+    def validate_optimal_configuration(configuration: ChannelConfiguration,
+                                       plays: Optional[int] = 10000) -> ValidatedConfiguration:
+        """ Runs the circuit with the given optimal configuration computing the success average probability
+            for each eta (and also the global), the selected eta for each measured state and finally the
+            upper and lower bound fidelities
+        """
+        return OneShotEntangledFullUniversalCircuit().validate_optimal_configuration(configuration, plays)
 
     def __init__(self,
                  channel_setup_configuration: Optional[OneShotSetupConfiguration] = None,

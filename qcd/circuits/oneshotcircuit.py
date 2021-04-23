@@ -42,9 +42,9 @@ class OneShotCircuit(Circuit):
         return (counts_distribution[0] +
                 counts_distribution[1]) / (plays * eta_group_length)
 
-    def _create_one_circuit(self,
-                            configuration: ChannelConfiguration,
-                            eta: float) -> QuantumCircuit:
+    def _create_one_circuit_without_measurement(self,
+                                                configuration: ChannelConfiguration,
+                                                eta: float) -> QuantumCircuit:
         """ Creates one circuit from a given  configuration and eta """
         configuration = cast(OneShotConfiguration, configuration)
         qreg_q = QuantumRegister(2, 'q')
@@ -58,7 +58,12 @@ class OneShotCircuit(Circuit):
         circuit.cx(qreg_q[1], qreg_q[0])
         circuit.rx(configuration.angle_rx, qreg_q[0])
         circuit.ry(configuration.angle_ry, qreg_q[0])
-        circuit.measure(qreg_q[0], creg_c[0])
+        return circuit
+
+    def _add_measurement_to_one_circuit(self,
+                                        creg_c: ClassicalRegister,
+                                        circuit: QuantumCircuit) -> QuantumCircuit:
+        circuit.measure([0], creg_c[0])
         return circuit
 
     def _create_one_configuration(self,

@@ -1,32 +1,32 @@
 """ Typings from all qcd module """
-from typing import List, Tuple, TypedDict
+from typing import List, TypedDict
 from ..configurations.configuration import ChannelConfiguration
-from enum import Enum
-
-
-class Eta(Enum):
-    ETA0 = 0
-    ETA1 = 1
-    ETA2 = 2
 
 
 class MeasuredStatesEtaAssignment(TypedDict):
-    state_00: Eta
-    state_01: Eta
-    state_10: Eta
-    state_11: Eta
+    state_00: int
+    state_01: int
+    state_10: int
+    state_11: int
 
 
-class OptimalConfiguration(TypedDict):
+class Fidelities(TypedDict):
+    upper_bound_fidelity: float
+    lower_bound_fidelity: float
+
+
+class OptimalConfiguration(TypedDict, total=False):
     best_algorithm: str
     best_probability: float
     best_configuration: ChannelConfiguration
     number_calls_made: int
 
 
-class Fidelities(TypedDict):
-    upper_bound_fidelity: float
-    lower_bound_fidelity: float
+class ValidatedConfiguration(OptimalConfiguration, total=False):
+    validated_probability: float
+    etas_probability: List[float]
+    measured_states_eta_assignment: MeasuredStatesEtaAssignment
+    fidelities: Fidelities
 
 
 class OptimalConfigurations(TypedDict, total=False):
@@ -37,7 +37,7 @@ class OptimalConfigurations(TypedDict, total=False):
     number_calls_made: List[int]
     legacy: bool
     validated_probabilities: List[float]
-    eta_probabilities: List[Tuple[float, float, float]]
+    eta_probabilities: List[List[float]]
     measured_states_eta_assignment: List[MeasuredStatesEtaAssignment]
     fidelities: List[Fidelities]
 

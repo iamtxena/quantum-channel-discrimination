@@ -1,4 +1,5 @@
 """ Auxiliary static methods """
+from functools import reduce
 from qcd.configurations.oneshotbaseconfiguration import OneShotConfiguration
 from qcd.typings.configurations import OptimalConfigurations
 from typing import Dict, List, Tuple, cast
@@ -86,3 +87,11 @@ def _adapt_result(result):
         })
         adapted_result['configurations'][idx] = new_configuration
     return adapted_result
+
+
+def upper_bound_fidelity(fidelities: List[float]) -> float:
+    return reduce(lambda total, current: total + (1 / 3) * current, fidelities, 0.0)
+
+
+def lower_bound_fidelity(fidelities: List[float]) -> float:
+    return 1 / 2 * reduce(lambda total, current: total + (1 / 9) * current**2, fidelities, 0.0)

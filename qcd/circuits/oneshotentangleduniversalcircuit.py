@@ -8,9 +8,9 @@ from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 class OneShotEntangledUniversalCircuit(OneShotEntangledFullInputCircuit):
     """ Representation of the One Shot Entangled Channel circuit """
 
-    def _create_one_circuit(self,
-                            configuration: ChannelConfiguration,
-                            eta: float) -> QuantumCircuit:
+    def _create_one_circuit_without_measurement(self,
+                                                configuration: ChannelConfiguration,
+                                                eta: float) -> QuantumCircuit:
         """ Creates one circuit from a given  configuration and eta """
         configuration = cast(OneShotEntangledUniversalConfiguration, configuration)
         qreg_q = QuantumRegister(3, 'q')
@@ -37,8 +37,7 @@ class OneShotEntangledUniversalCircuit(OneShotEntangledFullInputCircuit):
         circuit.cx(qreg_q[1], qreg_q[0])
         circuit.u3(configuration.theta6, configuration.phi6, configuration.lambda6, qreg_q[0])
         circuit.u3(configuration.theta7, configuration.phi7, configuration.lambda7, qreg_q[1])
-        circuit.measure([0, 1], creg_c)
-        return circuit
+        return creg_c, circuit
 
     def _create_one_configuration(self,
                                   configuration: ChannelConfiguration,
