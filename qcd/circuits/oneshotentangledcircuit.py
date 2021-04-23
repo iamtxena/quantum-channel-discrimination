@@ -108,12 +108,14 @@ class OneShotEntangledCircuit(OneShotCircuit):
             based on the guess strategy that is required to use and returns the
             etas assigned for each measured state
         """
-        etas_assignments = MeasuredStatesEtaAssignment(state_00=0,
-                                                       state_01=0,
-                                                       state_10=0,
-                                                       state_11=0)
+        etas_assignments = MeasuredStatesEtaAssignment(state_00=-1,
+                                                       state_01=-1,
+                                                       state_10=-1,
+                                                       state_11=-1)
+
         max_counts, etas_assignments = self._get_max_counts_and_etas_for_all_channels(eta_counts,
                                                                                       ([0, 0, 0, 0], etas_assignments))
+
         global_average_success_probability, etas_probability = self._get_global_and_etas_probabilities(
             max_counts, etas_assignments, plays, eta_group_length)
 
@@ -134,7 +136,13 @@ class OneShotEntangledCircuit(OneShotCircuit):
 
         eta_counts = [0] * eta_group_length
         for idx, state in enumerate(etas_assignments):
-            eta_counts[etas_assignments[state]] += max_counts[idx]  # type: ignore
+            if state != 'state_00' and state != 'state_01' and state != 'state_10' and state != 'state_11':
+                raise ValueError(f'invalid state: {state}')
+            eta_assigned = etas_assignments[state]  # type: ignore
+            if eta_assigned < -1 or eta_assigned > 2:
+                raise ValueError(f'invalid eta: {eta_assigned}')
+            if eta_assigned != -1:
+                eta_counts[eta_assigned] += max_counts[idx]
 
         eta_probabilities = [eta_count / (plays * eta_group_length) for eta_count in eta_counts]
         return (global_average_success_probability, eta_probabilities)
