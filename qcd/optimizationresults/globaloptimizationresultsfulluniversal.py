@@ -108,6 +108,7 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         eta_assigned_state_01 = []
         eta_assigned_state_10 = []
         eta_assigned_state_11 = []
+        success_probabilities_validated = []
 
         for idx, configuration in enumerate(self._validated_optimal_configurations['configurations']):
             etas_third_channel.append(
@@ -115,11 +116,13 @@ class GlobalOptimizationResultsFullUniversal(ABC):
             error_probabilities.append(1 - self._validated_optimal_configurations['probabilities'][idx])
             error_probabilities_validated.append(
                 1 - self._validated_optimal_configurations['validated_probabilities'][idx])
+            success_probabilities_validated.append(
+                self._validated_optimal_configurations['validated_probabilities'][idx])
             upper_fidelities.append(self._validated_optimal_configurations['fidelities'][idx]['upper_bound_fidelity'])
             lower_fidelities.append(self._validated_optimal_configurations['fidelities'][idx]['lower_bound_fidelity'])
-            eta0_error_probabilities.append(1 - self._validated_optimal_configurations['eta_probabilities'][idx][0])
-            eta1_error_probabilities.append(1 - self._validated_optimal_configurations['eta_probabilities'][idx][1])
-            eta2_error_probabilities.append(1 - self._validated_optimal_configurations['eta_probabilities'][idx][2])
+            eta0_error_probabilities.append(self._validated_optimal_configurations['eta_probabilities'][idx][0])
+            eta1_error_probabilities.append(self._validated_optimal_configurations['eta_probabilities'][idx][1])
+            eta2_error_probabilities.append(self._validated_optimal_configurations['eta_probabilities'][idx][2])
             eta_assigned_state_00.append(self._assign_eta(
                 'state_00', self._validated_optimal_configurations['measured_states_eta_assignment'][idx]))
             eta_assigned_state_01.append(self._assign_eta(
@@ -128,6 +131,9 @@ class GlobalOptimizationResultsFullUniversal(ABC):
                 'state_10', self._validated_optimal_configurations['measured_states_eta_assignment'][idx]))
             eta_assigned_state_11.append(self._assign_eta(
                 'state_11', self._validated_optimal_configurations['measured_states_eta_assignment'][idx]))
+            if (np.round(sum(self._validated_optimal_configurations['eta_probabilities'][idx]), 3) !=
+                    np.round(self._validated_optimal_configurations['validated_probabilities'][idx], 3)):
+                raise ValueError('invalid probabilities!')
 
         number_eta_pairs, eta_unique_pairs = get_number_eta_pairs(
             eta_groups=self._validated_optimal_configurations['eta_groups'])
@@ -136,6 +142,8 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         self._results_to_plot = [ResultsToPlot(
             {'error_probabilities': error_probabilities[idx * number_third_channels: (idx + 1) * number_third_channels],
              'error_probabilities_validated': error_probabilities_validated[
+                idx * number_third_channels: (idx + 1) * number_third_channels],
+             'success_probabilities_validated': success_probabilities_validated[
                 idx * number_third_channels: (idx + 1) * number_third_channels],
              'etas_third_channel': etas_third_channel[idx * number_third_channels: (idx + 1) * number_third_channels],
              'upper_fidelities': upper_fidelities[idx * number_third_channels: (idx + 1) * number_third_channels],
@@ -181,18 +189,44 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         fig.suptitle(sup_title, fontsize=20)
 
         for idx, parsed_result in enumerate(self._results_to_plot):
-            title = f"$\eta$ pair ({parsed_result['eta_pair'][0]}\u00B0,{parsed_result['eta_pair'][1]}\u00B0)"
+            title = f"$\eta$ pair ({parsed_result['eta_pair'][0]}\u00B0, {parsed_result['eta_pair'][1]}\u00B0)"
             ax = fig.add_subplot(2, 3, idx + 1 % 3)
             ax.set_ylim([0, 1])
             ax.set_title(title, fontsize=14)
-            ax.set_xlabel('Channel 3 (angle $\eta$)')
+            ax.set_xlabel('$\eta_2$ angle')
             ax.set_ylabel('Probability Error')
             ax.axvline(x=parsed_result['eta_pair'][0], linestyle='dotted',
-                       color='lightcoral', label=f"$\eta0$ = {parsed_result['eta_pair'][0]}\u00B0")
+                       color='lightcoral', label=f"$\eta_0$: {parsed_result['eta_pair'][0]}\u00B0")
             ax.axvline(x=parsed_result['eta_pair'][1], linestyle='dotted', color='firebrick',
-                       label=f"$\eta1$ = {parsed_result['eta_pair'][1]}\u00B0")
+                       label=f"$\eta_1$: {parsed_result['eta_pair'][1]}\u00B0")
             ax.plot(parsed_result['etas_third_channel'], parsed_result['error_probabilities'], label='Perr')
             ax.plot(parsed_result['etas_third_channel'], parsed_result['upper_fidelities'], label='Upper Bound')
             ax.plot(parsed_result['etas_third_channel'], parsed_result['lower_fidelities'], label='Lower Bound')
+            ax.legend()
+        plt.show()
+
+    def plot_global_probabilities(self, algorithm: str = '') -> None:
+        if self._results_to_plot is None:
+            raise ValueError('Results not available. Please call validate_optimal_configurations first.')
+
+        fig = plt.figure(figsize=(25, 10))
+        sup_title = 'Error Probabilities: Optimization vs Validation'
+        sup_title += f' with {algorithm}' if algorithm != '' else ''
+        fig.suptitle(sup_title, fontsize=20)
+
+        for idx, parsed_result in enumerate(self._results_to_plot):
+            title = f"$\eta$ pair ({parsed_result['eta_pair'][0]}\u00B0, {parsed_result['eta_pair'][1]}\u00B0)"
+            ax = fig.add_subplot(2, 3, idx + 1 % 3)
+            ax.set_title(title, fontsize=14)
+            ax.set_xlabel('$\eta_2$ angle')
+            ax.set_ylabel('Probability Error')
+            ax.axvline(x=parsed_result['eta_pair'][0], linestyle='dotted',
+                       color='lightcoral', label=f"$\eta_0$: {parsed_result['eta_pair'][0]}\u00B0")
+            ax.axvline(x=parsed_result['eta_pair'][1], linestyle='dotted', color='firebrick',
+                       label=f"$\eta_1$: {parsed_result['eta_pair'][1]}\u00B0")
+            ax.plot(parsed_result['etas_third_channel'],
+                    parsed_result['error_probabilities'], label='Perr Optimization')
+            ax.plot(parsed_result['etas_third_channel'],
+                    parsed_result['error_probabilities_validated'], label='Perr Validation')
             ax.legend()
         plt.show()

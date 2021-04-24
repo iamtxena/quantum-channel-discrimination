@@ -8,6 +8,7 @@ from typing import List, Tuple, cast
 import numpy as np
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 import itertools
+import random
 from qutip import fidelity, Qobj
 
 
@@ -94,10 +95,14 @@ class OneShotEntangledCircuit(OneShotCircuit):
                                               max_counts: int,
                                               new_value: int) -> Tuple[int, int]:
         """ return the max value between the new value or the current and
-            increase the eta index when new value is greater
+            increase the eta index when new value is greater or
+            when is the same value, increase it on 50% of the times
         """
         if new_value > max_counts:
             return (new_value, eta_index_assigned + 1)
+        if new_value == max_counts:
+            random_assignment = random.choice([0, 1])
+            return (new_value, eta_index_assigned + random_assignment)
         return (max_counts, eta_index_assigned)
 
     def _get_probabilities_and_etas_assigned_from_counts(self,
@@ -145,6 +150,9 @@ class OneShotEntangledCircuit(OneShotCircuit):
                 eta_counts[eta_assigned] += max_counts[idx]
 
         eta_probabilities = [eta_count / (plays * eta_group_length) for eta_count in eta_counts]
+        if np.round(sum(eta_probabilities), 3) != np.round(global_average_success_probability, 3):
+            raise ValueError(f'invalid probabilities! Globa avg: {global_average_success_probability} and ' +
+                             f'sum probs: {sum(eta_probabilities)}')
         return (global_average_success_probability, eta_probabilities)
 
     def _create_one_circuit_without_measurement(self,

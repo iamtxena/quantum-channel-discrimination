@@ -80,6 +80,7 @@ class OneShotEntangledFullUniversalConfigurationDict(OneShotEntangledUniversalCo
 class ResultsToPlot(TypedDict):
     error_probabilities: List[float]
     error_probabilities_validated: List[float]
+    success_probabilities_validated: List[float]
     etas_third_channel: List[int]
     upper_fidelities: List[float]
     lower_fidelities: List[float]
