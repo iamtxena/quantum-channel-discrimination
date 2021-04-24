@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import List
 from ..typings.configurations import OptimalConfigurations
-from .aux import build_probabilities_matrix, build_amplitudes_matrix
+from .aux import build_probabilities_matrix, build_amplitudes_matrix, get_number_eta_pairs
 
 
 class OptimizationResult(ABC):
@@ -42,7 +42,7 @@ class OptimizationResult(ABC):
         if eta_groups_length == 2:
             return [optimal_configurations]
 
-        number_eta_pairs = self._get_number_eta_pairs(optimal_configurations['eta_groups'])
+        number_eta_pairs, _ = get_number_eta_pairs(optimal_configurations['eta_groups'])
         return self._get_two_eta_configurations(optimal_configurations, number_eta_pairs, eta_groups_length)
 
     def _get_two_eta_configurations(self, optimal_configurations: OptimalConfigurations,
@@ -68,14 +68,3 @@ class OptimizationResult(ABC):
             list_configs.append(new_config)
 
         return list_configs
-
-    def _get_number_eta_pairs(self, eta_groups) -> int:
-        number_eta_pairs = 0
-        eta0 = -1
-        eta1 = -1
-        for eta_group in eta_groups:
-            if eta_group[0] != eta0 or eta_group[1] != eta1:
-                number_eta_pairs += 1
-                eta0 = eta_group[0]
-                eta1 = eta_group[1]
-        return number_eta_pairs

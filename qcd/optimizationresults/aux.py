@@ -3,6 +3,7 @@ import pickle
 from qcd.typings import TheoreticalOptimizationSetup
 from qcd.optimizations.aux import get_combinations_n_etas_without_repeats
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 from typing import List, cast, Tuple, Union, Dict, Optional
 from ..configurations import OneShotConfiguration
@@ -317,3 +318,17 @@ def _assign_improvement(result: TheoreticalOneShotEntangledOptimalConfigurations
         ind_0 = sorted_etas.index(result['eta_groups'][idx][0])
         ind_1 = (len(sorted_etas) - 1) - sorted_etas.index(result['eta_groups'][idx][1])
         matrix[ind_1, ind_0] = improvement
+
+
+def get_number_eta_pairs(eta_groups: List[List[float]]) -> Tuple[int, List[Tuple[int, int]]]:
+    number_eta_pairs = 0
+    eta0 = -1.0
+    eta1 = -1.0
+    eta_pairs = []
+    for eta_group in eta_groups:
+        if eta_group[0] != eta0 or eta_group[1] != eta1:
+            number_eta_pairs += 1
+            eta0 = eta_group[0]
+            eta1 = eta_group[1]
+            eta_pairs.append((int(math.degrees(eta0)), int(math.degrees(eta1))))
+    return (number_eta_pairs, eta_pairs)

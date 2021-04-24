@@ -1,4 +1,4 @@
-from typing import TypedDict, List
+from typing import Tuple, TypedDict, List
 
 
 class OneShotConfigurationDict(TypedDict, total=False):
@@ -75,3 +75,19 @@ class OneShotEntangledFullUniversalConfigurationDict(OneShotEntangledUniversalCo
     input_theta7: float
     input_phi7: float
     input_lambda7: float
+
+
+class ResultsToPlot(TypedDict):
+    error_probabilities: List[float]
+    error_probabilities_validated: List[float]
+    etas_third_channel: List[int]
+    upper_fidelities: List[float]
+    lower_fidelities: List[float]
+    eta0_error_probabilities: List[float]
+    eta1_error_probabilities: List[float]
+    eta2_error_probabilities: List[float]
+    eta_assigned_state_00: List[str]
+    eta_assigned_state_01: List[str]
+    eta_assigned_state_10: List[str]
+    eta_assigned_state_11: List[str]
+    eta_pair: Tuple[int, int]

@@ -129,13 +129,14 @@ class Circuit(ABC):
 
         circuits = [self._create_one_circuit_without_measurement(configuration=configuration, eta=eta)
                     for eta in configuration.eta_group]
+        fidelities = self._run_circuit_for_each_eta_get_fidelities(
+            configuration=configuration,
+            circuits=circuits)
         validated_configuration = self._run_circuit_for_each_eta_get_probabilities_and_etas_assigned(
             configuration=configuration,
             circuits=circuits,
             plays=plays)
-        validated_configuration['fidelities'] = self._run_circuit_for_each_eta_get_fidelities(
-            configuration=configuration,
-            circuits=circuits)
+        validated_configuration['fidelities'] = fidelities
 
         return validated_configuration
 
