@@ -57,8 +57,9 @@ class OneShotEntangledCircuit(OneShotCircuit):
             self,
             all_channel_counts: List[dict],
             max_counts_and_etas: Tuple[List[int],
-                                       MeasuredStatesEtaAssignment]) -> Tuple[List[int],
-                                                                              MeasuredStatesEtaAssignment]:
+                                       MeasuredStatesEtaAssignment],
+            current_eta: int) -> Tuple[List[int],
+                                       MeasuredStatesEtaAssignment]:
         """ returns the max counts between the max counts up to that moment and the circuit counts
             assigning the winner eta channel
         """
@@ -71,38 +72,45 @@ class OneShotEntangledCircuit(OneShotCircuit):
             max_counts[0], max_counts_and_etas[1]['state_00'] = self._update_max_counts_and_eta_assignment(
                 max_counts_and_etas[1]['state_00'],
                 max_counts_and_etas[0][0],
-                one_channel_counts['00'])
+                one_channel_counts['00'],
+                current_eta)
         if '01' in one_channel_counts:
             max_counts[1], max_counts_and_etas[1]['state_01'] = self._update_max_counts_and_eta_assignment(
                 max_counts_and_etas[1]['state_01'],
                 max_counts_and_etas[0][1],
-                one_channel_counts['01'])
+                one_channel_counts['01'],
+                current_eta)
         if '10' in one_channel_counts:
             max_counts[2], max_counts_and_etas[1]['state_10'] = self._update_max_counts_and_eta_assignment(
                 max_counts_and_etas[1]['state_10'],
                 max_counts_and_etas[0][2],
-                one_channel_counts['10'])
+                one_channel_counts['10'],
+                current_eta)
         if '11' in one_channel_counts:
             max_counts[3], max_counts_and_etas[1]['state_11'] = self._update_max_counts_and_eta_assignment(
                 max_counts_and_etas[1]['state_11'],
                 max_counts_and_etas[0][3],
-                one_channel_counts['11'])
+                one_channel_counts['11'],
+                current_eta)
 
-        return self._get_max_counts_and_etas_for_all_channels(all_channel_counts, (max_counts, max_counts_and_etas[1]))
+        return self._get_max_counts_and_etas_for_all_channels(all_channel_counts,
+                                                              (max_counts, max_counts_and_etas[1]),
+                                                              current_eta + 1)
 
     def _update_max_counts_and_eta_assignment(self,
                                               eta_index_assigned: int,
                                               max_counts: int,
-                                              new_value: int) -> Tuple[int, int]:
+                                              new_value: int,
+                                              current_eta: int) -> Tuple[int, int]:
         """ return the max value between the new value or the current and
             increase the eta index when new value is greater or
             when is the same value, increase it on 50% of the times
         """
         if new_value > max_counts:
-            return (new_value, eta_index_assigned + 1)
+            return (new_value, current_eta)
         if new_value == max_counts:
-            random_assignment = random.choice([0, 1])
-            return (new_value, eta_index_assigned + random_assignment)
+            random_assignment = random.choice([eta_index_assigned, current_eta])
+            return (new_value, random_assignment)
         return (max_counts, eta_index_assigned)
 
     def _get_probabilities_and_etas_assigned_from_counts(self,
@@ -119,7 +127,8 @@ class OneShotEntangledCircuit(OneShotCircuit):
                                                        state_11=-1)
 
         max_counts, etas_assignments = self._get_max_counts_and_etas_for_all_channels(eta_counts,
-                                                                                      ([0, 0, 0, 0], etas_assignments))
+                                                                                      ([0, 0, 0, 0], etas_assignments),
+                                                                                      current_eta=0)
 
         global_average_success_probability, etas_probability = self._get_global_and_etas_probabilities(
             max_counts, etas_assignments, plays, eta_group_length)
