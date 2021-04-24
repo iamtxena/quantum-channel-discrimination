@@ -203,6 +203,7 @@ class GlobalOptimizationResultsFullUniversal(ABC):
             ax.plot(parsed_result['etas_third_channel'], parsed_result['upper_fidelities'], label='Upper Bound')
             ax.plot(parsed_result['etas_third_channel'], parsed_result['lower_fidelities'], label='Lower Bound')
             ax.legend()
+        plt.subplots_adjust(hspace=0.4)
         plt.show()
 
     def plot_global_probabilities(self, algorithm: str = '') -> None:
@@ -229,6 +230,7 @@ class GlobalOptimizationResultsFullUniversal(ABC):
             ax.plot(parsed_result['etas_third_channel'],
                     parsed_result['error_probabilities_validated'], label='Perr Validation')
             ax.legend()
+        plt.subplots_adjust(hspace=0.4)
         plt.show()
 
     def plot_eta_success_probabilities(self, algorithm: str = '') -> None:
@@ -269,4 +271,59 @@ class GlobalOptimizationResultsFullUniversal(ABC):
                    bottom=base_bottom_probs,
                    label='Psucc $\eta_2$', color='green')
             ax.legend()
+        plt.subplots_adjust(hspace=0.4)
+        plt.show()
+
+    def plot_eta_assignments(self, eta_pair_index: int = -1, algorithm: str = '') -> None:
+        fig = plt.figure(figsize=(25, 20)) if eta_pair_index < 0 else plt.figure(figsize=(25, 10))
+        sup_title = '$\eta$ Success Probabilities with $\eta$ assigments for each measurement state'
+        sup_title += f' with {algorithm}' if algorithm != '' else ''
+        fig.suptitle(sup_title, fontsize=20)
+        width = 3
+
+        for idx, parsed_result in enumerate(self._results_to_plot):
+            if eta_pair_index >= 0 and eta_pair_index != idx:
+                continue
+            title = f"$\eta$ pair ({parsed_result['eta_pair'][0]}\u00B0, {parsed_result['eta_pair'][1]}\u00B0)"
+            ax = fig.add_subplot(3, 2, idx + 1 % 2) if eta_pair_index < 0 else fig.add_subplot(111)
+            ax.set_title(title, fontsize=14)
+            ax.set_ylabel('Probability Success')
+            ax.set_ylim([0, 1])
+            ax.set(xlabel=None, xticklabels=[])
+            base_bottom_probs = [eta0_prob + eta1_prob
+                                 for eta0_prob, eta1_prob in zip(parsed_result['eta0_success_probabilities'],
+                                                                 parsed_result['eta1_success_probabilities'])]
+            ax.axvline(x=parsed_result['eta_pair'][0], linestyle='dashed',
+                       color='cornflowerblue', label=f"$\eta_0$: {parsed_result['eta_pair'][0]}\u00B0")
+            ax.axvline(x=parsed_result['eta_pair'][1], linestyle='dashed', color='darkorange',
+                       label=f"$\eta_1$: {parsed_result['eta_pair'][1]}\u00B0")
+            ax.plot(parsed_result['etas_third_channel'],
+                    parsed_result['success_probabilities_validated'],
+                    linestyle='dotted', color='grey', label='Psucc Validation')
+            ax.bar(parsed_result['etas_third_channel'],
+                   parsed_result['eta0_success_probabilities'],
+                   width=width, align='edge', label='Psucc $\eta_0$', color='cornflowerblue')
+            ax.bar(parsed_result['etas_third_channel'], parsed_result['eta1_success_probabilities'],
+                   width=width,
+                   align='edge',
+                   bottom=parsed_result['eta0_success_probabilities'],
+                   label='Psucc $\eta_1$', color='darkorange')
+            ax.bar(parsed_result['etas_third_channel'], parsed_result['eta2_success_probabilities'],
+                   width=width,
+                   align='edge',
+                   bottom=base_bottom_probs,
+                   label='Psucc $\eta_2$', color='green')
+            data = [parsed_result['eta_assigned_state_00'],
+                    parsed_result['eta_assigned_state_01'],
+                    parsed_result['eta_assigned_state_10'],
+                    parsed_result['eta_assigned_state_11'], ]
+            columns = parsed_result['etas_third_channel']
+            rows = ('state 00', 'state 01', 'state 10', 'state 11')
+            ax.table(cellText=data,
+                     rowLabels=rows,
+                     colLabels=columns,
+                     loc='bottom')
+            ax.legend()
+        if eta_pair_index < 0:
+            plt.subplots_adjust(hspace=0.4)
         plt.show()
