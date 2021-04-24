@@ -1,4 +1,5 @@
-from qcd.typings.configurations import Fidelities, MeasuredStatesEtaAssignment, ValidatedConfiguration
+from qcd.typings.configurations import (Fidelities, MeasuredStatesEtaAssignment,
+                                        MeasuredStatesCounts, ValidatedConfiguration)
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.configurations import OneShotConfiguration, OneShotEntangledConfiguration
 from qiskit.quantum_info.states.utils import partial_trace
@@ -54,17 +55,20 @@ class OneShotEntangledCircuit(OneShotCircuit):
                 counts_distribution[3]) / (plays * eta_group_length)
 
     def _get_max_counts_and_etas_for_all_channels(
-            self,
-            all_channel_counts: List[dict],
-            max_counts_and_etas: Tuple[List[int],
-                                       MeasuredStatesEtaAssignment],
-            current_eta: int) -> Tuple[List[int],
-                                       MeasuredStatesEtaAssignment]:
+        self,
+        all_channel_counts: List[dict],
+        max_counts_and_etas: Tuple[List[int],
+                                   MeasuredStatesEtaAssignment],
+        current_eta: int,
+        measured_states_counts: MeasuredStatesCounts) -> Tuple[
+            Tuple[List[int],
+                  MeasuredStatesEtaAssignment],
+            MeasuredStatesCounts]:
         """ returns the max counts between the max counts up to that moment and the circuit counts
             assigning the winner eta channel
         """
         if not all_channel_counts:
-            return max_counts_and_etas
+            return (max_counts_and_etas, measured_states_counts)
 
         one_channel_counts = all_channel_counts.pop()
         max_counts = [0, 0, 0, 0]
@@ -74,28 +78,34 @@ class OneShotEntangledCircuit(OneShotCircuit):
                 max_counts_and_etas[0][0],
                 one_channel_counts['00'],
                 current_eta)
+            measured_states_counts['state_00'].append(one_channel_counts['00'])
         if '01' in one_channel_counts:
             max_counts[1], max_counts_and_etas[1]['state_01'] = self._update_max_counts_and_eta_assignment(
                 max_counts_and_etas[1]['state_01'],
                 max_counts_and_etas[0][1],
                 one_channel_counts['01'],
                 current_eta)
+            measured_states_counts['state_01'].append(one_channel_counts['01'])
         if '10' in one_channel_counts:
             max_counts[2], max_counts_and_etas[1]['state_10'] = self._update_max_counts_and_eta_assignment(
                 max_counts_and_etas[1]['state_10'],
                 max_counts_and_etas[0][2],
                 one_channel_counts['10'],
                 current_eta)
+            measured_states_counts['state_10'].append(one_channel_counts['10'])
         if '11' in one_channel_counts:
             max_counts[3], max_counts_and_etas[1]['state_11'] = self._update_max_counts_and_eta_assignment(
                 max_counts_and_etas[1]['state_11'],
                 max_counts_and_etas[0][3],
                 one_channel_counts['11'],
                 current_eta)
+            measured_states_counts['state_11'].append(one_channel_counts['11'])
 
+        measured_states_counts = self._update_null_measured_counts(one_channel_counts, measured_states_counts)
         return self._get_max_counts_and_etas_for_all_channels(all_channel_counts,
                                                               (max_counts, max_counts_and_etas[1]),
-                                                              current_eta + 1)
+                                                              current_eta + 1,
+                                                              measured_states_counts)
 
     def _update_max_counts_and_eta_assignment(self,
                                               eta_index_assigned: int,
@@ -113,6 +123,19 @@ class OneShotEntangledCircuit(OneShotCircuit):
             return (new_value, random_assignment)
         return (max_counts, eta_index_assigned)
 
+    def _update_null_measured_counts(self,
+                                     one_channel_counts: dict,
+                                     measured_states_counts: MeasuredStatesCounts) -> MeasuredStatesCounts:
+        if '00' not in one_channel_counts:
+            measured_states_counts['state_00'].append(0)
+        if '01' not in one_channel_counts:
+            measured_states_counts['state_01'].append(0)
+        if '10' not in one_channel_counts:
+            measured_states_counts['state_10'].append(0)
+        if '11' not in one_channel_counts:
+            measured_states_counts['state_11'].append(0)
+        return measured_states_counts
+
     def _get_probabilities_and_etas_assigned_from_counts(self,
                                                          eta_counts: List[dict],
                                                          plays: int,
@@ -125,17 +148,25 @@ class OneShotEntangledCircuit(OneShotCircuit):
                                                        state_01=-1,
                                                        state_10=-1,
                                                        state_11=-1)
+        mesaured_states_counts = MeasuredStatesCounts(state_00=[],
+                                                      state_01=[],
+                                                      state_10=[],
+                                                      state_11=[],
+                                                      total_counts=(plays * eta_group_length))
 
-        max_counts, etas_assignments = self._get_max_counts_and_etas_for_all_channels(eta_counts,
-                                                                                      ([0, 0, 0, 0], etas_assignments),
-                                                                                      current_eta=0)
+        (max_counts, etas_assignments), measured_states_counts = self._get_max_counts_and_etas_for_all_channels(
+            eta_counts,
+            ([0, 0, 0, 0], etas_assignments),
+            current_eta=0,
+            measured_states_counts=mesaured_states_counts)
 
         global_average_success_probability, etas_probability = self._get_global_and_etas_probabilities(
             max_counts, etas_assignments, plays, eta_group_length)
 
         return ValidatedConfiguration(validated_probability=global_average_success_probability,
                                       etas_probability=etas_probability,
-                                      measured_states_eta_assignment=etas_assignments)
+                                      measured_states_eta_assignment=etas_assignments,
+                                      measured_states_counts=measured_states_counts)
 
     def _get_global_and_etas_probabilities(self,
                                            max_counts: List[int],

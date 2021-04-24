@@ -10,6 +10,14 @@ class MeasuredStatesEtaAssignment(TypedDict):
     state_11: int
 
 
+class MeasuredStatesCounts(TypedDict):
+    state_00: List[int]
+    state_01: List[int]
+    state_10: List[int]
+    state_11: List[int]
+    total_counts: int
+
+
 class Fidelities(TypedDict):
     upper_bound_fidelity: float
     lower_bound_fidelity: float
@@ -27,6 +35,7 @@ class ValidatedConfiguration(OptimalConfiguration, total=False):
     etas_probability: List[float]
     measured_states_eta_assignment: MeasuredStatesEtaAssignment
     fidelities: Fidelities
+    measured_states_counts: MeasuredStatesCounts
 
 
 class OptimalConfigurations(TypedDict, total=False):
@@ -40,6 +49,7 @@ class OptimalConfigurations(TypedDict, total=False):
     eta_probabilities: List[List[float]]
     measured_states_eta_assignment: List[MeasuredStatesEtaAssignment]
     fidelities: List[Fidelities]
+    measured_states_counts: List[MeasuredStatesCounts]
 
 
 class TheoreticalOneShotOptimalConfiguration(OptimalConfiguration):

@@ -51,6 +51,7 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         validated_configurations['eta_probabilities'] = []
         validated_configurations['measured_states_eta_assignment'] = []
         validated_configurations['fidelities'] = []
+        validated_configurations['measured_states_counts'] = []
 
         eta_groups_length = len(validated_configurations['eta_groups'])
         print(f'number of eta groups to validate: {eta_groups_length}')
@@ -82,6 +83,7 @@ class GlobalOptimizationResultsFullUniversal(ABC):
             validated_configurations['measured_states_eta_assignment'].append(
                 validated_configuration['measured_states_eta_assignment'])
             validated_configurations['fidelities'].append(validated_configuration['fidelities'])
+            validated_configurations['measured_states_counts'].append(validated_configuration['measured_states_counts'])
         self._validated_optimal_configurations = validated_configurations
         end_time = time.time()
         total_minutes = int((end_time - program_start_time) / 60)
@@ -109,6 +111,19 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         eta_assigned_state_10 = []
         eta_assigned_state_11 = []
         success_probabilities_validated = []
+        counts_00_eta0 = []
+        counts_00_eta1 = []
+        counts_00_eta2 = []
+        counts_01_eta0 = []
+        counts_01_eta1 = []
+        counts_01_eta2 = []
+        counts_10_eta0 = []
+        counts_10_eta1 = []
+        counts_10_eta2 = []
+        counts_11_eta0 = []
+        counts_11_eta1 = []
+        counts_11_eta2 = []
+        total_counts = []
 
         for idx, configuration in enumerate(self._validated_optimal_configurations['configurations']):
             etas_third_channel.append(
@@ -134,6 +149,19 @@ class GlobalOptimizationResultsFullUniversal(ABC):
             if (np.round(sum(self._validated_optimal_configurations['eta_probabilities'][idx]), 3) !=
                     np.round(self._validated_optimal_configurations['validated_probabilities'][idx], 3)):
                 raise ValueError('invalid probabilities!')
+            counts_00_eta0.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_00'][0])
+            counts_00_eta1.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_00'][1])
+            counts_00_eta2.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_00'][2])
+            counts_01_eta0.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_01'][0])
+            counts_01_eta1.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_01'][1])
+            counts_01_eta2.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_01'][2])
+            counts_10_eta0.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_10'][0])
+            counts_10_eta1.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_10'][1])
+            counts_10_eta2.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_10'][2])
+            counts_11_eta0.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_11'][0])
+            counts_11_eta1.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_11'][1])
+            counts_11_eta2.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_11'][2])
+            total_counts.append(self._validated_optimal_configurations['measured_states_counts'][idx]['total_counts'])
 
         number_eta_pairs, eta_unique_pairs = get_number_eta_pairs(
             eta_groups=self._validated_optimal_configurations['eta_groups'])
@@ -162,7 +190,20 @@ class GlobalOptimizationResultsFullUniversal(ABC):
                 idx * number_third_channels: (idx + 1) * number_third_channels],
              'eta_assigned_state_11': eta_assigned_state_11[
                 idx * number_third_channels: (idx + 1) * number_third_channels],
-             'eta_pair': eta_pair})
+             'eta_pair': eta_pair,
+             'counts_00_eta0': counts_00_eta0[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_00_eta1': counts_00_eta1[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_00_eta2': counts_00_eta2[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_01_eta0': counts_01_eta0[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_01_eta1': counts_01_eta1[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_01_eta2': counts_01_eta2[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_10_eta0': counts_10_eta0[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_10_eta1': counts_10_eta1[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_10_eta2': counts_10_eta2[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_11_eta0': counts_11_eta0[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_11_eta1': counts_11_eta1[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'counts_11_eta2': counts_11_eta2[idx * number_third_channels: (idx + 1) * number_third_channels],
+             'total_counts': total_counts[idx * number_third_channels: (idx + 1) * number_third_channels]})
             for idx, eta_pair in enumerate(eta_unique_pairs)]
 
     def _assign_eta(self,
@@ -316,9 +357,19 @@ class GlobalOptimizationResultsFullUniversal(ABC):
             data = [parsed_result['eta_assigned_state_00'],
                     parsed_result['eta_assigned_state_01'],
                     parsed_result['eta_assigned_state_10'],
-                    parsed_result['eta_assigned_state_11'], ]
+                    parsed_result['eta_assigned_state_11'],
+                    parsed_result['counts_00_eta0'], parsed_result['counts_00_eta1'], parsed_result['counts_00_eta2'],
+                    parsed_result['counts_01_eta0'], parsed_result['counts_01_eta1'], parsed_result['counts_01_eta2'],
+                    parsed_result['counts_10_eta0'], parsed_result['counts_10_eta1'], parsed_result['counts_10_eta2'],
+                    parsed_result['counts_11_eta0'], parsed_result['counts_11_eta1'], parsed_result['counts_11_eta2'],
+                    parsed_result['total_counts']]
             columns = parsed_result['etas_third_channel']
-            rows = ('state 00', 'state 01', 'state 10', 'state 11')
+            rows = ('state 00', 'state 01', 'state 10', 'state 11',
+                    'counts_00_eta0', 'counts_00_eta1', 'counts_00_eta2',
+                    'counts_01_eta0', 'counts_01_eta1', 'counts_01_eta2',
+                    'counts_10_eta0', 'counts_10_eta1', 'counts_10_eta2',
+                    'counts_11_eta0', 'counts_11_eta1', 'counts_11_eta2',
+                    'total_counts')
             ax.table(cellText=data,
                      rowLabels=rows,
                      colLabels=columns,
