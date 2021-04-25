@@ -356,6 +356,9 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         plt.show()
 
     def plot_eta_assignments(self, eta_pair_index: int = -1, algorithm: str = '') -> None:
+        if self._results_to_plot is None:
+            raise ValueError('Results not available. Please call validate_optimal_configurations first.')
+
         fig = plt.figure(figsize=(35, 30)) if eta_pair_index < 0 else plt.figure(figsize=(25, 10))
         sup_title = '$\eta$ Success Probabilities with $\eta$ assigments for each measurement state'
         sup_title += f' with {algorithm}' if algorithm != '' else ''
@@ -421,6 +424,9 @@ class GlobalOptimizationResultsFullUniversal(ABC):
 
     def export_to_csv(self, file_name: str, path: Optional[str] = "") -> None:
         """ export results to plot to a csv file """
+        if self._results_to_plot is None:
+            raise ValueError('Results not available. Please call validate_optimal_configurations first.')
+
         for result_to_plot in self._results_to_plot:
             etas_third_channel = [str(i) for i in result_to_plot['etas_third_channel']]
             error_probabilities = [str(i) for i in result_to_plot['error_probabilities']]
