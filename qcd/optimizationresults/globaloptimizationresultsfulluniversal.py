@@ -2,7 +2,7 @@ from abc import ABC
 from qcd.typings.dicts import ResultsToPlot
 from qcd.dampingchannels import OneShotEntangledFullUniversalDampingChannel
 from qcd.configurations import OneShotEntangledFullUniversalConfiguration
-from typing import Literal, Optional, Union, cast
+from typing import List, Literal, Optional, Union, cast
 from ..typings.configurations import MeasuredStatesEtaAssignment, OptimalConfigurations
 from .aux import load_result_from_file, get_number_eta_pairs
 import time
@@ -111,18 +111,18 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         eta_assigned_state_10 = []
         eta_assigned_state_11 = []
         success_probabilities_validated = []
-        counts_00_eta0 = []
-        counts_00_eta1 = []
-        counts_00_eta2 = []
-        counts_01_eta0 = []
-        counts_01_eta1 = []
-        counts_01_eta2 = []
-        counts_10_eta0 = []
-        counts_10_eta1 = []
-        counts_10_eta2 = []
-        counts_11_eta0 = []
-        counts_11_eta1 = []
-        counts_11_eta2 = []
+        counts_00_eta0: List[str] = []
+        counts_00_eta1: List[str] = []
+        counts_00_eta2: List[str] = []
+        counts_01_eta0: List[str] = []
+        counts_01_eta1: List[str] = []
+        counts_01_eta2: List[str] = []
+        counts_10_eta0: List[str] = []
+        counts_10_eta1: List[str] = []
+        counts_10_eta2: List[str] = []
+        counts_11_eta0: List[str] = []
+        counts_11_eta1: List[str] = []
+        counts_11_eta2: List[str] = []
         total_counts = []
 
         for idx, configuration in enumerate(self._validated_optimal_configurations['configurations']):
@@ -149,18 +149,9 @@ class GlobalOptimizationResultsFullUniversal(ABC):
             if (np.round(sum(self._validated_optimal_configurations['eta_probabilities'][idx]), 3) !=
                     np.round(self._validated_optimal_configurations['validated_probabilities'][idx], 3)):
                 raise ValueError('invalid probabilities!')
-            counts_00_eta0.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_00'][0])
-            counts_00_eta1.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_00'][1])
-            counts_00_eta2.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_00'][2])
-            counts_01_eta0.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_01'][0])
-            counts_01_eta1.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_01'][1])
-            counts_01_eta2.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_01'][2])
-            counts_10_eta0.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_10'][0])
-            counts_10_eta1.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_10'][1])
-            counts_10_eta2.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_10'][2])
-            counts_11_eta0.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_11'][0])
-            counts_11_eta1.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_11'][1])
-            counts_11_eta2.append(self._validated_optimal_configurations['measured_states_counts'][idx]['state_11'][2])
+            self._assign_counts(counts_00_eta0, counts_00_eta1, counts_00_eta2, counts_01_eta0, counts_01_eta1,
+                                counts_01_eta2, counts_10_eta0, counts_10_eta1, counts_10_eta2, counts_11_eta0,
+                                counts_11_eta1, counts_11_eta2, idx)
             total_counts.append(self._validated_optimal_configurations['measured_states_counts'][idx]['total_counts'])
 
         number_eta_pairs, eta_unique_pairs = get_number_eta_pairs(
@@ -205,6 +196,54 @@ class GlobalOptimizationResultsFullUniversal(ABC):
              'counts_11_eta2': counts_11_eta2[idx * number_third_channels: (idx + 1) * number_third_channels],
              'total_counts': total_counts[idx * number_third_channels: (idx + 1) * number_third_channels]})
             for idx, eta_pair in enumerate(eta_unique_pairs)]
+
+    def _assign_counts(self, counts_00_eta0, counts_00_eta1, counts_00_eta2, counts_01_eta0, counts_01_eta1,
+                       counts_01_eta2, counts_10_eta0, counts_10_eta1, counts_10_eta2, counts_11_eta0, counts_11_eta1,
+                       counts_11_eta2, idx):
+
+        self._assign_max_counts(self._validated_optimal_configurations['measured_states_counts'][idx]['state_00'][0],
+                                self._validated_optimal_configurations['measured_states_counts'][idx]['state_00'][1],
+                                self._validated_optimal_configurations['measured_states_counts'][idx]['state_00'][2],
+                                counts_00_eta0, counts_00_eta1, counts_00_eta2)
+        self._assign_max_counts(self._validated_optimal_configurations['measured_states_counts'][idx]['state_01'][0],
+                                self._validated_optimal_configurations['measured_states_counts'][idx]['state_01'][1],
+                                self._validated_optimal_configurations['measured_states_counts'][idx]['state_01'][2],
+                                counts_01_eta0, counts_01_eta1, counts_01_eta2)
+        self._assign_max_counts(self._validated_optimal_configurations['measured_states_counts'][idx]['state_10'][0],
+                                self._validated_optimal_configurations['measured_states_counts'][idx]['state_10'][1],
+                                self._validated_optimal_configurations['measured_states_counts'][idx]['state_10'][2],
+                                counts_10_eta0, counts_10_eta1, counts_10_eta2)
+        self._assign_max_counts(self._validated_optimal_configurations['measured_states_counts'][idx]['state_11'][0],
+                                self._validated_optimal_configurations['measured_states_counts'][idx]['state_11'][1],
+                                self._validated_optimal_configurations['measured_states_counts'][idx]['state_11'][2],
+                                counts_11_eta0, counts_11_eta1, counts_11_eta2)
+
+    def _assign_max_counts(self, counts_eta0: int, counts_eta1: int, counts_eta2: int,
+                           counts_state_eta0: List[str], counts_state_eta1: List[str],
+                           counts_state_eta2: List[str]) -> None:
+        max_counts = counts_eta0
+        index_eta = 0
+        if (counts_eta1 > max_counts):
+            max_counts = counts_eta1
+            index_eta = 1
+        if (counts_eta2 > max_counts):
+            max_counts = counts_eta2
+            index_eta = 2
+        str_counts_eta0 = ''
+        str_counts_eta1 = ''
+        str_counts_eta2 = ''
+        if index_eta == 0:
+            str_counts_eta0 += '**'
+        if index_eta == 1:
+            str_counts_eta1 += '**'
+        if index_eta == 2:
+            str_counts_eta2 += '**'
+        str_counts_eta0 += str(counts_eta0)
+        str_counts_eta1 += str(counts_eta1)
+        str_counts_eta2 += str(counts_eta2)
+        counts_state_eta0.append(str_counts_eta0)
+        counts_state_eta1.append(str_counts_eta1)
+        counts_state_eta2.append(str_counts_eta2)
 
     def _assign_eta(self,
                     state_str: Union[
@@ -316,7 +355,7 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         plt.show()
 
     def plot_eta_assignments(self, eta_pair_index: int = -1, algorithm: str = '') -> None:
-        fig = plt.figure(figsize=(25, 20)) if eta_pair_index < 0 else plt.figure(figsize=(25, 10))
+        fig = plt.figure(figsize=(35, 30)) if eta_pair_index < 0 else plt.figure(figsize=(25, 10))
         sup_title = '$\eta$ Success Probabilities with $\eta$ assigments for each measurement state'
         sup_title += f' with {algorithm}' if algorithm != '' else ''
         fig.suptitle(sup_title, fontsize=20)
@@ -376,5 +415,5 @@ class GlobalOptimizationResultsFullUniversal(ABC):
                      loc='bottom')
             ax.legend()
         if eta_pair_index < 0:
-            plt.subplots_adjust(hspace=0.4)
+            plt.subplots_adjust(hspace=0.6)
         plt.show()

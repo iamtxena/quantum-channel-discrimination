@@ -55,73 +55,64 @@ class OneShotEntangledCircuit(OneShotCircuit):
                 counts_distribution[3]) / (plays * eta_group_length)
 
     def _get_max_counts_and_etas_for_all_channels(
-        self,
-        all_channel_counts: List[dict],
-        max_counts_and_etas: Tuple[List[int],
-                                   MeasuredStatesEtaAssignment],
-        current_eta: int,
-        measured_states_counts: MeasuredStatesCounts) -> Tuple[
-            Tuple[List[int],
-                  MeasuredStatesEtaAssignment],
-            MeasuredStatesCounts]:
+            self,
+            all_channel_counts: List[dict],
+            eta_assignments: MeasuredStatesEtaAssignment,
+            measured_states_counts: MeasuredStatesCounts) -> Tuple[
+                List[int],
+                MeasuredStatesEtaAssignment,
+                MeasuredStatesCounts]:
         """ returns the max counts between the max counts up to that moment and the circuit counts
             assigning the winner eta channel
         """
-        if not all_channel_counts:
-            return (max_counts_and_etas, measured_states_counts)
-
-        one_channel_counts = all_channel_counts.pop()
         max_counts = [0, 0, 0, 0]
-        if '00' in one_channel_counts:
-            max_counts[0], max_counts_and_etas[1]['state_00'] = self._update_max_counts_and_eta_assignment(
-                max_counts_and_etas[1]['state_00'],
-                max_counts_and_etas[0][0],
-                one_channel_counts['00'],
-                current_eta)
-            measured_states_counts['state_00'].append(one_channel_counts['00'])
-        if '01' in one_channel_counts:
-            max_counts[1], max_counts_and_etas[1]['state_01'] = self._update_max_counts_and_eta_assignment(
-                max_counts_and_etas[1]['state_01'],
-                max_counts_and_etas[0][1],
-                one_channel_counts['01'],
-                current_eta)
-            measured_states_counts['state_01'].append(one_channel_counts['01'])
-        if '10' in one_channel_counts:
-            max_counts[2], max_counts_and_etas[1]['state_10'] = self._update_max_counts_and_eta_assignment(
-                max_counts_and_etas[1]['state_10'],
-                max_counts_and_etas[0][2],
-                one_channel_counts['10'],
-                current_eta)
-            measured_states_counts['state_10'].append(one_channel_counts['10'])
-        if '11' in one_channel_counts:
-            max_counts[3], max_counts_and_etas[1]['state_11'] = self._update_max_counts_and_eta_assignment(
-                max_counts_and_etas[1]['state_11'],
-                max_counts_and_etas[0][3],
-                one_channel_counts['11'],
-                current_eta)
-            measured_states_counts['state_11'].append(one_channel_counts['11'])
-
-        measured_states_counts = self._update_null_measured_counts(one_channel_counts, measured_states_counts)
-        return self._get_max_counts_and_etas_for_all_channels(all_channel_counts,
-                                                              (max_counts, max_counts_and_etas[1]),
-                                                              current_eta + 1,
-                                                              measured_states_counts)
+        for current_eta, one_channel_counts in enumerate(all_channel_counts):
+            if '00' in one_channel_counts:
+                max_counts[0], eta_assignments['state_00'] = self._update_max_counts_and_eta_assignment(
+                    eta_assignments['state_00'],
+                    max_counts[0],
+                    one_channel_counts['00'],
+                    current_eta)
+                measured_states_counts['state_00'].append(one_channel_counts['00'])
+            if '01' in one_channel_counts:
+                max_counts[1], eta_assignments['state_01'] = self._update_max_counts_and_eta_assignment(
+                    eta_assignments['state_01'],
+                    max_counts[1],
+                    one_channel_counts['01'],
+                    current_eta)
+                measured_states_counts['state_01'].append(one_channel_counts['01'])
+            if '10' in one_channel_counts:
+                max_counts[2], eta_assignments['state_10'] = self._update_max_counts_and_eta_assignment(
+                    eta_assignments['state_10'],
+                    max_counts[2],
+                    one_channel_counts['10'],
+                    current_eta)
+                measured_states_counts['state_10'].append(one_channel_counts['10'])
+            if '11' in one_channel_counts:
+                max_counts[3], eta_assignments['state_11'] = self._update_max_counts_and_eta_assignment(
+                    eta_assignments['state_11'],
+                    max_counts[3],
+                    one_channel_counts['11'],
+                    current_eta)
+                measured_states_counts['state_11'].append(one_channel_counts['11'])
+            measured_states_counts = self._update_null_measured_counts(one_channel_counts, measured_states_counts)
+        return (max_counts, eta_assignments, measured_states_counts)
 
     def _update_max_counts_and_eta_assignment(self,
-                                              eta_index_assigned: int,
+                                              max_eta: int,
                                               max_counts: int,
                                               new_value: int,
-                                              current_eta: int) -> Tuple[int, int]:
+                                              new_eta: int) -> Tuple[int, int]:
         """ return the max value between the new value or the current and
             increase the eta index when new value is greater or
             when is the same value, increase it on 50% of the times
         """
         if new_value > max_counts:
-            return (new_value, current_eta)
+            return (new_value, new_eta)
         if new_value == max_counts:
-            random_assignment = random.choice([eta_index_assigned, current_eta])
+            random_assignment = random.choice([max_eta, new_eta])
             return (new_value, random_assignment)
-        return (max_counts, eta_index_assigned)
+        return (max_counts, max_eta)
 
     def _update_null_measured_counts(self,
                                      one_channel_counts: dict,
@@ -144,29 +135,72 @@ class OneShotEntangledCircuit(OneShotCircuit):
             based on the guess strategy that is required to use and returns the
             etas assigned for each measured state
         """
-        etas_assignments = MeasuredStatesEtaAssignment(state_00=-1,
-                                                       state_01=-1,
-                                                       state_10=-1,
-                                                       state_11=-1)
+        eta_assignments = MeasuredStatesEtaAssignment(state_00=-1,
+                                                      state_01=-1,
+                                                      state_10=-1,
+                                                      state_11=-1)
         mesaured_states_counts = MeasuredStatesCounts(state_00=[],
                                                       state_01=[],
                                                       state_10=[],
                                                       state_11=[],
                                                       total_counts=(plays * eta_group_length))
 
-        (max_counts, etas_assignments), measured_states_counts = self._get_max_counts_and_etas_for_all_channels(
+        max_counts, eta_assignments, measured_states_counts = self._get_max_counts_and_etas_for_all_channels(
             eta_counts,
-            ([0, 0, 0, 0], etas_assignments),
-            current_eta=0,
+            eta_assignments,
             measured_states_counts=mesaured_states_counts)
-
+        self._check_etas_assignments_and_etas_counts(eta_assignments, measured_states_counts, max_counts, eta_counts)
         global_average_success_probability, etas_probability = self._get_global_and_etas_probabilities(
-            max_counts, etas_assignments, plays, eta_group_length)
+            max_counts, eta_assignments, plays, eta_group_length)
 
         return ValidatedConfiguration(validated_probability=global_average_success_probability,
                                       etas_probability=etas_probability,
-                                      measured_states_eta_assignment=etas_assignments,
+                                      measured_states_eta_assignment=eta_assignments,
                                       measured_states_counts=measured_states_counts)
+
+    def _check_etas_assignments_and_etas_counts(self, etas_assignments: MeasuredStatesEtaAssignment,
+                                                measured_states_counts: MeasuredStatesCounts,
+                                                initial_max_counts, initial_eta_counts) -> None:
+        """ Checks that all assigments are correct """
+
+        for state in etas_assignments:
+            assigned_eta = etas_assignments[state]  # type: ignore
+            if assigned_eta == -1:
+                continue
+            max_eta = -1
+            max_counts = -1
+            max_eta_equal = -1
+            max_eta_equal2 = -1
+            for idx_eta, eta_counts in enumerate(measured_states_counts[state]):  # type: ignore
+                if eta_counts > max_counts:
+                    max_counts = eta_counts
+                    max_eta = idx_eta
+                    continue
+                if eta_counts == max_counts and max_eta_equal == -1:
+                    max_eta_equal = idx_eta
+                    continue
+                if eta_counts == max_counts and max_eta_equal != -1:
+                    max_eta_equal2 = idx_eta
+            if (assigned_eta != max_eta and
+                assigned_eta != max_eta_equal and
+                    assigned_eta != max_eta_equal2):
+                assigned_max_counts = measured_states_counts[state][assigned_eta]  # type: ignore
+                if max_eta_equal == -1:
+                    raise ValueError('invalid eta assignment. eta assigned:' +
+                                     f'eta_{assigned_eta} ' +
+                                     f'with counts: {assigned_max_counts}, and ' +
+                                     f'eta max is eta_{max_eta}$ with max counts: {max_counts}')
+                if max_eta_equal2 == -1:
+                    raise ValueError('invalid eta assignment. eta assigned:' +
+                                     f'eta_{assigned_eta} ' +
+                                     f'with counts: {assigned_max_counts}, and ' +
+                                     f'eta max is eta_{max_eta} or eta_{max_eta_equal} ' +
+                                     f'with max counts: {max_counts}')
+                raise ValueError('invalid eta assignment. eta assigned:' +
+                                 f'eta_{assigned_eta} ' +
+                                 f'with counts: {assigned_max_counts}, and ' +
+                                 f'eta max is eta_{max_eta} or eta_{max_eta_equal} or ' +
+                                 f'eta_{max_eta_equal2} with max counts: {max_counts}')
 
     def _get_global_and_etas_probabilities(self,
                                            max_counts: List[int],
