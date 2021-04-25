@@ -9,6 +9,7 @@ import time
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
 
 
 class GlobalOptimizationResultsFullUniversal(ABC):
@@ -417,3 +418,50 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         if eta_pair_index < 0:
             plt.subplots_adjust(hspace=0.6)
         plt.show()
+
+    def export_to_csv(self, file_name: str, path: Optional[str] = "") -> None:
+        """ export results to plot to a csv file """
+        for result_to_plot in self._results_to_plot:
+            etas_third_channel = [str(i) for i in result_to_plot['etas_third_channel']]
+            error_probabilities = [str(i) for i in result_to_plot['error_probabilities']]
+            error_probabilities_validated = [str(i) for i in result_to_plot['error_probabilities_validated']]
+            success_probabilities_validated = [str(i) for i in result_to_plot['success_probabilities_validated']]
+            upper_fidelities = [str(i) for i in result_to_plot['upper_fidelities']]
+            lower_fidelities = [str(i) for i in result_to_plot['lower_fidelities']]
+            eta0_success_probabilities = [str(i) for i in result_to_plot['eta0_success_probabilities']]
+            eta1_success_probabilities = [str(i) for i in result_to_plot['eta1_success_probabilities']]
+            eta2_success_probabilities = [str(i) for i in result_to_plot['eta2_success_probabilities']]
+            total_counts = [str(i) for i in result_to_plot['total_counts']]
+
+            header = ['eta_angles'] + etas_third_channel
+            data = [['error_probabilities'] + error_probabilities,
+                    ['error_probabilities_validated'] + error_probabilities_validated,
+                    ['success_probabilities_validated'] + success_probabilities_validated,
+                    ['upper_fidelities'] + upper_fidelities,
+                    ['lower_fidelities'] + lower_fidelities,
+                    ['eta0_success_probabilities'] + eta0_success_probabilities,
+                    ['eta1_success_probabilities'] + eta1_success_probabilities,
+                    ['eta2_success_probabilities'] + eta2_success_probabilities,
+                    ['eta_assigned_state_00'] + result_to_plot['eta_assigned_state_00'],
+                    ['eta_assigned_state_01'] + result_to_plot['eta_assigned_state_01'],
+                    ['eta_assigned_state_10'] + result_to_plot['eta_assigned_state_10'],
+                    ['eta_assigned_state_11'] + result_to_plot['eta_assigned_state_11'],
+                    ['counts_00_eta0'] + result_to_plot['counts_00_eta0'],
+                    ['counts_00_eta1'] + result_to_plot['counts_00_eta1'],
+                    ['counts_00_eta2'] + result_to_plot['counts_00_eta2'],
+                    ['counts_01_eta0'] + result_to_plot['counts_01_eta0'],
+                    ['counts_01_eta1'] + result_to_plot['counts_01_eta1'],
+                    ['counts_01_eta2'] + result_to_plot['counts_01_eta2'],
+                    ['counts_10_eta0'] + result_to_plot['counts_10_eta0'],
+                    ['counts_10_eta1'] + result_to_plot['counts_10_eta1'],
+                    ['counts_10_eta2'] + result_to_plot['counts_10_eta2'],
+                    ['counts_11_eta0'] + result_to_plot['counts_11_eta0'],
+                    ['counts_11_eta1'] + result_to_plot['counts_11_eta1'],
+                    ['counts_11_eta2'] + result_to_plot['counts_11_eta2'],
+                    ['total_counts'] + total_counts]
+
+            with open(f"./{path}{file_name}_" +
+                      f"{result_to_plot['eta_pair'][0]}_{result_to_plot['eta_pair'][1]}.csv", 'w') as f:
+                write = csv.writer(f)
+                write.writerow(header)
+                write.writerows(data)
