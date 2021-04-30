@@ -231,7 +231,7 @@ class OneShotEntangledCircuit(OneShotCircuit):
 
     def _create_one_circuit_without_measurement(self,
                                                 configuration: ChannelConfiguration,
-                                                eta: float) -> QuantumCircuit:
+                                                eta: float) -> Tuple[ClassicalRegister, QuantumCircuit]:
         """ Creates one circuit from a given  configuration and eta """
         configuration = cast(OneShotEntangledConfiguration, configuration)
         qreg_q = QuantumRegister(3, 'q')
@@ -249,7 +249,7 @@ class OneShotEntangledCircuit(OneShotCircuit):
         circuit.ry(configuration.angle_ry1, qreg_q[1])
         circuit.rx(configuration.angle_rx0, qreg_q[0])
         circuit.ry(configuration.angle_ry0, qreg_q[0])
-        return circuit
+        return creg_c, circuit
 
     def _add_measurement_to_one_circuit(self,
                                         creg_c: ClassicalRegister,

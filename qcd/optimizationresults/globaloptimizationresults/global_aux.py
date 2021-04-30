@@ -1,6 +1,6 @@
 from typing import List
-from . import OptimizationResult, OptimizationResultFullInput
-from ..typings.configurations import OptimalConfigurations
+from .. import OptimizationResult, OptimizationResultFullInput
+from ...typings.configurations import OptimalConfigurations
 
 
 def build_optimization_result(

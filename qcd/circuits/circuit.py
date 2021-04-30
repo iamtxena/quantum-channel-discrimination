@@ -129,9 +129,7 @@ class Circuit(ABC):
 
         circuits = [self._create_one_circuit_without_measurement(configuration=configuration, eta=eta)
                     for eta in configuration.eta_group]
-        fidelities = self._run_circuit_for_each_eta_get_fidelities(
-            configuration=configuration,
-            circuits=circuits)
+        fidelities = self._run_circuit_for_each_eta_get_fidelities(circuits=circuits)
         validated_configuration = self._run_circuit_for_each_eta_get_probabilities_and_etas_assigned(
             configuration=configuration,
             circuits=circuits,
@@ -156,7 +154,6 @@ class Circuit(ABC):
 
     def _run_circuit_for_each_eta_get_fidelities(
             self,
-            configuration: ChannelConfiguration,
             circuits: List[Tuple[ClassicalRegister, QuantumCircuit]]) -> Fidelities:
         """ Runs the circuit with the given optimal configuration using a state vector backend
             and computes the fidelity for each pair of channels
@@ -192,7 +189,7 @@ class Circuit(ABC):
     @abstractmethod
     def _create_one_circuit_without_measurement(self,
                                                 configuration: ChannelConfiguration,
-                                                eta: float) -> QuantumCircuit:
+                                                eta: float) -> Tuple[ClassicalRegister, QuantumCircuit]:
         """ Creates one circuit from a given configuration and eta without measurement gates """
         pass
 

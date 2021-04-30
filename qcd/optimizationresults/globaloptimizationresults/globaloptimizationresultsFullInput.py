@@ -1,7 +1,7 @@
 from qcd.circuits.aux import set_only_eta_groups
 from typing import Optional, List, Union, cast, Dict
-from ..typings.configurations import OptimalConfigurations
-from .aux import load_result_from_file
+from ...typings.configurations import OptimalConfigurations
+from ..aux import load_result_from_file
 from .global_aux import build_optimization_result_full_input
 from . import GlobalOptimizationResults
 

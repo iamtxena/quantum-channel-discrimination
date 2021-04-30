@@ -1,0 +1,4 @@
+
+from .globaloptimizationresults import GlobalOptimizationResults
+from .globaloptimizationresultsFullInput import GlobalOptimizationResultsFullInput
+from .globaloptimizationresultsfulluniversal import GlobalOptimizationResultsFullUniversal

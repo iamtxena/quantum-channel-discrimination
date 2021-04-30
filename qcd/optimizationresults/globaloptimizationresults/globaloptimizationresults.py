@@ -1,33 +1,47 @@
 from abc import ABC
 from qcd.typings.dicts import ResultsToPlot
-from qcd.dampingchannels import OneShotEntangledFullUniversalDampingChannel
-from qcd.configurations import OneShotEntangledFullUniversalConfiguration
-from typing import List, Literal, Optional, Union, cast
-from ..typings.configurations import MeasuredStatesEtaAssignment, OptimalConfigurations
-from .aux import load_result_from_file, get_number_eta_pairs
+from qcd.configurations.oneshotentangledconfiguration import OneShotEntangledConfiguration
+from qcd.dampingchannels.oneshotentangledchannel import OneShotEntangledDampingChannel
+from qcd.circuits.aux import set_only_eta_groups
+from typing import Literal, Optional, List, Union, cast, Dict
+from ...typings.configurations import MeasuredStatesEtaAssignment, OptimalConfigurations
+from ..aux import (get_number_eta_pairs, load_result_from_file, plot_one_result,
+                   plot_comparison_between_two_results, compute_percentage_delta_values)
+from .global_aux import build_optimization_result
+from ..theoreticaloptimizationresults import (
+    TheoreticalOneShotOptimizationResult, TheoreticalOneShotEntangledOptimizationResult)
+from ...typings.theoreticalresult import TheoreticalResult, STRATEGY
+import numpy as np
 import time
 import math
-import numpy as np
-import matplotlib.pyplot as plt
 import csv
+import matplotlib.pyplot as plt
 
 
-class GlobalOptimizationResultsFullUniversal(ABC):
+class GlobalOptimizationResults(ABC):
     """ Global class to load, process and plot any Optimization Results """
 
     @staticmethod
-    def load_results(file_name: str, path: Optional[str] = ""):
+    def load_results(file_names: Union[str, List[str]], path: Optional[str] = ""):
         """
           1. Load results from file for all file names
           2. build probability matrices for each loaded result
           3. build amplitude matrix for each loaded result
         """
+        names = file_names
+        if not isinstance(names, List):
+            names = [cast(str, file_names)]
 
-        results = load_result_from_file(file_name, path)
-        return GlobalOptimizationResultsFullUniversal(results)
+        results = [load_result_from_file(file_name, path) for file_name in names]
+        return GlobalOptimizationResults(results)
 
-    def __init__(self, optimal_configurations: OptimalConfigurations) -> None:
-        self._optimal_configurations = optimal_configurations
+    def __init__(self, optimal_configurations: Union[OptimalConfigurations, List[OptimalConfigurations]]) -> None:
+        self._optimal_configurations = optimal_configurations if isinstance(
+            optimal_configurations, List) else [optimal_configurations]
+        self._optimal_configurations = set_only_eta_groups(cast(List[Dict], self._optimal_configurations))
+        self._optimization_results = [build_optimization_result(
+            optimal_result) for optimal_result in self._optimal_configurations]
+        self._build_all_theoretical_optimizations_results(len(self._optimization_results[0].probabilities_matrix) - 1)
 
     @property
     def optimal_configurations(self):
@@ -41,13 +55,210 @@ class GlobalOptimizationResultsFullUniversal(ABC):
     def results_to_plot(self):
         return self._results_to_plot
 
+    def _build_all_theoretical_optimizations_results(self, number_etas: int) -> None:
+        """ Build the theoretical optimization result for each damping channel supported """
+        self._theoretical_results: TheoreticalResult = {
+            'one_shot': TheoreticalOneShotOptimizationResult(number_etas),
+            'one_shot_side_entanglement':
+            TheoreticalOneShotEntangledOptimizationResult(number_etas),
+        }
+
+    def add_results(self, file_names: Union[str, List[str]], path: Optional[str] = "") -> None:
+        """ Load more results from given files and add them to the existing results """
+        names = file_names
+        if not isinstance(names, List):
+            names = [cast(str, file_names)]
+
+        new_results = [load_result_from_file(file_name, path) for file_name in names]
+        self._optimal_configurations.extend(new_results)
+        new_optimization_results = [build_optimization_result(optimal_result) for optimal_result in new_results]
+        self._optimization_results.extend(new_optimization_results)
+
+    def plot_probabilities(self,
+                           results_index: int = 0,
+                           title: str = 'Probabilities from simulation',
+                           bar_label: str = 'Probabilities value',
+                           vmin: float = 0.0,
+                           vmax: float = 1.0,
+                           cmap='viridis') -> None:
+        """ Plot probabilities analysis """
+        plot_one_result(
+            self._optimization_results[0].probabilities_matrices[results_index], title, bar_label, vmin, vmax, cmap)
+
+    def plot_theoretical_probabilities(self,
+                                       strategy: STRATEGY = 'one_shot',
+                                       title: str = 'Probabilities from theory',
+                                       bar_label: str = 'Probabilities value',
+                                       vmin: float = 0.0,
+                                       vmax: float = 1.0,
+                                       cmap='viridis') -> None:
+        """ Plot theoretical probabilities analysis """
+        plot_one_result(
+            self._theoretical_results[strategy].probabilities_matrix, title, bar_label, vmin, vmax, cmap)
+
+    def plot_amplitudes(self,
+                        results_index: int = 0,
+                        title: str = 'Input state amplitude |1> obtained from simulation',
+                        bar_label: str = 'Amplitude value',
+                        vmin: float = 0.0,
+                        vmax: float = 1.0,
+                        cmap='viridis') -> None:
+        """ Plot amplitudes analysis """
+        plot_one_result(
+            self._optimization_results[0].amplitudes_matrices[results_index], title, bar_label, vmin, vmax, cmap)
+
+    def plot_theoretical_amplitudes(self,
+                                    strategy: STRATEGY = 'one_shot',
+                                    title: str = 'Input state amplitude |1> obtained from theory',
+                                    bar_label: str = 'Amplitude value',
+                                    vmin: float = 0.0,
+                                    vmax: float = 1.0) -> None:
+        """ Plot theoretical amplitudes analysis """
+        plot_one_result(self._theoretical_results[strategy].amplitudes_matrix, title, bar_label, vmin, vmax)
+
+    def plot_probabilities_comparison(self,
+                                      results_index1: int,
+                                      results_index2: int,
+                                      title: str = 'Difference in Probabilities from simulation',
+                                      bar_label: str = 'Probabilities value',
+                                      vmin: float = -0.1,
+                                      vmax: float = 0.1,
+                                      cmap='RdBu') -> None:
+        """ Plot probabilities comparing two results """
+        delta_probs = cast(np.ndarray, self._optimization_results[0].probabilities_matrices[results_index1]) - \
+            cast(np.ndarray, self._optimization_results[0].probabilities_matrices[results_index2])
+        plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
+
+    def plot_theoretical_probabilities_comparison(
+            self,
+            first_strategy: STRATEGY = 'one_shot_side_entanglement',
+            second_strategy: STRATEGY = 'one_shot',
+            title: str = 'Difference in Probabilities from theoretical strategies',
+            bar_label: str = 'Probabilities value',
+            vmin: float = 0,
+            vmax: float = 0.05,
+            cmap='viridis') -> None:
+        """ Plot probabilities comparing two results """
+        delta_probs = cast(np.ndarray, self._theoretical_results[first_strategy].probabilities_matrix) - \
+            cast(np.ndarray, self._theoretical_results[second_strategy].probabilities_matrix)
+        vmin = np.min(delta_probs)
+        vmax = np.max(delta_probs)
+        print(f'min: {vmin}, max {vmax}')
+        plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
+
+    def plot_probabilities_comparison_with_theoretical_result(
+            self,
+            results_index: int = 0,
+            strategy: STRATEGY = 'one_shot',
+            title: str = 'Difference in Probabilities' +
+            '(theory vs. simulation)',
+            bar_label: str = 'Probabilities Delta value',
+            vmin: float = -0.1,
+            vmax: float = 0.1,
+            cmap='RdBu') -> None:
+        """ Plot probabilities comparing theoretical results """
+        delta_probs = cast(np.ndarray, self._theoretical_results[strategy].probabilities_matrix) - \
+            cast(np.ndarray, self._optimization_results[0].probabilities_matrices[results_index])
+        plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
+
+    def plot_amplitudes_comparison(self,
+                                   results_index1: int,
+                                   results_index2: int,
+                                   title: str = 'Difference in Amplitudes (between simulations)',
+                                   bar_label: str = 'Amplitude value',
+                                   vmin: float = -1.0,
+                                   vmax: float = 1.0,
+                                   cmap='RdBu') -> None:
+        """ Plot amplitudes comparing two results """
+        delta_probs = cast(np.ndarray, self._optimization_results[0].amplitudes_matrices[results_index1]) - \
+            cast(np.ndarray, self._optimization_results[0].amplitudes_matrices[results_index2])
+        plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
+
+    def plot_theoretical_amplitudes_comparison(
+            self,
+            first_strategy: STRATEGY = 'one_shot',
+            second_strategy: STRATEGY = 'one_shot_side_entanglement',
+            title: str = 'Difference in Amplitudes from theoretical strategies',
+            bar_label: str = 'Amplitude value',
+            vmin: float = -1.0,
+            vmax: float = 1.0,
+            cmap='RdBu') -> None:
+        """ Plot amplitudes comparing two theoretical results """
+        delta_probs = cast(np.ndarray, self._theoretical_results[first_strategy].amplitudes_matrix) - \
+            cast(np.ndarray, self._theoretical_results[second_strategy].amplitudes_matrix)
+        plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
+
+    def plot_amplitudes_comparison_with_theoretical_result(
+            self,
+            results_index: int = 0,
+            strategy: STRATEGY = 'one_shot',
+            title: str = 'Difference in Amplitudes' +
+            '(theory vs. simulation)',
+            bar_label: str = 'Amplitude Delta value',
+            vmin: float = -1,
+            vmax: float = 1,
+            cmap='RdBu') -> None:
+        """ Plot amplitudes comparing theoretical results """
+        delta_probs = cast(np.ndarray, self._theoretical_results[strategy].amplitudes_matrix) - \
+            cast(np.ndarray, self._optimization_results[0].amplitudes_matrices[results_index])
+        plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
+
+    def plot_probabilities_comparison_percentage(
+            self,
+            results_index: int = 0,
+            strategy: STRATEGY = 'one_shot',
+            title: str = 'Deviation in % from theoric ' +
+            'probability (theory vs. simulation)',
+            bar_label: str = 'Probabilities Delta (%)',
+            vmin: float = -40.,
+            vmax: float = 0.0,
+            cmap='RdBu') -> None:
+        """ Plot probabilities comparing theoretical results displaying relative differences """
+        delta_probs = cast(np.ndarray, self._theoretical_results[strategy].probabilities_matrix) - \
+            cast(np.ndarray, self._optimization_results[0].probabilities_matrices[results_index])
+        percentage_delta_probs = compute_percentage_delta_values(
+            delta_probs, self._theoretical_results[strategy].probabilities_matrix)
+        plot_comparison_between_two_results(percentage_delta_probs, title, bar_label, vmin, vmax, cmap)
+
+    def plot_amplitudes_comparison_percentage(
+            self,
+            results_index: int = 0,
+            strategy: STRATEGY = 'one_shot',
+            title: str = 'Deviation in % from theoric ' +
+            'amplitude (theory vs. simulation)',
+            bar_label: str = 'Amplitude Delta (%)',
+            vmin: float = -40.,
+            vmax: float = 0.0,
+            cmap='RdBu') -> None:
+        """ Plot amplitudes comparing theoretical results displaying relative differences """
+        delta_amplitudes = cast(np.ndarray, self._theoretical_results[strategy].amplitudes_matrix) - \
+            cast(np.ndarray, self._optimization_results[0].amplitudes_matrices[results_index])
+        percentage_delta_amplitudes = compute_percentage_delta_values(
+            delta_amplitudes, self._theoretical_results[strategy].amplitudes_matrix)
+        plot_comparison_between_two_results(percentage_delta_amplitudes, title, bar_label, vmin, vmax, cmap)
+
+    def plot_theoretical_improvement(self,
+                                     title: str = 'Improvement on Side Entanglement Theory',
+                                     bar_label: str = 'Improvement value',
+                                     vmin: float = 0.0,
+                                     vmax: float = 0.05,
+                                     cmap='viridis') -> None:
+        """ Plot theoretical improvement analysis """
+        vmin = np.min(self._theoretical_results['one_shot_side_entanglement']._improvement_matrix)
+        vmax = np.max(self._theoretical_results['one_shot_side_entanglement']._improvement_matrix)
+        print(f'min: {vmin}, max {vmax}')
+        plot_one_result(cast(TheoreticalOneShotEntangledOptimizationResult,
+                             self._theoretical_results['one_shot_side_entanglement'])._improvement_matrix,
+                        title, bar_label, vmin, vmax, cmap)
+
     def validate_optimal_configurations(self,
+                                        results_index: int = 0,
                                         plays: Optional[int] = 10000) -> None:
         """ Runs the circuit with the given optimal configurations computing the success average probability
             for each eta (and also the global), the selected eta for each measured state and finally the
             upper and lower bound fidelities
         """
-        validated_configurations = self._optimal_configurations
+        validated_configurations = self._optimal_configurations[results_index]
         validated_configurations['validated_probabilities'] = []
         validated_configurations['eta_probabilities'] = []
         validated_configurations['measured_states_eta_assignment'] = []
@@ -60,15 +271,15 @@ class GlobalOptimizationResultsFullUniversal(ABC):
         program_start_time = time.time()
         probability_diffs_list = []
         for idx, configuration in enumerate(validated_configurations['configurations']):
-            eta_group = self._optimal_configurations['eta_groups'][idx]
-            validated_configuration = OneShotEntangledFullUniversalDampingChannel.validate_optimal_configuration(
+            eta_group = self._optimal_configurations[results_index]['eta_groups'][idx]
+            validated_configuration = OneShotEntangledDampingChannel.validate_optimal_configuration(
                 configuration, plays
             )
-            probability_diffs = np.round((self._optimal_configurations['probabilities']
+            probability_diffs = np.round((self._optimal_configurations[results_index]['probabilities']
                                           [idx] - validated_configuration['validated_probability']) * 100, 2)
             probability_diffs_list.append(probability_diffs)
             end_time = time.time()
-            if idx % 20 == 0:
+            if idx % 10 == 0:
                 print(
                     f'Going to validate this eta group: ({int(math.degrees(eta_group[0]))}, ' +
                     f'{int(math.degrees(eta_group[1]))}, {int(math.degrees(eta_group[2]))})')
@@ -128,7 +339,7 @@ class GlobalOptimizationResultsFullUniversal(ABC):
 
         for idx, configuration in enumerate(self._validated_optimal_configurations['configurations']):
             etas_third_channel.append(
-                int(math.degrees(cast(OneShotEntangledFullUniversalConfiguration, configuration).eta_group[2])))
+                int(math.degrees(cast(OneShotEntangledConfiguration, configuration).eta_group[2])))
             error_probabilities.append(1 - self._validated_optimal_configurations['probabilities'][idx])
             error_probabilities_validated.append(
                 1 - self._validated_optimal_configurations['validated_probabilities'][idx])

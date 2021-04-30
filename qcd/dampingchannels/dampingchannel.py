@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from qcd.typings.configurations import OptimalConfigurations
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.circuits import Circuit
-from qcd.optimizationresults import GlobalOptimizationResults
 from typing import Optional, List, Union
 from ..backends import DeviceBackend
 from ..executions import Execution
@@ -43,13 +42,6 @@ class DampingChannel(ABC):
             iterations: Optional[int] = 1024, timeout: Optional[float] = None) -> Execution:
         """ Runs all the experiments using the configured circuits launched to the provided backend """
         pass
-
-    def one_shot_run(self, plays: Optional[int] = 100) -> GlobalOptimizationResults:
-        """ Runs all the experiments using the optimal configurations and computing the success probability """
-        if self._one_shot_circuit is None:
-            raise ValueError('Optimal configurations MUST be provided to execute one shot runs')
-
-        return GlobalOptimizationResults(self._one_shot_circuit.one_shot_run(plays))
 
     @abstractmethod
     def plot_first_channel(self):

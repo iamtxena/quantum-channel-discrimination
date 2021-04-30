@@ -1,5 +1,5 @@
 """ Global QCD exports """
-from qcd.optimizationresults.global_aux import get_max_result
+from qcd.optimizationresults.globaloptimizationresults.global_aux import get_max_result
 from qcd.typings import CloneSetup
 from typing import Optional
 import pickle
