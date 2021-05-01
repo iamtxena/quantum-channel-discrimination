@@ -1,7 +1,7 @@
 """ Auxiliary static methods """
 import pickle
 from qcd.typings import TheoreticalOptimizationSetup
-from qcd.optimizations.aux import get_combinations_n_etas_without_repeats
+from qcd.optimizations.aux import get_combinations_two_etas_without_repeats_from_etas
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -296,10 +296,9 @@ def save_result_to_disk(optimal_configurations: OptimalConfigurations, name: str
 
 
 def get_theoretical_optimization_setup_from_number_of_etas(
-        number_channels_to_discriminate: int = 2,
         eta_partitions: int = 20) -> TheoreticalOptimizationSetup:
     """ compute the eta groups given the number of etas to generate from 0 to pi/2 (including pi/2) """
-    eta_groups = get_combinations_n_etas_without_repeats(number_channels_to_discriminate, eta_partitions)
+    eta_groups = get_combinations_two_etas_without_repeats_from_etas(eta_partitions)
     return {'eta_groups': eta_groups}
 
 

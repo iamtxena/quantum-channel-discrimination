@@ -3,6 +3,17 @@ from typing import List, TypedDict
 from ..configurations.configuration import ChannelConfiguration
 
 
+class MeasuredStatesEtaAssignmentOneQubit(TypedDict):
+    state_0: int
+    state_1: int
+
+
+class MeasuredStatesCountsOneQubit(TypedDict):
+    state_0: List[int]
+    state_1: List[int]
+    total_counts: int
+
+
 class MeasuredStatesEtaAssignment(TypedDict):
     state_00: int
     state_01: int

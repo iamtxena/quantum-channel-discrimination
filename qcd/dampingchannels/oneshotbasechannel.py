@@ -14,7 +14,7 @@ from ..typings import (ResultStates,
                        ResultProbabilities,
                        ResultProbabilitiesOneChannel,
                        OptimizationSetup)
-from ..typings.configurations import OptimalConfigurations
+from ..typings.configurations import OptimalConfigurations, ValidatedConfiguration
 from qiskit import Aer, QuantumRegister, ClassicalRegister, QuantumCircuit, execute
 from qiskit.providers.job import JobV1 as Job
 from qiskit.result import Result
@@ -51,6 +51,15 @@ class OneShotDampingChannel(DampingChannel):
             for the number of plays specified.
         """
         return OneShotCircuit().compute_average_success_probability(configuration, plays)
+
+    @staticmethod
+    def validate_optimal_configuration(configuration: ChannelConfiguration,
+                                       plays: Optional[int] = 10000) -> ValidatedConfiguration:
+        """ Runs the circuit with the given optimal configuration computing the success average probability
+            for each eta (and also the global), the selected eta for each measured state and finally the
+            upper and lower bound fidelities
+        """
+        return OneShotCircuit().validate_optimal_configuration(configuration, plays)
 
     def __init__(self,
                  channel_setup_configuration: Optional[OneShotSetupConfiguration] = None,

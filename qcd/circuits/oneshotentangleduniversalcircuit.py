@@ -1,7 +1,7 @@
 from qcd.configurations.configuration import ChannelConfiguration
 from qcd.configurations import OneShotConfiguration, OneShotEntangledUniversalConfiguration
 from . import OneShotEntangledFullInputCircuit
-from typing import List, cast
+from typing import List, Tuple, cast
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 
 
@@ -10,7 +10,7 @@ class OneShotEntangledUniversalCircuit(OneShotEntangledFullInputCircuit):
 
     def _create_one_circuit_without_measurement(self,
                                                 configuration: ChannelConfiguration,
-                                                eta: float) -> QuantumCircuit:
+                                                eta: float) -> Tuple[ClassicalRegister, QuantumCircuit]:
         """ Creates one circuit from a given  configuration and eta """
         configuration = cast(OneShotEntangledUniversalConfiguration, configuration)
         qreg_q = QuantumRegister(3, 'q')

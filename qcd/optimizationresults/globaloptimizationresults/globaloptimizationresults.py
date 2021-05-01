@@ -1,4 +1,5 @@
 from abc import ABC
+from qcd.dampingchannels.oneshotbasechannel import OneShotDampingChannel
 from qcd.typings.dicts import ResultsToPlot
 from qcd.configurations.oneshotentangledconfiguration import OneShotEntangledConfiguration
 from qcd.dampingchannels.oneshotentangledchannel import OneShotEntangledDampingChannel
@@ -250,6 +251,62 @@ class GlobalOptimizationResults(ABC):
         plot_one_result(cast(TheoreticalOneShotEntangledOptimizationResult,
                              self._theoretical_results['one_shot_side_entanglement'])._improvement_matrix,
                         title, bar_label, vmin, vmax, cmap)
+
+    def validate_optimal_configurations_one_qubit(self,
+                                                  results_index: int = 0,
+                                                  plays: Optional[int] = 10000) -> None:
+        """ Runs the circuit with the given optimal configurations computing the success average probability
+            for each eta (and also the global), the selected eta for each measured state and finally the
+            upper and lower bound fidelities for a One Qubit
+        """
+        validated_configurations = self._optimal_configurations[results_index]
+        validated_configurations['validated_probabilities'] = []
+        validated_configurations['eta_probabilities'] = []
+        validated_configurations['measured_states_eta_assignment'] = []
+        validated_configurations['fidelities'] = []
+        validated_configurations['measured_states_counts'] = []
+
+        eta_groups_length = len(validated_configurations['eta_groups'])
+        print(f'number of eta groups to validate: {eta_groups_length}')
+
+        program_start_time = time.time()
+        probability_diffs_list = []
+        for idx, configuration in enumerate(validated_configurations['configurations']):
+            eta_group = self._optimal_configurations[results_index]['eta_groups'][idx]
+            validated_configuration = OneShotDampingChannel.validate_optimal_configuration(
+                configuration, plays
+            )
+            probability_diffs = np.round((self._optimal_configurations[results_index]['probabilities']
+                                          [idx] - validated_configuration['validated_probability']) * 100, 2)
+            probability_diffs_list.append(probability_diffs)
+            end_time = time.time()
+            if idx % 10 == 0:
+                print(
+                    f'Going to validate this eta group: ({int(math.degrees(eta_group[0]))}, ' +
+                    f'{int(math.degrees(eta_group[1]))}, {int(math.degrees(eta_group[2]))})')
+                print(f"Optimal Probability: {np.round(validated_configurations['probabilities'][idx]*100, 2)}% " +
+                      f"Validated Probability: {np.round(validated_configuration['validated_probability']*100, 2)} % " +
+                      f'Difference (absolute value): {probability_diffs}%')
+                print(f"Group of etas # {idx} of {eta_groups_length}")
+                print("total time taken so far: " +
+                      f'{np.round(math.floor((end_time - program_start_time)/60), 0)} minutes' +
+                      f' and {int((end_time - program_start_time) % 60)} seconds')
+            validated_configurations['validated_probabilities'].append(validated_configuration['validated_probability'])
+            validated_configurations['eta_probabilities'].append(validated_configuration['etas_probability'])
+            validated_configurations['measured_states_eta_assignment'].append(
+                validated_configuration['measured_states_eta_assignment'])
+            validated_configurations['fidelities'].append(validated_configuration['fidelities'])
+            validated_configurations['measured_states_counts'].append(validated_configuration['measured_states_counts'])
+        self._validated_optimal_configurations = validated_configurations
+        end_time = time.time()
+        total_minutes = int((end_time - program_start_time) / 60)
+        if total_minutes < 1:
+            print(f"total seconds of validation: {int(end_time - program_start_time)}")
+        if total_minutes >= 1:
+            print(f"total minutes of validation: {total_minutes}")
+        print(f'Probability differences --> MAX: {max(probability_diffs_list)}% , MIN: {min(probability_diffs_list)}%')
+        self._optimal_configurations.append(validated_configurations)
+        print("Results ready to be displayed. 😎 ")
 
     def validate_optimal_configurations(self,
                                         results_index: int = 0,

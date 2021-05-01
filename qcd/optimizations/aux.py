@@ -65,7 +65,7 @@ def get_combinations_two_etas_without_repeats_from_lambdas(
     return reorder_pairs(eta_pairs)
 
 
-def get_combinations_two_etas_without_repeats_from_etas(angles_etas: List[float]) -> List[Tuple[float, float]]:
+def get_combinations_two_etas_without_repeats_from_etas(eta_partitions: int = 20) -> List[Tuple[float, float]]:
     """ from a given list of attenuations factors create a
         list of all combinatorial pairs of possible etas
         without repeats
@@ -73,12 +73,9 @@ def get_combinations_two_etas_without_repeats_from_etas(angles_etas: List[float]
         than first eta 0.2 and second eta 0.1
         Though, we will always put the greater value as the first pair element
     """
-    # when there is only one element, we add the same element
-    if len(angles_etas) == 1:
-        angles_etas.append(angles_etas[0])
+    etas = np.append(np.arange(0, np.pi / 2, np.pi / 2 / eta_partitions), np.pi / 2)
     # get combinations of two etas without repeats
-    eta_pairs = list(itertools.combinations(angles_etas, 2))
-
+    eta_pairs = list(itertools.combinations(etas, 2))
     return reorder_pairs(eta_pairs)
 
 
