@@ -299,6 +299,8 @@ class GlobalOptimizationResults(ABC):
                 validated_configuration['measured_states_eta_assignment'])
             validated_configurations['fidelities'].append(validated_configuration['fidelities'])
             validated_configurations['measured_states_counts'].append(validated_configuration['measured_states_counts'])
+            # !!! SET THE VALIDATED PROBABILITY AS THE ORIGINAL ONE
+            validated_configurations['probabilities'][idx] = validated_configuration['validated_probability']
         self._validated_optimal_configurations = validated_configurations
         end_time = time.time()
         total_minutes = int((end_time - program_start_time) / 60)
@@ -308,6 +310,8 @@ class GlobalOptimizationResults(ABC):
             print(f"total minutes of validation: {total_minutes}")
         print(f'Probability differences --> MAX: {max(probability_diffs_list)}% , MIN: {min(probability_diffs_list)}%')
         self._optimal_configurations.append(validated_configurations)
+        new_optimization_result = build_optimization_result(validated_configurations)
+        self._optimization_results.append(new_optimization_result)
         print("Results ready to be displayed. 😎 ")
 
     def _fix_configuration(self, results_index):
