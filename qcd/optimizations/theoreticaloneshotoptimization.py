@@ -40,7 +40,7 @@ class TheoreticalOneShotOptimization(TheoreticalOptimization):
         if gamma < 1 / np.sqrt(2):
             best_probability = 1 / 2 + 1 / 4 * \
                 (np.cos(self._global_eta_group[1]) - np.cos(self._global_eta_group[0])) / np.sqrt(1 - gamma * gamma)
-            best_theoretical_amplitude = np.sqrt(1 / (2 - 2 * gamma * gamma))
+            best_theoretical_amplitude = 1 / (2 - 2 * gamma * gamma)
         else:
             best_probability = 1 / 2 * (np.sin(self._global_eta_group[0]) * np.sin(
                 self._global_eta_group[0]) + np.cos(self._global_eta_group[1]) * np.cos(self._global_eta_group[1]))

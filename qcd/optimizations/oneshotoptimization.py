@@ -14,7 +14,16 @@ class OneShotOptimization(Optimization):
 
     def __init__(self, optimization_setup: OptimizationSetup):
         super().__init__(optimization_setup)
+        self._add_initial_parameters_and_variable_bounds_to_optimization_setup()
         self._one_shot_circuit = OneShotCircuit()
+
+    def _add_initial_parameters_and_variable_bounds_to_optimization_setup(self) -> None:
+        """ Update the optimization setup with intial parameters and variable bounds """
+        self._setup['initial_parameters'] = [0] * 3
+        variable_bounds = [(0, 1)]  # amplitude_probability
+        variable_bounds += [(0, 2 * np.pi)
+                            for i in range(2)]
+        self._setup['variable_bounds'] = cast(List[Tuple[float, float]], variable_bounds)
 
     def _convert_optimizer_results_to_channel_configuration(self,
                                                             configuration: List[float],
