@@ -43,6 +43,7 @@ class OptimizationResult(ABC):
             return [optimal_configurations]
 
         number_eta_pairs, _ = get_number_eta_pairs(optimal_configurations['eta_groups'])
+
         return self._get_two_eta_configurations(optimal_configurations, number_eta_pairs, eta_groups_length)
 
     def _get_two_eta_configurations(self, optimal_configurations: OptimalConfigurations,
@@ -50,6 +51,8 @@ class OptimizationResult(ABC):
                                     eta_groups_length: int) -> List[OptimalConfigurations]:
 
         number_third_channels = int(len(optimal_configurations['eta_groups']) / number_eta_pairs)
+        if number_third_channels <= 1:
+            return [optimal_configurations]
 
         list_configs = []
         for i in range(number_eta_pairs):
