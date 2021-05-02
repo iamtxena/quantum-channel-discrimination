@@ -3,7 +3,7 @@ from qcd.dampingchannels.oneshotbasechannel import OneShotDampingChannel
 from qcd.typings.dicts import ResultsToPlot
 from qcd.configurations.oneshotentangledconfiguration import OneShotEntangledConfiguration
 from qcd.dampingchannels.oneshotentangledchannel import OneShotEntangledDampingChannel
-from qcd.circuits.aux import set_only_eta_groups
+from qcd.circuits.aux import fix_configurations, set_only_eta_groups
 from typing import Literal, Optional, List, Union, cast, Dict
 from ...typings.configurations import MeasuredStatesEtaAssignment, OptimalConfigurations
 from ..aux import (get_number_eta_pairs, load_result_from_file, plot_one_result,
@@ -259,7 +259,9 @@ class GlobalOptimizationResults(ABC):
             for each eta (and also the global), the selected eta for each measured state and finally the
             upper and lower bound fidelities for a One Qubit
         """
-        validated_configurations = self._optimal_configurations[results_index]
+        fixed_optimal_configurations = self._fix_configuration(results_index)
+
+        validated_configurations = fixed_optimal_configurations
         validated_configurations['validated_probabilities'] = []
         validated_configurations['eta_probabilities'] = []
         validated_configurations['measured_states_eta_assignment'] = []
@@ -272,18 +274,18 @@ class GlobalOptimizationResults(ABC):
         program_start_time = time.time()
         probability_diffs_list = []
         for idx, configuration in enumerate(validated_configurations['configurations']):
-            eta_group = self._optimal_configurations[results_index]['eta_groups'][idx]
+            eta_group = fixed_optimal_configurations['eta_groups'][idx]
             validated_configuration = OneShotDampingChannel.validate_optimal_configuration(
                 configuration, plays
             )
-            probability_diffs = np.round((self._optimal_configurations[results_index]['probabilities']
+            probability_diffs = np.round((fixed_optimal_configurations['probabilities']
                                           [idx] - validated_configuration['validated_probability']) * 100, 2)
             probability_diffs_list.append(probability_diffs)
             end_time = time.time()
             if idx % 10 == 0:
                 print(
                     f'Going to validate this eta group: ({int(math.degrees(eta_group[0]))}, ' +
-                    f'{int(math.degrees(eta_group[1]))}, {int(math.degrees(eta_group[2]))})')
+                    f'{int(math.degrees(eta_group[1]))})')
                 print(f"Optimal Probability: {np.round(validated_configurations['probabilities'][idx]*100, 2)}% " +
                       f"Validated Probability: {np.round(validated_configuration['validated_probability']*100, 2)} % " +
                       f'Difference (absolute value): {probability_diffs}%')
@@ -307,6 +309,14 @@ class GlobalOptimizationResults(ABC):
         print(f'Probability differences --> MAX: {max(probability_diffs_list)}% , MIN: {min(probability_diffs_list)}%')
         self._optimal_configurations.append(validated_configurations)
         print("Results ready to be displayed. 😎 ")
+
+    def _fix_configuration(self, results_index):
+        """ !!! THIS IS ANOTHER FIX: to be able to read legacy format configuration """
+        fixed_optimal_configurations = set_only_eta_groups(
+            cast(List[Dict], [self._optimal_configurations[results_index]])).pop()
+        """ !!! THIS IS A FIX: to be able to read legacy format configuration """
+        fixed_optimal_configurations = fix_configurations(self._optimal_configurations[results_index])
+        return fixed_optimal_configurations
 
     def validate_optimal_configurations(self,
                                         results_index: int = 0,

@@ -86,7 +86,7 @@ class OneShotCircuit(Circuit):
 
     def _compute_upper_and_lower_fidelity_bounds(self, state_vectors: List[np.ndarray]) -> Fidelities:
         """ Computes upper and lower fidelity bounds from the given state vectors """
-        density_matrices = [partial_trace(np.outer(state_vector, state_vector.conj()), [2])
+        density_matrices = [partial_trace(np.outer(state_vector, state_vector.conj()), [1])
                             for state_vector in state_vectors]
         index_pairs = list(itertools.combinations(range(len(density_matrices)), 2))
         channel_fidelities = [fidelity(Qobj(density_matrices[first_index_pair].data), Qobj(
@@ -196,7 +196,7 @@ class OneShotCircuit(Circuit):
                 eta_counts[eta_assigned] += max_counts[idx]
 
         eta_probabilities = [eta_count / (plays * eta_group_length) for eta_count in eta_counts]
-        if np.round(sum(eta_probabilities), 3) != np.round(global_average_success_probability, 3):
+        if np.round(sum(eta_probabilities), 1) != np.round(global_average_success_probability, 1):
             raise ValueError(f'invalid probabilities! Globa avg: {global_average_success_probability} and ' +
-                             f'sum probs: {sum(eta_probabilities)}')
+                             f'sum probs: {np.round(sum(eta_probabilities), 2)}')
         return (global_average_success_probability, eta_probabilities)

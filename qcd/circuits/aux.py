@@ -63,10 +63,10 @@ def fix_configurations(result: OptimalConfigurations) -> OptimalConfigurations:
             'state_probability': (math.sin(configuration[0]))**2,
             'angle_rx': configuration[1],
             'angle_ry': configuration[2],
-            'eta_group': cast(dict, result)['eta_group'][idx]
-            if isinstance(cast(dict, result)['eta_pairs'][idx][0], float)
-            else (math.radians(int(cast(dict, result)['eta_pairs'][idx][0])),
-                  math.radians(int(cast(dict, result)['eta_pairs'][idx][1])))
+            'eta_group': cast(dict, result)['eta_groups'][idx]
+            if isinstance(cast(dict, result)['eta_groups'][idx][0], float)
+            else (math.radians(int(cast(dict, result)['eta_groups'][idx][0])),
+                  math.radians(int(cast(dict, result)['eta_groups'][idx][1])))
         })
         fixed_result['configurations'][idx] = new_configuration
         fixed_result['eta_groups'][idx] = new_configuration._eta_group
@@ -83,7 +83,7 @@ def _adapt_result(result):
             'state_probability': (math.sin(configuration.theta))**2,
             'angle_rx': configuration.angle_rx,
             'angle_ry': configuration.angle_ry,
-            'eta_pair': configuration.eta_pair
+            'eta_group': configuration.eta_group
         })
         adapted_result['configurations'][idx] = new_configuration
     return adapted_result
