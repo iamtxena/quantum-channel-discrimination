@@ -46,7 +46,8 @@ class OneShotExecution(Execution):
     def plot_wireframe_blochs(self,
                               results_index: Optional[int] = 0,
                               in_rows: Optional[int] = 3,
-                              in_cols: Optional[int] = 3) -> None:
+                              in_cols: Optional[int] = 3,
+                              show_sample_states: Optional[bool] = False) -> None:
         """ Displays the resulting Bloch Spheres after the input states travels through the channel  """
         results = self._get_one_result(results_index)
         rows = in_rows
@@ -64,12 +65,33 @@ class OneShotExecution(Execution):
         ax = fig.add_subplot(rows, cols, 1, projection='3d')
         draw_cube(ax)
 
+        # draw initial states
+        wf = ax.plot_wireframe(results['initial_states_reshaped']['reshapedCoordsX'],
+                               results['initial_states_reshaped']['reshapedCoordsY'],
+                               results['initial_states_reshaped']['reshapedCoordsZ'],
+                               color="c")
+        ax.set_title("Input States")
+        if not show_sample_states:
+            # draw center
+            ax.scatter([0], [0], [0], color="g", s=50)
+        # draw one state
+        else:
+            ax.scatter([results['initial_states_reshaped']['reshapedCoordsX'][5][7]],
+                       [results['initial_states_reshaped']['reshapedCoordsY'][5][7]],
+                       [results['initial_states_reshaped']['reshapedCoordsZ'][5][7]],
+                       color="k", s=100, zorder=2)
+
+            ax.scatter([results['initial_states_reshaped']['reshapedCoordsX'][13][8]],
+                       [results['initial_states_reshaped']['reshapedCoordsY'][13][8]],
+                       [results['initial_states_reshaped']['reshapedCoordsZ'][13][8]],
+                       color="b", s=100, zorder=3)
+        wf.set_zorder(1)
         # ===============
         # Next subplots
         # ===============
         attenuation_factors = results['attenuation_factors']
         # modulus_number = np.round(len(results['final_states_reshaped']) / (rows * cols - 1))
-        index_to_print = 0
+        index_to_print = 2
         for idx, final_state_reshaped in enumerate(results['final_states_reshaped']):
             if (idx == 0 or idx == 5 or idx == 6 or idx == 8 or idx == 10 or
                     idx == 12 or idx == 14 or idx == 16 or idx == 20):
@@ -78,17 +100,31 @@ class OneShotExecution(Execution):
                 #          index_to_print < (rows * cols - 1)) or
                 #         (idx == len(results['final_states_reshaped']) - 1)):
                 # set up the axes for the second plot
-                ax = fig.add_subplot(rows, cols, 1 + index_to_print, projection='3d')
+                ax = fig.add_subplot(rows, cols, index_to_print, projection='3d')
                 draw_cube(ax)
+
                 # draw final states
-                ax.plot_wireframe(final_state_reshaped['reshaped_coords_x'],
-                                  final_state_reshaped['reshaped_coords_y'],
-                                  final_state_reshaped['reshaped_coords_z'],
-                                  color="r")
+                in_wf = ax.plot_wireframe(final_state_reshaped['reshaped_coords_x'],
+                                          final_state_reshaped['reshaped_coords_y'],
+                                          final_state_reshaped['reshaped_coords_z'],
+                                          color="r")
                 title = f'Output States\n Channel $\lambda= {np.round(attenuation_factors[idx], 2)}$'
                 ax.set_title(title)
-                # draw center
-                ax.scatter([0], [0], final_state_reshaped["center"], color="g", s=50)
+                if not show_sample_states:
+                    # draw center
+                    ax.scatter([0], [0], final_state_reshaped["center"], color="g", s=50)
+                else:
+                    # final one state reshaped
+                    ax.scatter([final_state_reshaped['reshaped_coords_x'][5][7]],
+                               [final_state_reshaped['reshaped_coords_y'][5][7]],
+                               [final_state_reshaped['reshaped_coords_z'][5][7]],
+                               color="k", s=100, zorder=2)
+
+                    ax.scatter([final_state_reshaped['reshaped_coords_x'][13][8]],
+                               [final_state_reshaped['reshaped_coords_y'][13][8]],
+                               [final_state_reshaped['reshaped_coords_z'][13][8]],
+                               color="b", s=100, zorder=3)
+                in_wf.set_zorder(1)
                 index_to_print += 1
 
         plt.show()

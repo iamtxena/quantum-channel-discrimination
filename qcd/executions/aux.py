@@ -9,4 +9,4 @@ def draw_cube(axes) -> None:
     r = [-1, 1]
     for s, l in combinations(np.array(list(product(r, r, r))), 2):
         if np.sum(np.abs(s - l)) == r[1] - r[0]:
-            axes.plot3D(*zip(s, l), color="w")
+            axes.plot3D(*zip(s, l), color="w", zorder=-1)
