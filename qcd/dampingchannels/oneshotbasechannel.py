@@ -250,15 +250,21 @@ class OneShotDampingChannel(DampingChannel):
             total_lambdas_per_state.append(
                 [self._channel_setup_configuration.attenuation_factors[idx]] * len(final_states['zero_amplitude']))
 
-        return OneShotResults(final_states=final_states_list,
-                              final_states_reshaped=final_states_reshaped_list,
-                              probabilities=ResultProbabilities(x_input_0=np.array(total_x_input_0),
-                                                                x_input_1=np.array(total_x_input_1),
-                                                                z_output_0=np.array(total_z_output_0),
-                                                                z_output_1=np.array(total_z_output_1)),
-                              attenuation_factors=attenuation_factors,
-                              attenuation_factor_per_state=np.array(total_lambdas_per_state),
-                              backend_name=backend.backend.name())
+        return OneShotResults(
+            initial_states_reshaped=self._compute_state_vector_coords_reshaped(
+                self._initial_states['zero_amplitude'],
+                self._channel_setup_configuration.angles_phase,
+                self._channel_setup_configuration.points_theta,
+                self._channel_setup_configuration.points_phase),
+            final_states=final_states_list,
+            final_states_reshaped=final_states_reshaped_list,
+            probabilities=ResultProbabilities(x_input_0=np.array(total_x_input_0),
+                                              x_input_1=np.array(total_x_input_1),
+                                              z_output_0=np.array(total_z_output_0),
+                                              z_output_1=np.array(total_z_output_1)),
+            attenuation_factors=attenuation_factors,
+            attenuation_factor_per_state=np.array(total_lambdas_per_state),
+            backend_name=backend.backend.name())
 
     def _process_job_one_lambda(self,
                                 job: Job,
@@ -290,6 +296,28 @@ class OneShotDampingChannel(DampingChannel):
                                               x_input_1=x_input_1,
                                               z_output_0=z_output_0,
                                               z_output_1=z_output_1))
+
+    def _compute_state_vector_coords_reshaped(self,
+                                              amplitudes_vector: List[float],
+                                              angles_phase: List[float],
+                                              n_points_theta: int,
+                                              n_points_phase: int) -> ResultStatesReshaped:
+        """ Compute the reshaped coordinates from a given amplitudes """
+        initial_state_vector_coords_x = []
+        initial_state_vector_coords_y = []
+        initial_state_vector_coords_z = []
+        for idx, amplitude in enumerate(amplitudes_vector):
+            theta_i = 2 * np.arccos(amplitude)
+            phase_i = angles_phase[idx % n_points_phase]
+            initial_state_vector_coords_x.append(np.sin(theta_i) * np.cos(phase_i))
+            initial_state_vector_coords_y.append(np.sin(theta_i) * np.sin(phase_i))
+            initial_state_vector_coords_z.append(np.cos(theta_i))
+        # Reshaping matrices X, Y and Z in right dimensions to be represented
+        return {
+            'reshapedCoordsX': np.reshape(initial_state_vector_coords_x, (n_points_theta, n_points_phase)),
+            'reshapedCoordsY': np.reshape(initial_state_vector_coords_y, (n_points_theta, n_points_phase)),
+            'reshapedCoordsZ': np.reshape(initial_state_vector_coords_z, (n_points_theta, n_points_phase)),
+        }
 
     def _compute_finale_state_vector_coords_reshaped(self,
                                                      amplitudes_vector: List[float],

@@ -34,13 +34,16 @@ class ResultProbabilities(TypedDict):
     z_output_1: List[List[complex]]
 
 
-class OneShotResults(TypedDict):
+class OneShotResults(TypedDict, total=False):
+    initial_states_reshaped: ResultStatesReshaped
     final_states: List[ResultStates]
     final_states_reshaped: List[ResultStatesReshaped]
     probabilities: ResultProbabilities
     attenuation_factors: List[float]
     attenuation_factor_per_state: List[List[float]]
     backend_name: str
+    initial_one_state_reshaped: Tuple[float, float, float]
+    final_one_state_reshaped: List[Tuple[float, float, float]]
 
 
 class OptimizationSetup(TypedDict, total=False):
