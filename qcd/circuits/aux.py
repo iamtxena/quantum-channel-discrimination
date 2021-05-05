@@ -1,5 +1,6 @@
 """ Auxiliary static methods """
 from functools import reduce
+from qcd.configurations.oneshotentangledconfiguration import OneShotEntangledConfiguration
 from qcd.configurations.oneshotbaseconfiguration import OneShotConfiguration
 from qcd.typings.configurations import OptimalConfigurations
 from typing import Dict, List, Tuple, cast
@@ -49,12 +50,12 @@ def fix_configurations(result: OptimalConfigurations) -> OptimalConfigurations:
 
     if len(result['configurations']) <= 0:
         return result
-    if (len(result['configurations']) > 0 and
-            hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'state_probability')):
+    if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'state_probability'):
         return result
-    if (len(result['configurations']) > 0 and
-            hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'theta')):
+    if hasattr(cast(OneShotConfiguration, result['configurations'][0]), 'theta'):
         return _adapt_result(result)
+    if isinstance(result['configurations'][0], dict):
+        return _adapt_result_to_one_shot_entangled_configuration(result)
 
     """ We have to fix configurations, creating a new configuration object """
     fixed_result = result
@@ -84,6 +85,21 @@ def _adapt_result(result):
             'angle_rx': configuration.angle_rx,
             'angle_ry': configuration.angle_ry,
             'eta_group': configuration.eta_group
+        })
+        adapted_result['configurations'][idx] = new_configuration
+    return adapted_result
+
+
+def _adapt_result_to_one_shot_entangled_configuration(result):
+    adapted_result = result
+    for idx, configuration in enumerate(cast(List[dict], result['configurations'])):
+        new_configuration = OneShotEntangledConfiguration({
+            'state_probability': configuration['state_probability'],
+            'angle_rx0': configuration['angle_rx0'],
+            'angle_ry0': configuration['angle_ry0'],
+            'angle_rx1': configuration['angle_rx1'],
+            'angle_ry1': configuration['angle_ry1'],
+            'eta_group': configuration['eta_pair']
         })
         adapted_result['configurations'][idx] = new_configuration
     return adapted_result
