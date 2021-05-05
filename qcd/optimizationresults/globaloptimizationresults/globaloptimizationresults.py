@@ -282,7 +282,7 @@ class GlobalOptimizationResults(ABC):
                                           [idx] - validated_configuration['validated_probability']) * 100, 2)
             probability_diffs_list.append(probability_diffs)
             end_time = time.time()
-            if idx % 10 == 0:
+            if idx % 20 == 0:
                 print(
                     f'Going to validate this eta group: ({int(math.degrees(eta_group[0]))}, ' +
                     f'{int(math.degrees(eta_group[1]))})')
