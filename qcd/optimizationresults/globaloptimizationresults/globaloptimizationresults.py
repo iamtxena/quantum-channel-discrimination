@@ -128,6 +128,9 @@ class GlobalOptimizationResults(ABC):
         """ Plot probabilities comparing two results """
         delta_probs = cast(np.ndarray, self._optimization_results[results_index1].probabilities_matrices[0]) - \
             cast(np.ndarray, self._optimization_results[results_index2].probabilities_matrices[0])
+        print_vmin = np.min(delta_probs)
+        print_vmax = np.max(delta_probs)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_theoretical_probabilities_comparison(
@@ -142,9 +145,9 @@ class GlobalOptimizationResults(ABC):
         """ Plot probabilities comparing two results """
         delta_probs = cast(np.ndarray, self._theoretical_results[first_strategy].probabilities_matrix) - \
             cast(np.ndarray, self._theoretical_results[second_strategy].probabilities_matrix)
-        vmin = np.min(delta_probs)
-        vmax = np.max(delta_probs)
-        print(f'min: {vmin}, max {vmax}')
+        print_vmin = np.min(delta_probs)
+        print_vmax = np.max(delta_probs)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_probabilities_comparison_with_theoretical_result(
