@@ -99,8 +99,8 @@ class GlobalOptimizationResults(ABC):
 
     def plot_amplitudes(self,
                         results_index: int = 0,
-                        title: str = 'Input state amplitude |1> obtained from simulation',
-                        bar_label: str = 'Amplitude value',
+                        title: str = 'Input state probability |1> obtained from simulation',
+                        bar_label: str = 'Parameter value',
                         vmin: float = 0.0,
                         vmax: float = 1.0,
                         cmap='viridis') -> None:
@@ -110,8 +110,8 @@ class GlobalOptimizationResults(ABC):
 
     def plot_theoretical_amplitudes(self,
                                     strategy: STRATEGY = 'one_shot',
-                                    title: str = 'Input state amplitude |1> obtained from theory',
-                                    bar_label: str = 'Amplitude value',
+                                    title: str = 'Input state probability |1> obtained from theory',
+                                    bar_label: str = 'Parameter value',
                                     vmin: float = 0.0,
                                     vmax: float = 1.0) -> None:
         """ Plot theoretical amplitudes analysis """
@@ -168,8 +168,8 @@ class GlobalOptimizationResults(ABC):
     def plot_amplitudes_comparison(self,
                                    results_index1: int,
                                    results_index2: int,
-                                   title: str = 'Difference in Amplitudes (between simulations)',
-                                   bar_label: str = 'Amplitude value',
+                                   title: str = 'Difference in input state probability (between simulations)',
+                                   bar_label: str = 'Parameter value',
                                    vmin: float = -1.0,
                                    vmax: float = 1.0,
                                    cmap='RdBu') -> None:
@@ -182,8 +182,8 @@ class GlobalOptimizationResults(ABC):
             self,
             first_strategy: STRATEGY = 'one_shot',
             second_strategy: STRATEGY = 'one_shot_side_entanglement',
-            title: str = 'Difference in Amplitudes from theoretical strategies',
-            bar_label: str = 'Amplitude value',
+            title: str = 'Difference in Input State Probability from theoretical strategies',
+            bar_label: str = 'Parameter value',
             vmin: float = -1.0,
             vmax: float = 1.0,
             cmap='RdBu') -> None:
@@ -196,9 +196,9 @@ class GlobalOptimizationResults(ABC):
             self,
             results_index: int = 0,
             strategy: STRATEGY = 'one_shot',
-            title: str = 'Difference in Amplitudes' +
-            '(theory vs. simulation)',
-            bar_label: str = 'Amplitude Delta value',
+            title: str = 'Difference in Input State Probability' +
+            ' (theory vs. simulation)',
+            bar_label: str = 'Parameter Delta value',
             vmin: float = -1,
             vmax: float = 1,
             cmap='RdBu') -> None:
@@ -211,8 +211,8 @@ class GlobalOptimizationResults(ABC):
             self,
             results_index: int = 0,
             strategy: STRATEGY = 'one_shot',
-            title: str = 'Deviation in % from theoric ' +
-            'probability (theory vs. simulation)',
+            title: str = 'Probability Deviation in % ' +
+            '(theory vs. simulation)',
             bar_label: str = 'Probabilities Delta (%)',
             vmin: float = -40.,
             vmax: float = 0.0,
@@ -228,9 +228,9 @@ class GlobalOptimizationResults(ABC):
             self,
             results_index: int = 0,
             strategy: STRATEGY = 'one_shot',
-            title: str = 'Deviation in % from theoric ' +
-            'amplitude (theory vs. simulation)',
-            bar_label: str = 'Amplitude Delta (%)',
+            title: str = 'Input State Probability Deviation in %' +
+            '(theory vs. simulation)',
+            bar_label: str = 'Parameter Delta value (%)',
             vmin: float = -40.,
             vmax: float = 0.0,
             cmap='RdBu') -> None:
