@@ -83,6 +83,9 @@ class GlobalOptimizationResults(ABC):
                            vmax: float = 1.0,
                            cmap='viridis') -> None:
         """ Plot probabilities analysis """
+        print_vmin = np.min(self._optimization_results[results_index].probabilities_matrices[0])
+        print_vmax = np.max(self._optimization_results[results_index].probabilities_matrices[0])
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_one_result(
             self._optimization_results[results_index].probabilities_matrices[0], title, bar_label, vmin, vmax, cmap)
 
@@ -94,6 +97,9 @@ class GlobalOptimizationResults(ABC):
                                        vmax: float = 1.0,
                                        cmap='viridis') -> None:
         """ Plot theoretical probabilities analysis """
+        print_vmin = np.min(self._theoretical_results[strategy].probabilities_matrix)
+        print_vmax = np.max(self._theoretical_results[strategy].probabilities_matrix)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_one_result(
             self._theoretical_results[strategy].probabilities_matrix, title, bar_label, vmin, vmax, cmap)
 
@@ -105,6 +111,9 @@ class GlobalOptimizationResults(ABC):
                         vmax: float = 1.0,
                         cmap='viridis') -> None:
         """ Plot amplitudes analysis """
+        print_vmin = np.min(self._optimization_results[results_index].amplitudes_matrices[0])
+        print_vmax = np.max(self._optimization_results[results_index].amplitudes_matrices[0])
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_one_result(
             self._optimization_results[results_index].amplitudes_matrices[0], title, bar_label, vmin, vmax, cmap)
 
@@ -115,6 +124,9 @@ class GlobalOptimizationResults(ABC):
                                     vmin: float = 0.0,
                                     vmax: float = 1.0) -> None:
         """ Plot theoretical amplitudes analysis """
+        print_vmin = np.min(self._theoretical_results[strategy].amplitudes_matrix)
+        print_vmax = np.max(self._theoretical_results[strategy].amplitudes_matrix)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_one_result(self._theoretical_results[strategy].amplitudes_matrix, title, bar_label, vmin, vmax)
 
     def plot_probabilities_comparison(self,
@@ -163,6 +175,9 @@ class GlobalOptimizationResults(ABC):
         """ Plot probabilities comparing theoretical results """
         delta_probs = cast(np.ndarray, self._theoretical_results[strategy].probabilities_matrix) - \
             cast(np.ndarray, self._optimization_results[results_index].probabilities_matrices[0])
+        print_vmin = np.min(delta_probs)
+        print_vmax = np.max(delta_probs)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_amplitudes_comparison(self,
@@ -176,6 +191,9 @@ class GlobalOptimizationResults(ABC):
         """ Plot amplitudes comparing two results """
         delta_probs = cast(np.ndarray, self._optimization_results[results_index1].amplitudes_matrices[0]) - \
             cast(np.ndarray, self._optimization_results[results_index2].amplitudes_matrices[0])
+        print_vmin = np.min(delta_probs)
+        print_vmax = np.max(delta_probs)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_theoretical_amplitudes_comparison(
@@ -190,6 +208,9 @@ class GlobalOptimizationResults(ABC):
         """ Plot amplitudes comparing two theoretical results """
         delta_probs = cast(np.ndarray, self._theoretical_results[first_strategy].amplitudes_matrix) - \
             cast(np.ndarray, self._theoretical_results[second_strategy].amplitudes_matrix)
+        print_vmin = np.min(delta_probs)
+        print_vmax = np.max(delta_probs)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_amplitudes_comparison_with_theoretical_result(
@@ -205,6 +226,9 @@ class GlobalOptimizationResults(ABC):
         """ Plot amplitudes comparing theoretical results """
         delta_probs = cast(np.ndarray, self._theoretical_results[strategy].amplitudes_matrix) - \
             cast(np.ndarray, self._optimization_results[results_index].amplitudes_matrices[0])
+        print_vmin = np.min(delta_probs)
+        print_vmax = np.max(delta_probs)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_comparison_between_two_results(delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_probabilities_comparison_percentage(
@@ -222,6 +246,9 @@ class GlobalOptimizationResults(ABC):
             cast(np.ndarray, self._optimization_results[results_index].probabilities_matrices[0])
         percentage_delta_probs = compute_percentage_delta_values(
             delta_probs, self._theoretical_results[strategy].probabilities_matrix)
+        print_vmin = np.min(percentage_delta_probs)
+        print_vmax = np.max(percentage_delta_probs)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_comparison_between_two_results(percentage_delta_probs, title, bar_label, vmin, vmax, cmap)
 
     def plot_amplitudes_comparison_percentage(
@@ -239,6 +266,9 @@ class GlobalOptimizationResults(ABC):
             cast(np.ndarray, self._optimization_results[results_index].amplitudes_matrices[0])
         percentage_delta_amplitudes = compute_percentage_delta_values(
             delta_amplitudes, self._theoretical_results[strategy].amplitudes_matrix)
+        print_vmin = np.min(percentage_delta_amplitudes)
+        print_vmax = np.max(percentage_delta_amplitudes)
+        print(f'min: {print_vmin}, max {print_vmax}')
         plot_comparison_between_two_results(percentage_delta_amplitudes, title, bar_label, vmin, vmax, cmap)
 
     def plot_theoretical_improvement(self,
