@@ -76,15 +76,15 @@ class OneShotExecution(Execution):
             ax.scatter([0], [0], [0], color="g", s=50)
         # draw one state
         else:
-            ax.scatter([results['initial_states_reshaped']['reshapedCoordsX'][5][7]],
-                       [results['initial_states_reshaped']['reshapedCoordsY'][5][7]],
-                       [results['initial_states_reshaped']['reshapedCoordsZ'][5][7]],
-                       color="k", s=100, zorder=2)
+            ax.plot([0, results['initial_states_reshaped']['reshapedCoordsX'][5][7]],
+                    [0, results['initial_states_reshaped']['reshapedCoordsY'][5][7]],
+                    [0, results['initial_states_reshaped']['reshapedCoordsZ'][5][7]],
+                    color="k", zorder=2, linewidth=3)
 
-            ax.scatter([results['initial_states_reshaped']['reshapedCoordsX'][13][8]],
-                       [results['initial_states_reshaped']['reshapedCoordsY'][13][8]],
-                       [results['initial_states_reshaped']['reshapedCoordsZ'][13][8]],
-                       color="b", s=100, zorder=3)
+            ax.plot([0, results['initial_states_reshaped']['reshapedCoordsX'][13][8]],
+                    [0, results['initial_states_reshaped']['reshapedCoordsY'][13][8]],
+                    [0, results['initial_states_reshaped']['reshapedCoordsZ'][13][8]],
+                    color="b", zorder=3, linewidth=3)
         wf.set_zorder(1)
         # ===============
         # Next subplots
@@ -115,15 +115,15 @@ class OneShotExecution(Execution):
                     ax.scatter([0], [0], final_state_reshaped["center"], color="g", s=50)
                 else:
                     # final one state reshaped
-                    ax.scatter([final_state_reshaped['reshaped_coords_x'][5][7]],
-                               [final_state_reshaped['reshaped_coords_y'][5][7]],
-                               [final_state_reshaped['reshaped_coords_z'][5][7]],
-                               color="k", s=100, zorder=2)
+                    ax.plot([0, final_state_reshaped['reshaped_coords_x'][5][7]],
+                            [0, final_state_reshaped['reshaped_coords_y'][5][7]],
+                            [final_state_reshaped["center"], final_state_reshaped['reshaped_coords_z'][5][7]],
+                            color="k", zorder=2, linewidth=3)
 
-                    ax.scatter([final_state_reshaped['reshaped_coords_x'][13][8]],
-                               [final_state_reshaped['reshaped_coords_y'][13][8]],
-                               [final_state_reshaped['reshaped_coords_z'][13][8]],
-                               color="b", s=100, zorder=3)
+                    ax.plot([0, final_state_reshaped['reshaped_coords_x'][13][8]],
+                            [0, final_state_reshaped['reshaped_coords_y'][13][8]],
+                            [final_state_reshaped["center"], final_state_reshaped['reshaped_coords_z'][13][8]],
+                            color="b", zorder=3, linewidth=3)
                 in_wf.set_zorder(1)
                 index_to_print += 1
 
