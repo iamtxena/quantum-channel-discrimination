@@ -11,13 +11,14 @@ from ..typings.configurations import OptimalConfigurations, ValidatedConfigurati
 import numpy as np
 
 
+#class OneShotEntangledDampingChannel(OneShotDampingChannel):
 class OneShotDampingChannelProjectivMeasurement(OneShotDampingChannel):
-    """ Representation of the One Shot One Qubit Quantum Damping Channel with Projective Measurement considering the proposition from arXiv:1807.08449v3"""
+    """ Representation of the One Shot Two Qubit Entangled Quantum Damping Channel """
 
     @staticmethod
     def build_from_optimal_configurations(file_name: str, path: Optional[str] = ""):
         """ Builds a Quantum Damping Channel from the optimal configuration for each pair of attenuation angles """
-        return OneShotEntangledDampingChannel(optimal_configurations=load_result_from_file(file_name, path))
+        return OneShotDampingChannelProjectivMeasurement(optimal_configurations=load_result_from_file(file_name, path))
 
     @staticmethod
     def find_optimal_configurations(optimization_setup: OptimizationSetup,
